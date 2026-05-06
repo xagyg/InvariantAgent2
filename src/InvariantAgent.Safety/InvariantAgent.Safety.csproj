@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Invariants\Event\" />
+    <Folder Include="Invariants\State\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
+  </ItemGroup>
+
+</Project>

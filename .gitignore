@@ -1,0 +1,84 @@
+# =========================
+# Build outputs
+# =========================
+bin/
+obj/
+out/
+
+# =========================
+# User-specific files
+# =========================
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# Visual Studio Code
+.vscode/
+.vs/
+
+# =========================
+# OS generated files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# .NET build artifacts
+# =========================
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+# NuGet packages (optional if using central restore)
+*.nupkg
+.nuget/
+
+# =========================
+# ASP.NET Core / Hosting
+# =========================
+appsettings.Development.json
+secrets.json
+
+# local HTTPS certs
+*.pfx
+*.key
+
+# =========================
+# Test results
+# =========================
+TestResults/
+*.trx
+
+# coverage
+coverage/
+*.coverage
+*.coveragexml
+
+# =========================
+# EF Core migrations (optional - depends on your workflow)
+# If you generate migrations locally, you might NOT ignore this.
+# =========================
+# Migrations/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Docker (if you add later)
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Publish output
+# =========================
+publish/
