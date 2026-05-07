@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using InvariantAgent.Core.Events;
 
 namespace InvariantAgent.Core.Model
 {

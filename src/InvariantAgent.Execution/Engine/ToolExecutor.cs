@@ -16,7 +16,18 @@ public class ToolExecutor : IExecutor
     {
         var tool = _tools.Get(action.Tool);
 
-        var result = tool.Run(action.Input, state);
+        ToolResult result;
+
+        try
+        {
+            var raw = tool.Run(action.Input, state);
+
+            result = raw as ToolResult ?? ToolResult.Ok(action.Tool, raw);
+        }
+        catch (Exception ex)
+        {
+            result = ToolResult.Fail(action.Tool, ex.Message);
+        }
 
         return new AgentOutcome
         {

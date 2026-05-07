@@ -7,8 +7,17 @@ public class EchoTool : ITool
 {
     public string Name => "echo";
 
-    public object Run(string input, AgentState state)
+    public ToolResult Run(string input, AgentState state)
     {
-        return input;
+        var trimmedInput = input;
+
+        if (input.StartsWith(Name + " ", StringComparison.OrdinalIgnoreCase))
+        {
+            trimmedInput = input.Substring(Name.Length + 1);
+        }
+
+        Console.WriteLine(trimmedInput);
+
+        return ToolResult.Ok(Name, input);
     }
 }

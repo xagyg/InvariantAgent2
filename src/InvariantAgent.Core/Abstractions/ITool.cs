@@ -5,5 +5,5 @@ public interface ITool
 {
     string Name { get; }
 
-    object Run(string input, AgentState state);
+    ToolResult Run(string input, AgentState state);
 }

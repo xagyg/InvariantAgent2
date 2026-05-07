@@ -7,16 +7,16 @@ public class SearchTool : ITool
 {
     public string Name => "search";
 
-    public object Run(string input, AgentState state)
+    public ToolResult Run(string input, AgentState state)
     {
-        return new
+        return ToolResult.Ok(Name, new
         {
             Query = input,
-            Results = new[]
-            {
+            Results = new List<string>
+                {
                 $"Result 1 for '{input}'",
                 $"Result 2 for '{input}'"
-            }
-        };
+                }                
+        });        
     }
 }

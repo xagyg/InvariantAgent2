@@ -1,4 +1,5 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Events;
+using InvariantAgent.Core.Model;
 using System.Collections.Generic;
 
 namespace InvariantAgent.Core.Pipeline

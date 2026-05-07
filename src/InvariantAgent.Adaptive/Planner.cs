@@ -1,4 +1,5 @@
 ﻿using InvariantAgent.Core.Model;
+using System;
 
 
 namespace InvariantAgent.Adaptive
@@ -18,13 +19,16 @@ namespace InvariantAgent.Adaptive
 
         private string ResolveTool(StateProjection state, string input)
         {
-            if (input.Contains("calculate"))
+            if (input.Trim().StartsWith("calculate"))
                 return "calculator";
 
-            if (input.Contains("search"))
+            if (input.Trim().StartsWith("search"))
                 return "search";
 
-            return "echo";
+            if (input.Trim().StartsWith("echo"))
+                return "echo";
+
+            throw new InvalidOperationException($"Unknown tool: {input.Split(' ')[0]}");
         }
     }
 }

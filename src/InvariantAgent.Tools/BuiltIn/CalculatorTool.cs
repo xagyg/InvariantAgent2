@@ -8,18 +8,11 @@ public class CalculatorTool : ITool
 {
     public string Name => "calculator";
 
-    public object Run(string input, AgentState state)
+    public ToolResult Run(string input, AgentState state)
     {
-        try
-        {
-            var table = new DataTable();
-            var result = table.Compute(input, string.Empty);
+        var table = new DataTable();
+        var result = table.Compute(input, string.Empty);
 
-            return result;
-        }
-        catch
-        {
-            return $"Invalid expression: {input}";
-        }
+        return ToolResult.Ok(Name,  result);
     }
 }

@@ -1,4 +1,4 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Events;
 
 namespace InvariantAgent.Simulation.Replay
 {

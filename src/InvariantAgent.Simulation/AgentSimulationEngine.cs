@@ -4,6 +4,7 @@ using InvariantAgent.Adaptive;
 using InvariantAgent.Core.Model;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Execution.Engine;
+using InvariantAgent.Core.Events;
 
 namespace InvariantAgent.Simulation
 {
@@ -35,22 +36,24 @@ namespace InvariantAgent.Simulation
 
         public AgentState Run(string input)
         {
-            Console.WriteLine($"\n[STATE] Version: {_state.Version}");
+           // Console.WriteLine($"\n[STATE] Version: {_state.Version}");
 
             // 0. π(Sₜ)
             var projection = StateProjector.Project(_state);
 
             // 1. Adaptive (Aₜ = f_adapt(π(Sₜ), Iₜ))
             var action = _planner.Plan(projection, input);
-
-            Console.WriteLine($"[PLAN] Tool={action.Tool}, Input={action.Input}");
+            
             _state.AddEvent("Plan", $"Tool={action.Tool}, Input={action.Input}");
+
+          //  Console.WriteLine($"[PLAN] Tool={action.Tool}, Input={action.Input}");
 
             // 2. Π_pre (Sₜ, Aₜ)
             var pre = _pre.Evaluate(_state, action);
 
-            Console.WriteLine($"[Π_pre] Allowed={pre.Allowed}");
             _state.AddEvent("PreControl", pre.Allowed ? "Allowed" : pre.Reason);
+
+          //  Console.WriteLine($"[Π_pre] Allowed={pre.Allowed}");
 
             if (!pre.Allowed)
             {
@@ -60,20 +63,21 @@ namespace InvariantAgent.Simulation
             // 3. Execution
             var outcome = _executor.Execute(action, _state);
 
-            Console.WriteLine($"[EXEC] Tool={action.Tool}, Result={outcome.Result}");
             _state.AddEvent("Execution", $"Tool={action.Tool}, Result={outcome.Result}");
+
+           // Console.WriteLine($"[EXEC] Tool={action.Tool}, Result={outcome.Result}");
 
             // 4. Π_post (Sₜ, Oₜ)
             var post = _post.Evaluate(_state, outcome);
 
-            Console.WriteLine($"[Π_post] Accepted={post.Accepted}");
             _state.AddEvent("PostControl", post.Accepted ? "Accepted" : post.Reason);
+
+         //   Console.WriteLine($"[Π_post] Accepted={post.Accepted}");
 
             if (!post.Accepted)
             {
                 return _state;
             }
-
 
             // 5. Sₜ₊₁ = T(Sₜ, Oₜ)
             _state = _reducer.Reduce(_state, outcome);

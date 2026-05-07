@@ -7,7 +7,7 @@ public class FailingTool : ITool
 {
     public string Name => "fail";
 
-    public object Run(string input, AgentState state)
+    public ToolResult Run(string input, AgentState state)
     {
         throw new InvalidOperationException("Simulated tool failure");
     }

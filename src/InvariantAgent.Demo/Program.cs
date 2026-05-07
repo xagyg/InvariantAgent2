@@ -1,7 +1,8 @@
 ﻿using InvariantAgent.Adaptive;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control.Post;
 using InvariantAgent.Core.Control.Pre;
+using InvariantAgent.Core.Model;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Safety.Invariants.Action;
@@ -9,15 +10,63 @@ using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Simulation;
 using InvariantAgent.Tools;
 using InvariantAgent.Tools.BuiltIn;
-using InvariantAgent.Core.Abstractions;
 
-class Program
+namespace InvariantAgent.ConsoleApp;
+
+internal static class Program
 {
     static void Main()
     {
-        Console.WriteLine("=== InvariantAgent Simulation Starting ===");
+        Console.WriteLine("=== InvariantAgent REPL ===");
+        Console.WriteLine("Commands:");
+        Console.WriteLine("  exit      - quit");
+        Console.WriteLine("  clear     - clear screen");
+        Console.WriteLine();
 
-        // 1. Invariants
+        var engine = BuildEngine();
+
+        while (true)
+        {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write("agent> ");
+            Console.ResetColor();
+
+            var input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+                continue;
+
+            input = input.Trim();
+
+            switch (input.ToLowerInvariant())
+            {
+                case "exit":
+                case "quit":
+                    return;
+
+                case "clear":
+                    Console.Clear();
+                    continue;
+            }
+
+            try
+            {
+                Run(engine, input);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"[ERROR] {ex.Message}");
+                Console.ResetColor();
+            }
+
+            Console.WriteLine();
+        }
+    }
+
+    private static AgentSimulationEngine BuildEngine()
+    {
+        // Invariants
         var actionSet = new InvariantSet<AgentAction>(
             new List<IInvariant<AgentAction>>
             {
@@ -30,11 +79,11 @@ class Program
                 new SuccessOutcomeInvariant()
             });
 
-        // 2. Control
+        // Control
         var pre = new PreControl(actionSet);
         var post = new PostControl(outcomeSet);
 
-        // 3. Tools
+        // Tools
         var registry = new ToolRegistry(new List<ITool>
         {
             new EchoTool(),
@@ -44,37 +93,57 @@ class Program
 
         var executor = new ToolExecutor(registry);
 
-        // 4. Adaptive
+        // Planner
         var planner = new Planner();
 
-        // 5. Engine
-        var engine = new AgentSimulationEngine(
+        // Engine
+        return new AgentSimulationEngine(
             planner,
             pre,
             post,
             executor,
-            new StateReducer()
-        );
-
-        // 6. Run with trace
-        RunWithTrace(engine, "hello world");
-
-        Console.WriteLine("=== Simulation Complete ===");
+            new StateReducer());
     }
 
-    static void RunWithTrace(AgentSimulationEngine engine, string input)
+    private static void Run(AgentSimulationEngine engine, string input)
     {
-        Console.WriteLine($"\nINPUT: {input}\n");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine();
+        Console.WriteLine($"INPUT: {input}");
+        Console.ResetColor();
 
         var state = engine.Run(input);
 
-        Console.WriteLine("\n--- FINAL STATE ---");
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine("FINAL STATE");
+        Console.ResetColor();
+
         Console.WriteLine($"Version: {state.Version}");
-        Console.WriteLine($"Events: {state.Events.Count}");
+        Console.WriteLine($"Events : {state.Events.Count}");
+        Console.WriteLine();
 
         foreach (var e in state.Events)
         {
-            Console.WriteLine($"[{e.Type}] {e.Payload}");
+            Console.ForegroundColor = GetColor(e.Type);
+
+            Console.Write($"[{e.Type}] ");
+
+            Console.ResetColor();
+
+            Console.WriteLine(e.Payload);
         }
+    }
+
+    private static ConsoleColor GetColor(string type)
+    {
+        return type switch
+        {
+            "InputReceived" => ConsoleColor.Yellow,
+            "PlanGenerated" => ConsoleColor.Cyan,
+            "ToolExecuted" => ConsoleColor.Green,
+            "InvariantViolation" => ConsoleColor.Red,
+            _ => ConsoleColor.Gray
+        };
     }
 }
