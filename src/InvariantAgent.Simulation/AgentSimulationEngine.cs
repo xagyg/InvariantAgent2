@@ -36,7 +36,8 @@ namespace InvariantAgent.Simulation
 
         public AgentState Run(string input)
         {
-           // Console.WriteLine($"\n[STATE] Version: {_state.Version}");
+            // Console.WriteLine($"\n[STATE] Version: {_state.Version}");
+            _state.AddEvent("Step", $"StepId={Guid.NewGuid()}");
 
             // 0. π(Sₜ)
             var projection = StateProjector.Project(_state);

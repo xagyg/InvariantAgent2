@@ -16,6 +16,6 @@ public class ToolRegistry : IToolRegistry
         if (_tools.TryGetValue(name, out var tool))
             return tool;
 
-        throw new InvalidOperationException($"Tool not registered: {name}");
+        return null;
     }
 }

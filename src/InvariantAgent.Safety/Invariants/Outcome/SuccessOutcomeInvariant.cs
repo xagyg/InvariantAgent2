@@ -10,6 +10,9 @@ namespace InvariantAgent.Safety.Invariants.Outcome
             if (outcome.Result == null)
                 return InvariantResult.Fail("Execution failed");
 
+            if (!outcome.Result.Success)
+                return InvariantResult.Fail(outcome.Result.Error);
+
             return InvariantResult.Pass();
         }
     }

@@ -6,7 +6,7 @@ namespace InvariantAgent.Tools.BuiltIn;
 
 public class CalculatorTool : ITool
 {
-    public string Name => "calculator";
+    public string Name => "calc";
 
     public ToolResult Run(string input, AgentState state)
     {

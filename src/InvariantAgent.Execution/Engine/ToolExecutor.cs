@@ -16,6 +16,17 @@ public class ToolExecutor : IExecutor
     {
         var tool = _tools.Get(action.Tool);
 
+        if (tool == null)
+        {
+            return new AgentOutcome
+            {                
+                Tool = action.Tool,
+                Input = action.Input,
+                Result = ToolResult.Fail(action.Tool, "Unkown tool"),
+                StateVersion = state.Version
+            };           
+        }
+
         ToolResult result;
 
         try

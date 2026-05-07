@@ -11,7 +11,7 @@ public class AgentOutcome
     public string Input { get; set; } = "";
 
     // Raw result of execution (Oₜ)
-    public object Result { get; set; }
+    public ToolResult Result { get; set; }
 
     // Links outcome back to the state version that produced it
     public int StateVersion { get; set; }

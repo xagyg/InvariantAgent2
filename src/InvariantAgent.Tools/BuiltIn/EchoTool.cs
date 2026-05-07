@@ -16,8 +16,6 @@ public class EchoTool : ITool
             trimmedInput = input.Substring(Name.Length + 1);
         }
 
-        Console.WriteLine(trimmedInput);
-
-        return ToolResult.Ok(Name, input);
+        return ToolResult.Ok(Name, trimmedInput);
     }
 }

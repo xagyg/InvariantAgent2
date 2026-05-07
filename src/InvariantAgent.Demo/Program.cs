@@ -70,7 +70,7 @@ internal static class Program
         var actionSet = new InvariantSet<AgentAction>(
             new List<IInvariant<AgentAction>>
             {
-                new NoEmptyInputInvariant()
+                new NoDeleteInvariant()
             });
 
         var outcomeSet = new InvariantSet<AgentOutcome>(
@@ -88,7 +88,8 @@ internal static class Program
         {
             new EchoTool(),
             new SearchTool(),
-            new CalculatorTool()
+            new CalculatorTool(),
+            new ReplayTool()
         });
 
         var executor = new ToolExecutor(registry);
@@ -114,24 +115,32 @@ internal static class Program
 
         var state = engine.Run(input);
 
-        Console.WriteLine();
+        //Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("FINAL STATE");
+       // Console.WriteLine("FINAL STATE");
         Console.ResetColor();
 
-        Console.WriteLine($"Version: {state.Version}");
-        Console.WriteLine($"Events : {state.Events.Count}");
+        //if (execution != null)
+       // {
+       //     Console.WriteLine(execution.Payload);
+       // }
+
+        // Console.WriteLine($"Version: {state.Version}");
+        // Console.WriteLine($"Events : {state.Events.Count}");
         Console.WriteLine();
 
-        foreach (var e in state.Events)
+        var lastStepIndex = state.Events
+            .FindLastIndex(e => e.Type == "Step");
+
+        if (lastStepIndex >= 0)
         {
-            Console.ForegroundColor = GetColor(e.Type);
-
-            Console.Write($"[{e.Type}] ");
-
-            Console.ResetColor();
-
-            Console.WriteLine(e.Payload);
+            foreach (var e in state.Events.Skip(lastStepIndex))
+            {
+                Console.ForegroundColor = GetColor(e.Type);
+                Console.Write($"[{e.Type}] ");
+                Console.ResetColor();
+                Console.WriteLine(e.Payload);
+            }
         }
     }
 
@@ -139,9 +148,12 @@ internal static class Program
     {
         return type switch
         {
-            "InputReceived" => ConsoleColor.Yellow,
-            "PlanGenerated" => ConsoleColor.Cyan,
-            "ToolExecuted" => ConsoleColor.Green,
+            "Step" => ConsoleColor.Cyan,
+            "Plan" => ConsoleColor.Cyan,
+            "PreControl" => ConsoleColor.Yellow,
+            "PostControl" => ConsoleColor.Yellow,
+            "Execution" => ConsoleColor.Green,
+            "State" => ConsoleColor.Cyan,
             "InvariantViolation" => ConsoleColor.Red,
             _ => ConsoleColor.Gray
         };
