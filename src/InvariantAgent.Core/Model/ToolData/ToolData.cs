@@ -2,4 +2,5 @@
 
 public abstract class ToolData
 {
+    public abstract override string ToString();
 }

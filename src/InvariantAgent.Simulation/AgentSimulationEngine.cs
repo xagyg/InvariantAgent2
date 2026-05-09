@@ -3,7 +3,6 @@ using InvariantAgent.Core.Model;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Core.Events;
-using InvariantAgent.Core.Model.ToolData;
 
 namespace InvariantAgent.Simulation
 {
@@ -63,7 +62,7 @@ namespace InvariantAgent.Simulation
             // 3. Execution
             var outcome = _executor.Execute(action, _state);
 
-            _state.AddEvent(new ExecutionEvent { Tool = outcome.Tool, Result = (outcome.Result.Data as TextData)?.Value });
+            _state.AddEvent(new ExecutionEvent { Tool = outcome.Tool, Result = outcome.Result.Data?.ToString() });
 
             // 4. Π_post (Sₜ, Oₜ)
             var post = _post.Evaluate(_state, outcome);

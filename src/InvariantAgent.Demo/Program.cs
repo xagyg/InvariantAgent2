@@ -10,6 +10,7 @@ using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Simulation;
 using InvariantAgent.Tools;
 using InvariantAgent.Tools.BuiltIn;
+using System.Linq;
 
 namespace InvariantAgent.ConsoleApp;
 
@@ -66,11 +67,21 @@ internal static class Program
 
     private static AgentSimulationEngine BuildEngine()
     {
+        // Tools
+        var registry = new ToolRegistry(new List<ITool>
+        {
+            new EchoTool(),
+            new SearchTool(),
+            new CalculatorTool(),
+            new ReplayTool()
+        });
+
         // Invariants
         var actionSet = new InvariantSet<AgentAction>(
             new List<IInvariant<AgentAction>>
             {
-                new NoDeleteInvariant()
+                new NoDeleteInvariant(),
+                new AllowedToolsInvariant(registry.GetToolNames())
             });
 
         var outcomeSet = new InvariantSet<AgentOutcome>(
@@ -82,15 +93,6 @@ internal static class Program
         // Control
         var pre = new PreControl(actionSet);
         var post = new PostControl(outcomeSet);
-
-        // Tools
-        var registry = new ToolRegistry(new List<ITool>
-        {
-            new EchoTool(),
-            new SearchTool(),
-            new CalculatorTool(),
-            new ReplayTool()
-        });
 
         var executor = new ToolExecutor(registry);
 

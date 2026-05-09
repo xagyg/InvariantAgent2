@@ -18,4 +18,9 @@ public class ToolRegistry : IToolRegistry
 
         return null;
     }
+
+    public List<string> GetToolNames()
+    {
+        return _tools.Select(t => t.Key).ToList();
+    }
 }
