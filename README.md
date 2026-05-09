@@ -19,10 +19,10 @@ invariants > runtime > planner > tools
 This is philosophically different from most current agent frameworks, which typically treat the LLM itself as the governing entity.
 
 In InvariantAgent:
-- invariants define boundaries,
-- the runtime governs execution,
-- planners generate decisions,
-- and tools perform actions.
+- invariants define boundaries
+- the runtime governs execution
+- planners generate decisions
+- tools perform actions
 
 ## Architecture
 
@@ -49,17 +49,11 @@ In InvariantAgent:
 ## Features
 
 - Replayable execution
-
 - Event-sourced state transitions
-
 - Tool mediation
-
 - Pre/post execution controls
-
 - Deterministic simulation
-
 - Model-agnostic planner abstraction
-
 - Offline-capable execution paths
 
 ## Run
