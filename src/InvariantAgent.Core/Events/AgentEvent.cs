@@ -1,15 +1,11 @@
 ﻿using System;
 
-namespace InvariantAgent.Core.Events
+public abstract class AgentEvent
 {
-    public class AgentEvent
-    {
-        public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
-        public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+    public abstract string Type { get; }
 
-        public string Type { get; init; } = "";
-
-        public object Payload { get; init; }       
-    }
+    public abstract string ToObservation();
 }

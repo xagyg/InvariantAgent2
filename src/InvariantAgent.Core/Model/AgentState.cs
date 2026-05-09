@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using InvariantAgent.Core.Events;
+﻿using System.Collections.Generic;
 
 namespace InvariantAgent.Core.Model
 {
@@ -12,14 +10,11 @@ namespace InvariantAgent.Core.Model
         public string Mode { get; set; } = "";
         public List<string> Policies { get; set; } = new();
 
-        public void AddEvent(string type, string payload)
+        public string Goal { get; set; }
+
+        public void AddEvent(AgentEvent e)
         {
-            Events.Add(new AgentEvent
-            {
-                Type = type,
-                Payload = payload,
-                Timestamp = DateTime.UtcNow
-            });
+            Events.Add(e);
         }
     }
 }

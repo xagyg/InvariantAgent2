@@ -33,7 +33,7 @@ public class ToolExecutor : IExecutor
         {
             var raw = tool.Run(action.Input, state);
 
-            result = raw as ToolResult ?? ToolResult.Ok(action.Tool, raw);
+            result = ToolResult.Ok(action.Tool, raw.Data);
         }
         catch (Exception ex)
         {

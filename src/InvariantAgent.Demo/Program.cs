@@ -94,8 +94,8 @@ internal static class Program
 
         var executor = new ToolExecutor(registry);
 
-        // Planner
-        var planner = new Planner();
+        // Choose planner
+        var planner = CreatePlanner("rule");
 
         // Engine
         return new AgentSimulationEngine(
@@ -139,7 +139,7 @@ internal static class Program
                 Console.ForegroundColor = GetColor(e.Type);
                 Console.Write($"[{e.Type}] ");
                 Console.ResetColor();
-                Console.WriteLine(e.Payload);
+                Console.WriteLine(e.ToObservation());
             }
         }
     }
@@ -156,6 +156,23 @@ internal static class Program
             "State" => ConsoleColor.Cyan,
             "InvariantViolation" => ConsoleColor.Red,
             _ => ConsoleColor.Gray
+        };
+    }
+
+    private static IPlanner CreatePlanner(string mode, params string[] args)
+    {
+        //var mode = Environment.GetEnvironmentVariable("AGENT_PLANNER");
+
+        return mode.ToLowerInvariant() switch
+        {
+            "openai" => new OpenAiPlanner(args[0]),
+                //Environment.GetEnvironmentVariable("OPENAI_API_KEY")),
+
+            "gemini" => new GeminiPlanner(args[0]),
+
+            "rule" => new RulePlanner(),
+
+            _ => new RulePlanner()
         };
     }
 }

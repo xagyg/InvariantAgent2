@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google_GenerativeAI" Version="3.6.6" />
+    <PackageReference Include="OpenAI" Version="2.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
   </ItemGroup>
 

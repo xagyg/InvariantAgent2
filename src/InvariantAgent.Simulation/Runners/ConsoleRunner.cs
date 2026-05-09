@@ -48,7 +48,7 @@ namespace InvariantAgent.Simulation.Runners
             Console.WriteLine("\nEVENT TRACE:");
             foreach (var e in _engine.Events)
             {
-                Console.WriteLine($"{e.Type} -> {e.Payload}");
+                Console.WriteLine($"{e.ToObservation()}");
             }
         }
     }

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.ToolData;
 
 namespace InvariantAgent.Tools.BuiltIn
 {
@@ -12,7 +13,7 @@ namespace InvariantAgent.Tools.BuiltIn
         {
             if (state.Events.Count == 0)
             {
-                return ToolResult.Ok(Name, "====\nNo events recorded.\n====");
+                return ToolResult.Ok(Name, new TextData { Value = "====\nNo events recorded.\n====" });
             }
 
             int count = state.Events.Count;
@@ -31,12 +32,12 @@ namespace InvariantAgent.Tools.BuiltIn
                 sb.Append('[')
                   .Append(e.Type)
                   .Append("] ")
-                  .AppendLine(e.Payload?.ToString());
+                  .AppendLine(e.ToObservation());
             }
 
             sb.Append("==== REPLAY END ====");
 
-            return ToolResult.Ok(Name, sb.ToString());
+            return ToolResult.Ok(Name, new TextData { Value = sb.ToString() });
         }
     }
 }

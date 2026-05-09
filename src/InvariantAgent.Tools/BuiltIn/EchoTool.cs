@@ -1,6 +1,8 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model;
 
+using InvariantAgent.Core.Model.ToolData;
+
 namespace InvariantAgent.Tools.BuiltIn;
 
 public class EchoTool : ITool
@@ -9,13 +11,14 @@ public class EchoTool : ITool
 
     public ToolResult Run(string input, AgentState state)
     {
-        var trimmedInput = input;
-
-        if (input.StartsWith(Name + " ", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(input))
         {
-            trimmedInput = input.Substring(Name.Length + 1);
+            return ToolResult.Fail(Name, "Input was empty");
         }
 
-        return ToolResult.Ok(Name, trimmedInput);
+        return ToolResult.Ok(
+            Name,
+            new TextData { Value = input }
+        );
     }
 }

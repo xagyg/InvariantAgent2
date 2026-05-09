@@ -1,6 +1,4 @@
-﻿using InvariantAgent.Core.Events;
-
-
+﻿
 namespace InvariantAgent.Observability
 {
     public class EventStore

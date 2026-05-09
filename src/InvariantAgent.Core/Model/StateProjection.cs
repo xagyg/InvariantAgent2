@@ -4,8 +4,14 @@ namespace InvariantAgent.Core.Model
 {
     public class StateProjection
     {
-        public string Mode { get; init; }
-        public IReadOnlyList<string> ActivePolicies { get; init; }
-        public IReadOnlyDictionary<string, object> MemorySnapshot { get; init; }
+        public string Mode { get; set; }
+
+        public IReadOnlyList<string> ActivePolicies { get; set; }
+
+        public string MemorySummary { get; init; }
+
+        public string LastOutcomeSummary { get; init; }
+
+        public string GoalContext { get; init; }
     }
 }

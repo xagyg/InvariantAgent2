@@ -6,4 +6,4 @@ public interface ITool
     string Name { get; }
 
     ToolResult Run(string input, AgentState state);
-}
+} 

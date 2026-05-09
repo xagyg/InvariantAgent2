@@ -1,11 +1,8 @@
-﻿using InvariantAgent.Core.Events;
-using InvariantAgent.Core.Model;
-using System.Collections.Generic;
-
+﻿using InvariantAgent.Core.Model;
 namespace InvariantAgent.Core.Abstractions
 {
     public interface IStateReducer
     {
-        StateProjection Reduce(IEnumerable<AgentEvent> events);
+        AgentState Reduce(AgentState state, AgentOutcome outcome);
     }
 }

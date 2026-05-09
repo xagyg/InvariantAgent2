@@ -10,19 +10,20 @@ namespace InvariantAgent.Core.Model
 
         public string Tool { get; set; } = "";
 
-        public object Data { get; set; }
+        public ToolData.ToolData Data { get; set; }
 
         public string Error { get; set; }
 
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; set; }
 
-        public static ToolResult Ok(string tool, object data)
+        public static ToolResult Ok(string tool, ToolData.ToolData data)
         {
             return new ToolResult
             {
                 Tool = tool,
                 Success = true,
-                Data = data
+                Data = data,
+                Timestamp = DateTime.UtcNow
             };
         }
 
@@ -32,7 +33,8 @@ namespace InvariantAgent.Core.Model
             {
                 Tool = tool,
                 Success = false,
-                Error = error
+                Error = error,
+                Timestamp = DateTime.UtcNow
             };
         }
 

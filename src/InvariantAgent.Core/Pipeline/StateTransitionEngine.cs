@@ -7,40 +7,53 @@ namespace InvariantAgent.Core.Pipeline
     {
         private readonly IPlanner _planner;
         private readonly IExecutor _executor;
-        private readonly IControlOperator _control;
+        private readonly IPreControl _pre;
+        private readonly IPostControl _post;
+        private readonly IStateReducer _reducer;
 
         public StateTransitionEngine(
             IPlanner planner,
             IExecutor executor,
-            IControlOperator control)
+            IPreControl pre,
+            IPostControl post,
+            IStateReducer reducer)
         {
             _planner = planner;
             _executor = executor;
-            _control = control;
+            _pre = pre;
+            _post = post;
+            _reducer = reducer;
         }
 
-        public AgentState Step(AgentState s, string input)
+        public AgentState Step(AgentState state, string input)
         {
+            /*******
             var projection = StateProjector.Project(s);
 
-            // Aₜ = f_adapt(Sₜ, Iₜ)
+            state.AddEvent(new StepEvent());
+
+            // 1. Plan
             var action = _planner.Plan(projection, input);
 
-            // A'ₜ = Π_pre(Aₜ)
-            var safeAction = _control.ApplyPre(s, action);
+            state.AddEvent(new PlanEvent { Tool = action.Tool, Input = input });
+
+            var safeAction = _pre.Evaluate(state, action);
             if (safeAction == null)
-                return s;
+                return state;
 
-            // Oₜ = f_exec(A'ₜ)
-            var outcome = _executor.Execute(safeAction, s);
+            // 2. Execute
+            var outcome = _executor.Execute(action, state);
 
-            // O'ₜ = Π_post(Oₜ)
-            var safeOutcome = _control.ApplyPost(s, outcome);
+            state.AddEvent(new ExecutionEvent { Tool = outcome.Tool, Result = outcome.Result });
+
+            var safeOutcome = _post.Evaluate(state, outcome);
             if (safeOutcome == null)
-                return s;
+                return state;
 
-            // Sₜ₊₁ = update(Sₜ, O'ₜ)
-            return ApplyUpdate(s, safeOutcome);
+            // 3. Update
+            return _reducer.Reduce(state, safeOutcome);
+            *******/
+            return null;
         }
 
         private AgentState ApplyUpdate(AgentState state, AgentOutcome outcome)

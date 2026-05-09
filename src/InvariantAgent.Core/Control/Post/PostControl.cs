@@ -1,8 +1,9 @@
 ﻿using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Abstractions;
 
 namespace InvariantAgent.Core.Control.Post;
 
-public class PostControl
+public class PostControl : IPostControl
 {
     private readonly InvariantSet<AgentOutcome> _invariants;
 

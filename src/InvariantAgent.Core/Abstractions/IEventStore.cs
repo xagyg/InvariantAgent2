@@ -1,4 +1,3 @@
-using InvariantAgent.Core.Events;
 using System.Collections.Generic;
 
 namespace InvariantAgent.Core.Abstractions;

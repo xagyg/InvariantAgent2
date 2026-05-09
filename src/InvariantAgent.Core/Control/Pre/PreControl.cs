@@ -1,9 +1,10 @@
 ﻿using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Abstractions;
 
 namespace InvariantAgent.Core.Control.Pre
 {
 
-    public class PreControl
+    public class PreControl : IPreControl
     {
         private readonly InvariantSet<AgentAction> _invariants;
 

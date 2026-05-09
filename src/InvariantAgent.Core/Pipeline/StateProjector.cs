@@ -1,9 +1,6 @@
 ﻿using InvariantAgent.Core.Model;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace InvariantAgent.Core.Pipeline
 {
@@ -15,8 +12,33 @@ namespace InvariantAgent.Core.Pipeline
             {
                 Mode = state.Mode,
                 ActivePolicies = state.Policies.ToList(),
-                MemorySnapshot = new Dictionary<string, object>(state.Memory)
+
+                MemorySummary = SummariseMemory(state.Memory),
+
+                LastOutcomeSummary = state.Events.OfType<ExecutionEvent>().LastOrDefault()?.Result,
+
+                GoalContext = state.Goal
             };
+        }
+
+        private static string SummariseMemory(Dictionary<string, object> memory)
+        {
+            var importantKeys = new HashSet<string>
+                {
+                    "goal",
+                    "user_intent",
+                    "last_action",
+                    "error_state"
+                };
+
+            var prioritized = memory
+                .Where(kv => importantKeys.Contains(kv.Key))
+                .OrderByDescending(kv => importantKeys.Contains(kv.Key));
+
+            return string.Join("; ",
+                prioritized
+                    .Take(10)
+                    .Select(kv => $"{kv.Key}={kv.Value}"));
         }
     }
 }

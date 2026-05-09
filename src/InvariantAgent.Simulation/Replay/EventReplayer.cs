@@ -1,5 +1,4 @@
-﻿using InvariantAgent.Core.Events;
-
+﻿
 namespace InvariantAgent.Simulation.Replay
 {
     public class EventReplayer
@@ -13,15 +12,15 @@ namespace InvariantAgent.Simulation.Replay
                 switch (e.Type)
                 {
                     case "PreBlocked":
-                        Console.WriteLine($"[PRE BLOCK] {e.Payload}");
+                        Console.WriteLine($"[PRE BLOCK] {e.ToObservation()}");
                         break;
 
                     case "PostBlocked":
-                        Console.WriteLine($"[POST BLOCK] {e.Payload}");
+                        Console.WriteLine($"[POST BLOCK] {e.ToObservation()}");
                         break;
 
                     case "OutcomeAccepted":
-                        Console.WriteLine($"[OK] {e.Payload}");
+                        Console.WriteLine($"[OK] {e.ToObservation()}");
                         break;
 
                     default:
