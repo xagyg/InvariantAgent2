@@ -84,7 +84,7 @@ InvariantAgent is the reference implementation of the:
 
 **Invariant-Bounded Agent Alignment Model (IBAAM)**
 
-Additional details:
+Additional details (original paper):
 https://drive.google.com/file/d/1IVljpg-cmN2Q_pIryRBfT77NqDpSERc-/view
 
 ## Example Session
@@ -170,7 +170,7 @@ INPUT: replay
 
 agent> quit
 
-F:\dev\github\InvariantAgent2\src\InvariantAgent.Demo\bin\Debug\net8.0\InvariantAgent.Demo.exe (process 31076) exited with code 0 (0x0).
+F:\InvariantAgent2\src\InvariantAgent.Demo\bin\Debug\net8.0\InvariantAgent.Demo.exe (process 31076) exited with code 0 (0x0).
 
 Press any key to close this window . . .
 ```
