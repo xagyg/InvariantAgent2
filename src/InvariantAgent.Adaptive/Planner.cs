@@ -34,7 +34,8 @@ namespace InvariantAgent.Adaptive
             return new AgentAction
             {
                 Tool = "echo",
-                Input = $"Planner error: {ex.Message}"
+                Input = $"Planner error: {ex.Message}",
+                Error = ex.Message               
             };
         }
     }
