@@ -34,7 +34,6 @@ namespace InvariantAgent.Simulation
 
         public AgentState Run(string input)
         {
-            // Console.WriteLine($"\n[STATE] Version: {_state.Version}");
             _state.AddEvent(new StepEvent());
 
             // 0. π(Sₜ)
@@ -50,14 +49,10 @@ namespace InvariantAgent.Simulation
                 return _state;
             }
 
-          //  Console.WriteLine($"[PLAN] Tool={action.Tool}, Input={action.Input}");
-
             // 2. Π_pre (Sₜ, Aₜ)
             var pre = _pre.Evaluate(_state, action);
 
             _state.AddEvent(new PreControlEvent { Allowed = pre.Allowed, Reason = pre.Reason });
-
-          //  Console.WriteLine($"[Π_pre] Allowed={pre.Allowed}");
 
             if (!pre.Allowed)
             {
@@ -69,14 +64,10 @@ namespace InvariantAgent.Simulation
 
             _state.AddEvent(new ExecutionEvent { Tool = outcome.Tool, Result = outcome.Result.ToString() });
 
-           // Console.WriteLine($"[EXEC] Tool={action.Tool}, Result={outcome.Result}");
-
             // 4. Π_post (Sₜ, Oₜ)
             var post = _post.Evaluate(_state, outcome);
 
             _state.AddEvent(new PostControlEvent { Allowed = post.Accepted, Reason = post.Reason });
-
-         //   Console.WriteLine($"[Π_post] Accepted={post.Accepted}");
 
             if (!post.Accepted)
             {
