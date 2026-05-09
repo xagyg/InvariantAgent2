@@ -2,7 +2,7 @@
 {
     public class AgentAction
     {
-        public string Tool { get; set; }
+        public string Capability { get; set; }
         public string Input { get; set; }
 
         // null = success, non-null = failure reason

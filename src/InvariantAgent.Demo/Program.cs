@@ -8,9 +8,9 @@ using InvariantAgent.Execution.Engine;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Simulation;
-using InvariantAgent.Tools;
-using InvariantAgent.Tools.BuiltIn;
-using System.Linq;
+using InvariantAgent.Capabilities;
+using InvariantAgent.Capabilities.Tools;
+using InvariantAgent.Capabilities.Services;
 
 namespace InvariantAgent.ConsoleApp;
 
@@ -68,12 +68,13 @@ internal static class Program
     private static AgentSimulationEngine BuildEngine()
     {
         // Tools
-        var registry = new ToolRegistry(new List<ITool>
+        var registry = new CapabilityRegistry(new List<ICapability>
         {
             new EchoTool(),
             new SearchTool(),
             new CalculatorTool(),
-            new ReplayTool()
+            new ReplayTool(),
+            new ExampleHttpService()
         });
 
         // Invariants
@@ -81,7 +82,7 @@ internal static class Program
             new List<IInvariant<AgentAction>>
             {
                 new NoDeleteInvariant(),
-                new AllowedToolsInvariant(registry.GetToolNames())
+                new AllowedCapabilityInvariant(registry.GetCapabilityNames())
             });
 
         var outcomeSet = new InvariantSet<AgentOutcome>(
@@ -94,7 +95,7 @@ internal static class Program
         var pre = new PreControl(actionSet);
         var post = new PostControl(outcomeSet);
 
-        var executor = new ToolExecutor(registry);
+        var executor = new CapabilityExecutor(registry);
 
         // Choose planner
         var planner = CreatePlanner("rule");

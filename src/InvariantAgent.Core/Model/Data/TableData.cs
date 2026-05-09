@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-namespace InvariantAgent.Core.Model.ToolData;
+namespace InvariantAgent.Core.Model.Data;
 
-public class TableData : ToolData
+public class TableData : CapabilityData
 {
     public List<string[]> Rows { get; set; } = new();
 

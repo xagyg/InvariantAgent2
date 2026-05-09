@@ -1,13 +1,13 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model;
 
-namespace InvariantAgent.Tools.BuiltIn;
+namespace InvariantAgent.Capabilities.Tools;
 
-public class FailingTool : ITool
+public class FailingTool : ICapability
 {
     public string Name => "fail";
 
-    public ToolResult Run(string input, AgentState state)
+    public CapabilityResult Execute(CapabilityRequest request, AgentState state)
     {
         throw new InvalidOperationException("Simulated tool failure");
     }

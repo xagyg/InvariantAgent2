@@ -11,7 +11,7 @@ namespace InvariantAgent.Simulation
         private readonly IPlanner _planner;
         private readonly IPreControl _pre;
         private readonly IPostControl _post;
-        private readonly ToolExecutor _executor;
+        private readonly CapabilityExecutor _executor;
         private readonly IStateReducer _reducer;
 
         private AgentState _state = new();
@@ -22,7 +22,7 @@ namespace InvariantAgent.Simulation
             IPlanner planner,
             IPreControl pre,
             IPostControl post,
-            ToolExecutor executor,
+            CapabilityExecutor executor,
             IStateReducer reducer)
         {
             _planner = planner;
@@ -42,7 +42,7 @@ namespace InvariantAgent.Simulation
             // 1. Adaptive (Aₜ = f_adapt(π(Sₜ), Iₜ))
             var action = _planner.Plan(projection, input);
 
-            _state.AddEvent(new PlanEvent { Tool = action.Tool, Input = action.Input });
+            _state.AddEvent(new PlanEvent { Capability = action.Capability, Input = action.Input });
 
             if (action.HasError)
             {            
@@ -62,7 +62,7 @@ namespace InvariantAgent.Simulation
             // 3. Execution
             var outcome = _executor.Execute(action, _state);
 
-            _state.AddEvent(new ExecutionEvent { Tool = outcome.Tool, Result = outcome.Result.Data?.ToString() });
+            _state.AddEvent(new ExecutionEvent { Capability = outcome.Capability, Result = outcome.Result.Data?.ToString() });
 
             // 4. Π_post (Sₜ, Oₜ)
             var post = _post.Evaluate(_state, outcome);

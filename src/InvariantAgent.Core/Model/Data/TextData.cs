@@ -1,6 +1,6 @@
-﻿namespace InvariantAgent.Core.Model.ToolData;
+﻿namespace InvariantAgent.Core.Model.Data;
 
-public class TextData : ToolData
+public class TextData : CapabilityData
 {
     public string Value { get; set; } = "";
 

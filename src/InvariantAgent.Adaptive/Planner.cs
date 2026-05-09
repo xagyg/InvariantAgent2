@@ -33,7 +33,7 @@ namespace InvariantAgent.Adaptive
         {
             return new AgentAction
             {
-                Tool = "echo",
+                Capability = "echo",
                 Input = $"Planner error: {ex.Message}",
                 Error = ex.Message               
             };

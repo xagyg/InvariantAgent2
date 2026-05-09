@@ -10,12 +10,12 @@ public static class AgentActionParser
 
         var parts = trimmed.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
 
-        var tool = parts[0].ToLowerInvariant();
+        var capability = parts[0].ToLowerInvariant();
         var args = parts.Length > 1 ? parts[1] : "";
 
         return new AgentAction
         {
-            Tool = tool,
+            Capability = capability,
             Input = args
         };
     }

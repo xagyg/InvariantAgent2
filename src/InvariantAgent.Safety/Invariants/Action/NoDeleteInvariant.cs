@@ -9,7 +9,7 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantResult Evaluate(AgentAction action)
         {
-            if (action.Tool == "delete")
+            if (action.Capability == "delete")
                 return InvariantResult.Fail(Name, "Delete operations are not allowed");
 
             return InvariantResult.Pass(Name);

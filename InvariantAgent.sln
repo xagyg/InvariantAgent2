@@ -16,7 +16,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Simulation",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Demo", "src\InvariantAgent.Demo\InvariantAgent.Demo.csproj", "{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvariantAgent.Tools", "src\InvariantAgent.Tools\InvariantAgent.Tools.csproj", "{CB6A0345-E805-4FE2-92B0-78FAED80F753}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Capabilities", "src\InvariantAgent.Capabilities\InvariantAgent.Capabilities.csproj", "{CB6A0345-E805-4FE2-92B0-78FAED80F753}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

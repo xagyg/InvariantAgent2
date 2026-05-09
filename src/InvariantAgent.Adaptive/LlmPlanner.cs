@@ -28,7 +28,7 @@ namespace InvariantAgent.Adaptive
             sb.AppendLine("""
 You are an agent planner.
 
-Available tools:
+Available capabilities (tools or services):
 - echo
 - search
 - calculator
@@ -36,8 +36,8 @@ Available tools:
 
 Return ONLY:
 
-tool: <tool-name>
-input: <tool-input>
+capability: <capability-name>
+input: <capability-input>
 
 User input:
 """);
@@ -55,9 +55,9 @@ User input:
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToList();
 
-            var tool = lines
-                .First(x => x.StartsWith("tool:"))
-                .Substring("tool:".Length)
+            var capability = lines
+                .First(x => x.StartsWith("capability:"))
+                .Substring("capability:".Length)
                 .Trim();
 
             var input = lines
@@ -67,7 +67,7 @@ User input:
 
             return new AgentAction
             {
-                Tool = tool,
+                Capability = capability,
                 Input = input
             };
         }

@@ -12,7 +12,7 @@ namespace InvariantAgent.Safety.Composition
             return new InvariantSet<AgentAction>(new IActionInvariant[]
             {
             new NoDeleteInvariant(),
-            new AllowedToolsInvariant(new[] { "search", "echo", "calculator" })
+            new AllowedCapabilityInvariant(new[] { "search", "echo", "calculator" })
             });
         }
 

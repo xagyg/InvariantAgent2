@@ -1,24 +1,24 @@
 ﻿using System.Text;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Model.ToolData;
+using InvariantAgent.Core.Model.Data;
 
-namespace InvariantAgent.Tools.BuiltIn
+namespace InvariantAgent.Capabilities.Tools
 {
-    public class ReplayTool : ITool
+    public class ReplayTool : ICapability
     {
         public string Name => "replay";
 
-        public ToolResult Run(string input, AgentState state)
+        public CapabilityResult Execute(CapabilityRequest request, AgentState state)
         {
             if (state.Events.Count == 0)
             {
-                return ToolResult.Ok(Name, new TextData { Value = "====\nNo events recorded.\n====" });
+                return CapabilityResult.Ok(Name, new TextData { Value = "====\nNo events recorded.\n====" });
             }
 
             int count = state.Events.Count;
 
-            if (int.TryParse(input, out var requested))
+            if (int.TryParse(request.Input, out var requested))
             {
                 count = Math.Min(requested, state.Events.Count);
             }
@@ -37,7 +37,7 @@ namespace InvariantAgent.Tools.BuiltIn
 
             sb.Append("==== REPLAY END ====");
 
-            return ToolResult.Ok(Name, new TextData { Value = sb.ToString() });
+            return CapabilityResult.Ok(Name, new TextData { Value = sb.ToString() });
         }
     }
 }

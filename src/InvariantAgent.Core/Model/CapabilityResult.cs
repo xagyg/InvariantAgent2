@@ -4,34 +4,34 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Model
 {
-    public class ToolResult
+    public class CapabilityResult
     {
         public bool Success { get; set; }
 
-        public string Tool { get; set; } = "";
+        public string Capability { get; set; } = "";
 
-        public ToolData.ToolData Data { get; set; }
+        public Data.CapabilityData Data { get; set; }
 
         public string Error { get; set; }
 
         public DateTime Timestamp { get; set; }
 
-        public static ToolResult Ok(string tool, ToolData.ToolData data)
+        public static CapabilityResult Ok(string capability, Data.CapabilityData data)
         {
-            return new ToolResult
+            return new CapabilityResult
             {
-                Tool = tool,
+                Capability = capability,
                 Success = true,
                 Data = data,
                 Timestamp = DateTime.UtcNow
             };
         }
 
-        public static ToolResult Fail(string tool, string error)
+        public static CapabilityResult Fail(string capability, string error)
         {
-            return new ToolResult
+            return new CapabilityResult
             {
-                Tool = tool,
+                Capability = capability,
                 Success = false,
                 Error = error,
                 Timestamp = DateTime.UtcNow
@@ -41,9 +41,9 @@ namespace InvariantAgent.Core.Model
         public override string ToString()
         {
             if (!Success)
-                return $"Tool={Tool}, Error={Error}";
+                return $"Capability={Capability}, Error={Error}";
 
-            return $"Tool={Tool}, Data={Format(Data)}";
+            return $"Capability={Capability}, Data={Format(Data)}";
         }
 
         private static string Format(object? value)

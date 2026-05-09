@@ -3,20 +3,20 @@ using InvariantAgent.Core.Abstractions;
 
 namespace InvariantAgent.Safety.Invariants.Action;
 
-public class AllowedToolsInvariant : IActionInvariant
+public class AllowedCapabilityInvariant : IActionInvariant
 {
-    public string Name => nameof(AllowedToolsInvariant);
+    public string Name => nameof(AllowedCapabilityInvariant);
 
-    private readonly HashSet<string> _allowedTools;
+    private readonly HashSet<string> _allowedCapabilities;
 
-    public AllowedToolsInvariant(IEnumerable<string> allowedTools)
+    public AllowedCapabilityInvariant(IEnumerable<string> allowedCapabilities)
     {
-        _allowedTools = new HashSet<string>(allowedTools);
+        _allowedCapabilities = new HashSet<string>(allowedCapabilities);
     }
 
     public InvariantResult Evaluate(AgentAction action)
     {
-        if (_allowedTools.Contains(action.Tool))
+        if (_allowedCapabilities.Contains(action.Capability))
         {
             return new InvariantResult
             {
@@ -29,7 +29,7 @@ public class AllowedToolsInvariant : IActionInvariant
         return new InvariantResult
         {
             IsValid = false,
-            Reason = $"Tool '{action.Tool}' is not in allowed set",
+            Reason = $"Capability '{action.Capability}' is not in the allowed set of tools or services",
             InvariantName = Name
         };
     }
