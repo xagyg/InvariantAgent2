@@ -86,3 +86,92 @@ InvariantAgent is the reference implementation of the:
 
 Additional details:
 https://drive.google.com/file/d/1IVljpg-cmN2Q_pIryRBfT77NqDpSERc-/view
+
+## Example Session
+
+```text
+=== InvariantAgent REPL ===
+
+Commands:
+  exit      - quit
+  clear     - clear screen
+
+agent> echo hi
+
+INPUT: echo hi
+
+[Step] StepId=ae18dc8c-d25a-4800-be55-7a569bc2f85a
+[Plan] Tool=echo, Input=hi
+[PreControl] Allowed
+[Execution] Tool=echo, Result=Tool=echo, Data={ Value=hi }
+[PostControl] Allowed
+[State] Version=1
+
+agent> something
+
+INPUT: something
+
+[Step] StepId=f59c6e26-46c8-4716-a122-3009f943321a
+[Plan] Tool=something, Input=
+[PreControl] Allowed
+[Execution] Tool=something, Result=Tool=something, Error=Unknown tool
+[PostControl] Blocked: Unknown tool
+
+agent> calc 10+20
+
+INPUT: calc 10+20
+
+[Step] StepId=4c1e48cc-25e7-46fd-a3c6-1e572ed6bc9d
+[Plan] Tool=calc, Input=10+20
+[PreControl] Allowed
+[Execution] Tool=calc, Result=Tool=calc, Data={ Value=30 }
+[PostControl] Allowed
+[State] Version=2
+
+agent> replay
+
+INPUT: replay
+
+[Step] StepId=4a1d26b0-0739-4035-ab13-1ceedd029807
+[Plan] Tool=replay, Input=
+[PreControl] Allowed
+[Execution] Tool=replay, Result=Tool=replay, Data={ Value=
+
+==== REPLAY START ====
+
+[Step] StepId=ae18dc8c-d25a-4800-be55-7a569bc2f85a
+[Plan] Tool=echo, Input=hi
+[PreControl] Allowed
+[Execution] Tool=echo, Result=Tool=echo, Data={ Value=hi }
+[PostControl] Allowed
+[State] Version=1
+
+[Step] StepId=f59c6e26-46c8-4716-a122-3009f943321a
+[Plan] Tool=something, Input=
+[PreControl] Allowed
+[Execution] Tool=something, Result=Tool=something, Error=Unknown tool
+[PostControl] Blocked: Unknown tool
+
+[Step] StepId=4c1e48cc-25e7-46fd-a3c6-1e572ed6bc9d
+[Plan] Tool=calc, Input=10+20
+[PreControl] Allowed
+[Execution] Tool=calc, Result=Tool=calc, Data={ Value=30 }
+[PostControl] Allowed
+[State] Version=2
+
+[Step] StepId=4a1d26b0-0739-4035-ab13-1ceedd029807
+[Plan] Tool=replay, Input=
+[PreControl] Allowed
+
+==== REPLAY END ====
+}
+
+[PostControl] Allowed
+[State] Version=3
+
+agent> quit
+
+F:\dev\github\InvariantAgent2\src\InvariantAgent.Demo\bin\Debug\net8.0\InvariantAgent.Demo.exe (process 22756) exited with code 0 (0x0).
+
+Press any key to close this window . . .
+```

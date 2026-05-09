@@ -34,7 +34,7 @@ namespace InvariantAgent.Simulation
 
         public AgentState Run(string input)
         {
-            _state.AddEvent(new StepEvent());
+            _state.AddEvent(new StepEvent { StepId = Guid.NewGuid() });
 
             // 0. π(Sₜ)
             var projection = StateProjector.Project(_state);
