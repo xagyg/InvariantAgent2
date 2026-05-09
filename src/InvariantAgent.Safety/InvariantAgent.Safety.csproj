@@ -7,11 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Invariants\Event\" />
-    <Folder Include="Invariants\State\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
   </ItemGroup>
 

@@ -14,15 +14,18 @@ namespace InvariantAgent.Core.Model
 
         public InvariantResult Evaluate(T input)
         {
+            var name = "";
             foreach (var invariant in _invariants)
             {
                 var result = invariant.Evaluate(input);
 
                 if (!result.IsValid)
                     return result; // short-circuit on first failure
+
+                name = "|" + invariant.Name;
             }
 
-            return InvariantResult.Pass();
+            return InvariantResult.Pass(name.Substring(1));
         }
     }
 }

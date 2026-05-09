@@ -20,7 +20,7 @@ namespace InvariantAgent.Core.Control.Pre
             return new PreControlResult
             {
                 Allowed = result.IsValid,
-                Reason = result.Reason
+                Reason = $"{result.InvariantName}: {result.Reason}"
             };
         }
     }

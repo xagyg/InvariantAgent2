@@ -29,7 +29,7 @@ public class PostControl : IPostControl
         {
             Accepted = false,
             OriginalOutcome = outcome,
-            Reason = result.Reason,
+            Reason = $"{result.InvariantName}: {result.Reason}",
             ViolationType = Classify(state, result)
         };
     }

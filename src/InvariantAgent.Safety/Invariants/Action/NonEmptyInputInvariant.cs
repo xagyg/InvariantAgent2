@@ -5,12 +5,14 @@ namespace InvariantAgent.Safety.Invariants.Action
 {
     public class NoEmptyInputInvariant : IActionInvariant
     {
+        public string Name => nameof(NoEmptyInputInvariant);
+
         public InvariantResult Evaluate(AgentAction input)
         {
             if (string.IsNullOrWhiteSpace(input.Input))
-                return InvariantResult.Fail("Empty input not allowed");
+                return InvariantResult.Fail(Name, "Empty input not allowed");
 
-            return InvariantResult.Pass();
+            return InvariantResult.Pass(Name);
         }
     }
 }

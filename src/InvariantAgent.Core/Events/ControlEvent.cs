@@ -5,6 +5,7 @@
     public bool Allowed { get; init; }
     public string Reason { get; init; }
 
+
     public override string ToObservation()
-        => (Allowed ? "Allowed" : $"Blocked: {Reason}");
+        => (Allowed ? "Allowed" : $"Blocked by {Reason}");
 }

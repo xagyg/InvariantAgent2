@@ -5,15 +5,17 @@ namespace InvariantAgent.Safety.Invariants.Outcome
 {
     public class SuccessOutcomeInvariant : IOutcomeInvariant
     {
+        public string Name => nameof(SuccessOutcomeInvariant);
+
         public InvariantResult Evaluate(AgentOutcome outcome)
         {
             if (outcome.Result == null)
-                return InvariantResult.Fail("Execution failed");
+                return InvariantResult.Fail(Name, "Execution failed");
 
             if (!outcome.Result.Success)
-                return InvariantResult.Fail(outcome.Result.Error);
+                return InvariantResult.Fail(Name, outcome.Result.Error);
 
-            return InvariantResult.Pass();
+            return InvariantResult.Pass(Name);
         }
     }
 }

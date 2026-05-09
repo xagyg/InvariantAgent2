@@ -8,6 +8,8 @@ namespace InvariantAgent.Core.Model
 {
     public interface IInvariant<T>
     {
+        string Name { get; }
+
         InvariantResult Evaluate(T input);
     }
 }

@@ -5,6 +5,8 @@ namespace InvariantAgent.Safety.Invariants.Action;
 
 public class AllowedToolsInvariant : IActionInvariant
 {
+    public string Name => nameof(AllowedToolsInvariant);
+
     private readonly HashSet<string> _allowedTools;
 
     public AllowedToolsInvariant(IEnumerable<string> allowedTools)
@@ -19,14 +21,16 @@ public class AllowedToolsInvariant : IActionInvariant
             return new InvariantResult
             {
                 IsValid = true,
-                Reason = null
+                Reason = null,
+                InvariantName = Name
             };
         }
 
         return new InvariantResult
         {
             IsValid = false,
-            Reason = $"Tool '{action.Tool}' is not in allowed set"
+            Reason = $"Tool '{action.Tool}' is not in allowed set",
+            InvariantName = Name
         };
     }
 }
