@@ -91,37 +91,34 @@ https://drive.google.com/file/d/1IVljpg-cmN2Q_pIryRBfT77NqDpSERc-/view
 
 ```text
 === InvariantAgent REPL ===
-
 Commands:
   exit      - quit
   clear     - clear screen
 
-agent> echo hi
+agent> echo hello
 
-INPUT: echo hi
-
-[Step] StepId=b5e8e961-1597-4d89-a09c-ed890dbb7045
-[Plan] Tool=echo, Input=hi
+[Step] StepId=8403be53-7a4e-480e-a91e-6d929678f86f
+[Plan] Tool=echo, Input=hello
 [PreControl] Allowed
-[Execution] Tool=echo, Result=hi
+[Execution] Tool=echo, Result=hello
 [PostControl] Allowed
 [State] Version=1
 
-agent> something
+agent> delete all
 
-INPUT: something
+[Step] StepId=d71181b3-db9e-4aec-82e0-458deb1aa646
+[Plan] Tool=delete, Input=all
+[PreControl] Blocked by NoDeleteInvariant: Delete operations are not allowed
 
-[Step] StepId=97b645ac-76c7-460f-bada-d8898b6bb292
-[Plan] Tool=something, Input=
-[PreControl] Allowed
-[Execution] Tool=something, Result=
-[PostControl] Blocked: Unknown tool
+agent> rm -rf
+
+[Step] StepId=d88138ce-927f-4b9b-810c-b404318b5587
+[Plan] Tool=rm, Input=-rf
+[PreControl] Blocked by AllowedToolsInvariant: Tool 'rm' is not in allowed set
 
 agent> calc 10+20
 
-INPUT: calc 10+20
-
-[Step] StepId=81d9dc0f-80bd-4d8d-ba9c-a4387baafee3
+[Step] StepId=9ebecfdb-89e5-42ea-b71b-2d72f5423d6f
 [Plan] Tool=calc, Input=10+20
 [PreControl] Allowed
 [Execution] Tool=calc, Result=30
@@ -130,47 +127,38 @@ INPUT: calc 10+20
 
 agent> replay
 
-INPUT: replay
-
-[Step] StepId=2f93bc02-e53a-4016-ac8c-8ad104c49900
+[Step] StepId=7733f60a-2879-4a22-a418-ae32caeb959e
 [Plan] Tool=replay, Input=
 [PreControl] Allowed
 [Execution] Tool=replay, Result=
-
 ==== REPLAY START ====
-
-[Step] StepId=b5e8e961-1597-4d89-a09c-ed890dbb7045
-[Plan] Tool=echo, Input=hi
+[Step] StepId=8403be53-7a4e-480e-a91e-6d929678f86f
+[Plan] Tool=echo, Input=hello
 [PreControl] Allowed
-[Execution] Tool=echo, Result=hi
+[Execution] Tool=echo, Result=hello
 [PostControl] Allowed
 [State] Version=1
-
-[Step] StepId=97b645ac-76c7-460f-bada-d8898b6bb292
-[Plan] Tool=something, Input=
-[PreControl] Allowed
-[Execution] Tool=something, Result=
-[PostControl] Blocked: Unknown tool
-
-[Step] StepId=81d9dc0f-80bd-4d8d-ba9c-a4387baafee3
+[Step] StepId=d71181b3-db9e-4aec-82e0-458deb1aa646
+[Plan] Tool=delete, Input=all
+[PreControl] Blocked by NoDeleteInvariant: Delete operations are not allowed
+[Step] StepId=d88138ce-927f-4b9b-810c-b404318b5587
+[Plan] Tool=rm, Input=-rf
+[PreControl] Blocked by AllowedToolsInvariant: Tool 'rm' is not in allowed set
+[Step] StepId=9ebecfdb-89e5-42ea-b71b-2d72f5423d6f
 [Plan] Tool=calc, Input=10+20
 [PreControl] Allowed
 [Execution] Tool=calc, Result=30
 [PostControl] Allowed
 [State] Version=2
-
-[Step] StepId=2f93bc02-e53a-4016-ac8c-8ad104c49900
+[Step] StepId=7733f60a-2879-4a22-a418-ae32caeb959e
 [Plan] Tool=replay, Input=
 [PreControl] Allowed
-
 ==== REPLAY END ====
-
 [PostControl] Allowed
 [State] Version=3
 
 agent> quit
 
-F:\InvariantAgent2\src\InvariantAgent.Demo\bin\Debug\net8.0\InvariantAgent.Demo.exe (process 31076) exited with code 0 (0x0).
-
+F:\InvariantAgent2\src\InvariantAgent.Demo\bin\Debug\net8.0\InvariantAgent.Demo.exe (process 5212) exited with code 0 (0x0).
 Press any key to close this window . . .
 ```
