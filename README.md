@@ -1,44 +1,94 @@
-\# InvariantAgent
-
-
+# InvariantAgent 2
 
 A reference implementation of the Invariant-Bounded Agent Alignment Model (IBAAM).
 
+## Key Idea
 
+LLMs are treated as untrusted cognitive generators.
 
-\## Key Idea
+All actions must pass through invariant-bounded runtime control.
 
+LLMs become cognitive plugins operating inside invariant-bounded execution.
 
+## Core Hierarchy
 
-LLMs are treated as \*\*untrusted generators\*\*.
+```text
+invariants > runtime > planner > tools
+```
 
+This is philosophically different from most current agent frameworks, which typically treat the LLM itself as the governing entity.
 
+In InvariantAgent:
+- invariants define boundaries,
+- the runtime governs execution,
+- planners generate decisions,
+- and tools perform actions.
 
-All actions must pass through a \*\*Control Gate\*\* enforcing invariants.
+## Architecture
 
+- Core: contracts + models
 
+- Control: invariant enforcement
 
-\## Architecture
+- Execution: planners + tools
 
+- Adaptive: prompts + memory
 
+- Observability: logs + replay
 
-\- Core: contracts + models
+- Simulation: replayable state evolution
 
-\- Control: invariant enforcement
+## Planner Support
 
-\- Execution: LLM + tools
+- OpenAI planners
 
-\- Adaptive: prompts + memory
+- Google Gemini planners
 
-\- Observability: logs + replay
+- Local deterministic rule-based planners
 
+## Features
 
+- Replayable execution
 
-\## Run
+- Event-sourced state transitions
 
+- Tool mediation
+
+- Pre/post execution controls
+
+- Deterministic simulation
+
+- Model-agnostic planner abstraction
+
+- Offline-capable execution paths
+
+## Run
+
+InvariantAgent 2 is started from the demo project (unlike InvariantAgent 1).
 
 
 ```bash
+dotnet run --project InvariantAgent.Demo
+```
 
-dotnet run --project src/InvariantAgent.Api
+Entry point:
 
+```text
+InvariantAgent.Demo/Program.cs
+```
+
+## Goal
+
+InvariantAgent explores agent systems where:
+- governance is runtime-enforced,
+- invariants are first-class,
+- and models are replaceable planning components.
+
+## IBAAM
+
+InvariantAgent is the reference implementation of the:
+
+**Invariant-Bounded Agent Alignment Model (IBAAM)**
+
+Additional details:
+https://drive.google.com/file/d/1IVljpg-cmN2Q_pIryRBfT77NqDpSERc-/view
