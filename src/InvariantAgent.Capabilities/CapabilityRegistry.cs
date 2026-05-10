@@ -2,7 +2,7 @@
 
 namespace InvariantAgent.Capabilities;
 
-public class CapabilityRegistry : ICapabiltyRegistry
+public class CapabilityRegistry : ICapabilityRegistry
 {
     private readonly Dictionary<string, ICapability> _capabilities;
 

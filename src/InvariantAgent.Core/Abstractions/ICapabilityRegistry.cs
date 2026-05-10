@@ -1,7 +1,7 @@
 ﻿
 namespace InvariantAgent.Core.Abstractions;
 
-public interface ICapabiltyRegistry
+public interface ICapabilityRegistry
 {
     ICapability Get(string capabilityName);
 }

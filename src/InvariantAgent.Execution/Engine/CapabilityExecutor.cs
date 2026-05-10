@@ -5,9 +5,9 @@ namespace InvariantAgent.Execution.Engine;
 
 public class CapabilityExecutor : IExecutor
 {
-    private readonly ICapabiltyRegistry _capabilities;
+    private readonly ICapabilityRegistry _capabilities;
 
-    public CapabilityExecutor(ICapabiltyRegistry capabilities)
+    public CapabilityExecutor(ICapabilityRegistry capabilities)
     {
         _capabilities = capabilities;
     }
