@@ -1,4 +1,4 @@
-# InvariantAgent 2
+# InvariantAgent 2 (IA2)
 
 A reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
 
