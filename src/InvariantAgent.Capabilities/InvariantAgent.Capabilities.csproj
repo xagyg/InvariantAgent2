@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Runtime\InvariantAgent.Runtime.csproj" />
   </ItemGroup>
 
 </Project>

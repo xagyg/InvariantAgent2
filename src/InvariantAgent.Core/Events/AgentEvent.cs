@@ -1,5 +1,7 @@
 ﻿using System;
 
+namespace InvariantAgent.Core.Events;
+
 public abstract class AgentEvent
 {
     public Guid Id { get; init; } = Guid.NewGuid();

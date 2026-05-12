@@ -1,6 +1,5 @@
 ﻿using System.Text;
-using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.Agent;
 
 namespace InvariantAgent.Adaptive
 {
@@ -19,28 +18,93 @@ namespace InvariantAgent.Adaptive
 
         protected abstract string Complete(string prompt);
 
-        protected virtual string BuildPrompt(
-            StateProjection state,
-            string input)
+        //        protected virtual string BuildPrompt(StateProjection state, string input)
+        //        {
+        //            var sb = new StringBuilder();
+
+        //            sb.AppendLine("""
+        //You are an agent planner.
+
+        //Available capabilities (tools or services):
+        //- echo
+        //- search
+        //- calculator
+        //- replay
+
+        //Return ONLY:
+
+        //capability: <capability-name>
+        //input: <capability-input>
+
+        //User input:
+        //""");
+
+        //            sb.AppendLine(input);
+
+        //            return sb.ToString();
+        //        }
+
+        protected virtual string BuildPrompt(StateProjection state, string input)
         {
             var sb = new StringBuilder();
 
             sb.AppendLine("""
-You are an agent planner.
+You are a governed agent planner.
 
-Available capabilities (tools or services):
+Your role is to select the single best capability
+and input for the current request.
+
+Available capabilities:
 - echo
 - search
 - calculator
 - replay
+- drift
+- memory-set
+- memory-show
 
-Return ONLY:
+You operate under invariant governance.
+
+Return ONLY the following format:
 
 capability: <capability-name>
 input: <capability-input>
 
-User input:
+Do not explain your reasoning.
+Do not return markdown.
+Do not return JSON.
 """);
+
+            sb.AppendLine();
+
+            sb.AppendLine("Current runtime state:");
+
+            sb.AppendLine($"Version: {state.Version}");
+
+            if (!string.IsNullOrWhiteSpace(state.Goal))
+            {
+                sb.AppendLine($"Goal: {state.Goal}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(state.MemorySummary))
+            {
+                sb.AppendLine($"Memory: {state.MemorySummary}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(state.LastOutcome))
+            {
+                sb.AppendLine($"Last outcome: {state.LastOutcome}");
+            }
+
+            if (state.ActivePolicies.Count > 0)
+            {
+                sb.AppendLine(
+                    $"Policies: {string.Join(", ", state.ActivePolicies)}");
+            }
+
+            sb.AppendLine();
+
+            sb.AppendLine("User input:");
 
             sb.AppendLine(input);
 

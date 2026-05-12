@@ -1,18 +1,22 @@
 ﻿using InvariantAgent.Adaptive;
+using InvariantAgent.Capabilities;
+using InvariantAgent.Capabilities.Services;
+using InvariantAgent.Capabilities.Tools;
+using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control.Post;
 using InvariantAgent.Core.Control.Pre;
-using InvariantAgent.Core.Model;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Outcome;
-using InvariantAgent.Simulation;
-using InvariantAgent.Capabilities;
-using InvariantAgent.Capabilities.Tools;
-using InvariantAgent.Capabilities.Services;
+using InvariantAgent.Runtime;
+using InvariantAgent.Storage;
+using InvariantAgent.Observability;
 
-namespace InvariantAgent.ConsoleApp;
+namespace InvariantAgent.Demno;
+
+// FOR EXPERIMENTAL PURPOSES ONLY (Startup Program is in InvariantAgent.ConsoleApp)
 
 internal static class Program
 {
@@ -24,7 +28,7 @@ internal static class Program
         Console.WriteLine("  clear     - clear screen");
         Console.WriteLine();
 
-        var engine = BuildEngine();
+        var orchestrator = BuildOrchestrator();
 
         while (true)
         {
@@ -52,7 +56,7 @@ internal static class Program
 
             try
             {
-                Run(engine, input);
+                Run(orchestrator, input);
             }
             catch (Exception ex)
             {
@@ -65,116 +69,106 @@ internal static class Program
         }
     }
 
-    private static AgentSimulationEngine BuildEngine()
+    private static GovernedAgentRuntime BuildOrchestrator()
     {
-        // Tools
+        var transitionStore = new InMemoryTransitionStore();
+
         var registry = new CapabilityRegistry(new List<ICapability>
         {
             new EchoTool(),
             new SearchTool(),
             new CalculatorTool(),
-            new ReplayTool(),
-            new ExampleHttpService()
+            new ReplayTool(transitionStore),
+            new ExampleHttpService(),
+            new DriftTool(transitionStore, new SimpleDriftAnalyzer())
         });
 
-        // Invariants
-        var actionSet = new InvariantSet<AgentAction>(
-            new List<IInvariant<AgentAction>>
-            {
-                new NoDeleteInvariant(),
-                new AllowedCapabilityInvariant(registry.GetCapabilityNames())
-            });
+        var preInvariants = new List<IInvariant>
+        {
+            new NoDeleteInvariant(),
+            new AllowedCapabilityInvariant(registry.GetCapabilityNames())
+        };
 
-        var outcomeSet = new InvariantSet<AgentOutcome>(
-            new List<IInvariant<AgentOutcome>>
-            {
-                new SuccessOutcomeInvariant()
-            });
+        var postInvariants = new List<IInvariant>
+        {
+            new SuccessOutcomeInvariant(),
+            new NonEmptyOutcomeInvariant()
+        };
 
-        // Control
-        var pre = new PreControl(actionSet);
-        var post = new PostControl(outcomeSet);
-
+        var pre = new PreControl(preInvariants);
+        var post = new PostControl(postInvariants);
         var executor = new CapabilityExecutor(registry);
+        var planner = CreatePlanner("command");
 
-        // Choose planner
-        var planner = CreatePlanner("rule");
-
-        // Engine
-        return new AgentSimulationEngine(
+        return new GovernedAgentRuntime(
             planner,
             pre,
             post,
             executor,
-            new StateReducer());
+            new StateReducer(),
+            transitionStore);
     }
 
-    private static void Run(AgentSimulationEngine engine, string input)
+    private static void Run(GovernedAgentRuntime orchestrator, string input)
     {
         Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine();
         Console.WriteLine($"INPUT: {input}");
         Console.ResetColor();
 
-        var state = engine.Run(input);
+        var context = orchestrator
+            .RunAsync(input)
+            .GetAwaiter()
+            .GetResult();
 
-        //Console.WriteLine();
-        Console.ForegroundColor = ConsoleColor.Green;
-       // Console.WriteLine("FINAL STATE");
-        Console.ResetColor();
+        var transition = context.Transition;
 
-        //if (execution != null)
-       // {
-       //     Console.WriteLine(execution.Payload);
-       // }
-
-        // Console.WriteLine($"Version: {state.Version}");
-        // Console.WriteLine($"Events : {state.Events.Count}");
         Console.WriteLine();
 
-        var lastStepIndex = state.Events
-            .FindLastIndex(e => e.Type == "Step");
-
-        if (lastStepIndex >= 0)
+        foreach (var e in transition.Events)
         {
-            foreach (var e in state.Events.Skip(lastStepIndex))
-            {
-                Console.ForegroundColor = GetColor(e.Type);
-                Console.Write($"[{e.Type}] ");
-                Console.ResetColor();
-                Console.WriteLine(e.ToObservation());
-            }
+            Console.ForegroundColor = GetColor(e.Stage);
+            Console.Write($"[{e.Stage}] ");
+            Console.ResetColor();
+            Console.WriteLine(e.Message);
         }
+
+        if (!string.IsNullOrWhiteSpace(transition.Reason))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Reason: {transition.Reason}");
+            Console.ResetColor();
+        }
+
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"Status: {transition.Status}");
+        Console.ResetColor();
     }
 
-    private static ConsoleColor GetColor(string type)
+    private static ConsoleColor GetColor(string stage)
     {
-        return type switch
+        return stage switch
         {
-            "Step" => ConsoleColor.Cyan,
-            "Plan" => ConsoleColor.Cyan,
+            "Input" => ConsoleColor.Cyan,
+            "Planning" => ConsoleColor.Cyan,
+            "Invariant" => ConsoleColor.DarkCyan,
             "PreControl" => ConsoleColor.Yellow,
             "PostControl" => ConsoleColor.Yellow,
             "Execution" => ConsoleColor.Green,
-            "State" => ConsoleColor.Cyan,
-            "InvariantViolation" => ConsoleColor.Red,
+            "Reducer" => ConsoleColor.Cyan,
+            "Rejected" => ConsoleColor.Red,
             _ => ConsoleColor.Gray
         };
     }
 
     private static IPlanner CreatePlanner(string mode, params string[] args)
     {
-        //var mode = Environment.GetEnvironmentVariable("AGENT_PLANNER");
-
         return mode.ToLowerInvariant() switch
         {
             "openai" => new OpenAiPlanner(args[0]),
-                //Environment.GetEnvironmentVariable("OPENAI_API_KEY")),
-
             "gemini" => new GeminiPlanner(args[0]),
-
             "rule" => new RulePlanner(),
-
+            "command" => new CommandPlanner(),
             _ => new RulePlanner()
         };
     }

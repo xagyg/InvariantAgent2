@@ -1,27 +1,42 @@
-﻿using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Abstractions;
+﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
+using System.Collections.Generic;
 
 namespace InvariantAgent.Core.Control.Pre
 {
-
-    public class PreControl : IPreControl
+    public sealed class PreControl : IPreControl
     {
-        private readonly InvariantSet<AgentAction> _invariants;
+        private readonly IEnumerable<IInvariant> _invariants;
 
-        public PreControl(InvariantSet<AgentAction> invariants)
+        public PreControl(IEnumerable<IInvariant> invariants)
         {
             _invariants = invariants;
         }
 
-        public PreControlResult Evaluate(AgentState state, AgentAction action)
+        public ControlDecision Evaluate(TransitionContext context)
         {
-            var result = _invariants.Evaluate(action);
-
-            return new PreControlResult
+            foreach (var invariant in _invariants)
             {
-                Allowed = result.IsValid,
-                Reason = $"{result.InvariantName}: {result.Reason}"
-            };
+                var result = invariant.Evaluate(context);
+
+                context.Transition.Record("Invariant",
+                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}");
+
+                if (!result.Passed)
+                {
+                    context.Transition.Status = TransitionStatus.Rejected;
+
+                    context.Transition.Reason =
+                        $"Invariant '{invariant.Name}' failed: {result.Reason}";
+
+                    return ControlDecision.Block(context.Transition.Reason);
+                }
+            }
+
+            context.Transition.Status = TransitionStatus.Allowed;
+
+            return ControlDecision.Allow();
         }
     }
 }

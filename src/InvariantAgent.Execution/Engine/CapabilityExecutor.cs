@@ -1,5 +1,7 @@
 ﻿using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Capability;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Execution.Engine;
 
@@ -12,40 +14,62 @@ public class CapabilityExecutor : IExecutor
         _capabilities = capabilities;
     }
 
-    public AgentOutcome Execute(AgentAction action, AgentState state)
+    public void Execute(TransitionContext context)
     {
-        var capabilities = _capabilities.Get(action.Capability);
+        var transition = context.Transition;
 
-        if (capabilities == null)
+        var action = transition.ProposedAction;
+
+        if (action == null)
         {
-            return new AgentOutcome
-            {                
-                Capability = action.Capability,
-                Input = action.Input,
-                Result = CapabilityResult.Fail(action.Capability, "Unkown tool or service"),
-                StateVersion = state.Version
-            };           
+            transition.Status = TransitionStatus.Failed;
+
+            transition.Outcome = new AgentOutcome
+            {
+                Success = false,
+                Error = "No proposed action."
+            };
+
+            return;
         }
 
-        CapabilityResult result;
+        var result = ExecuteCapability(action);
 
-        try
+        transition.Outcome = new AgentOutcome
         {
-            var raw = capabilities.Execute(new CapabilityRequest { Input = action.Input }, state);
-
-            result = CapabilityResult.Ok(action.Capability, raw.Data);
-        }
-        catch (Exception ex)
-        {
-            result = CapabilityResult.Fail(action.Capability, ex.Message);
-        }
-
-        return new AgentOutcome
-        {
-            Capability = action.Capability,
-            Input = action.Input,
-            Result = result,
-            StateVersion = state.Version
+            Success = result.Success,
+            Capability = result.Capability,
+            Result = result.Success ? result.Data?.ToString() ?? "" : "",
+            Error = result.Error
         };
+
+        transition.SelfModification = result.ProposedModification;
+
+        transition.Status = TransitionStatus.Executed;
+
+        if (transition.SelfModification != null)
+        {
+            transition.Record(
+                "SelfModification",
+                $"{transition.SelfModification.Target}.{transition.SelfModification.Operation} {transition.SelfModification.Key}");
+        }
+    }
+
+    private CapabilityResult ExecuteCapability(
+    AgentAction action)
+    {
+        var capability = _capabilities.Get(action.Capability);
+
+        if (capability == null)
+        {
+            return new CapabilityResult
+            {
+                Success = false,
+                Capability = action.Capability,
+                Error = $"Unknown capability '{action.Capability}'."
+            };
+        }
+
+        return capability.Execute(new CapabilityRequest { Input = action.Input });
     }
 }

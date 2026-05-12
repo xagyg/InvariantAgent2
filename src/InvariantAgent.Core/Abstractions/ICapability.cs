@@ -1,9 +1,9 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Capability;
 
 namespace InvariantAgent.Core.Abstractions;
 public interface ICapability
 {
     string Name { get; }
 
-    CapabilityResult Execute(CapabilityRequest request, AgentState state);
+    CapabilityResult Execute(CapabilityRequest request);
 } 

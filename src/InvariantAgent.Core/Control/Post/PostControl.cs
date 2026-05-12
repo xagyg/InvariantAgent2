@@ -1,50 +1,66 @@
-﻿using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Abstractions;
+﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
+using System.Collections.Generic;
 
-namespace InvariantAgent.Core.Control.Post;
-
-public class PostControl : IPostControl
+namespace InvariantAgent.Core.Control.Post
 {
-    private readonly InvariantSet<AgentOutcome> _invariants;
-
-    public PostControl(InvariantSet<AgentOutcome> invariants)
+    public sealed class PostControl : IPostControl
     {
-        _invariants = invariants;
-    }
+        private readonly IEnumerable<IInvariant> _invariants;
 
-    public PostControlResult Evaluate(AgentState state, AgentOutcome outcome)
-    {
-        var result = _invariants.Evaluate(outcome);
-
-        if (result.IsValid)
+        public PostControl(IEnumerable<IInvariant> invariants)
         {
+            _invariants = invariants;
+        }
+
+        public PostControlResult Evaluate(TransitionContext context)
+        {
+            foreach (var invariant in _invariants)
+            {
+                var result = invariant.Evaluate(context);
+
+                context.Transition.Record("Invariant",
+                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}");
+
+                if (!result.Passed)
+                {
+                    context.Transition.Status = TransitionStatus.Rejected;
+
+                    context.Transition.Reason =
+                        $"Invariant '{invariant.Name}' failed: {result.Reason}";
+
+                    return new PostControlResult
+                    {
+                        Accepted = false,
+                        OriginalOutcome = context.Transition.Outcome,
+                        Reason = context.Transition.Reason,
+                        ViolationType = ToViolationType(invariant.Category)
+                    };
+                }
+            }
+
             return new PostControlResult
             {
                 Accepted = true,
-                OriginalOutcome = outcome
+                OriginalOutcome = context.Transition.Outcome
             };
         }
 
-        return new PostControlResult
+        private static ViolationType ToViolationType(InvariantCategory category)
         {
-            Accepted = false,
-            OriginalOutcome = outcome,
-            Reason = $"{result.InvariantName}: {result.Reason}",
-            ViolationType = Classify(state, result)
-        };
-    }
+            return category switch
+            {
+                InvariantCategory.Safety => ViolationType.Safety,
 
-    private ViolationType Classify(AgentState state, InvariantResult result)
-    {
-        if (result.Reason?.Contains("access") == true)
-            return ViolationType.Safety;
+                InvariantCategory.Integrity => ViolationType.Integrity,
 
-        if (result.Reason?.Contains("state") == true)
-            return ViolationType.Integrity;
+                InvariantCategory.Identity => ViolationType.Identity,
 
-        if (result.Reason?.Contains("identity") == true)
-            return ViolationType.Identity;
+                InvariantCategory.SelfModification => ViolationType.Safety,
 
-        return ViolationType.Safety;
+                _ => ViolationType.Safety
+            };
+        }
     }
 }

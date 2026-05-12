@@ -1,36 +1,42 @@
-﻿using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Abstractions;
+﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
 
-namespace InvariantAgent.Safety.Invariants.Action;
-
-public class AllowedCapabilityInvariant : IActionInvariant
+namespace InvariantAgent.Safety.Invariants.Action
 {
-    public string Name => nameof(AllowedCapabilityInvariant);
-
-    private readonly HashSet<string> _allowedCapabilities;
-
-    public AllowedCapabilityInvariant(IEnumerable<string> allowedCapabilities)
+    public sealed class AllowedCapabilityInvariant : IInvariant
     {
-        _allowedCapabilities = new HashSet<string>(allowedCapabilities);
-    }
+        private readonly HashSet<string> _allowedCapabilities;
 
-    public InvariantResult Evaluate(AgentAction action)
-    {
-        if (_allowedCapabilities.Contains(action.Capability))
+        public string Name => nameof(AllowedCapabilityInvariant);
+
+        public InvariantCategory Category => InvariantCategory.Safety;
+
+        public AllowedCapabilityInvariant(IEnumerable<string> allowedCapabilities)
         {
-            return new InvariantResult
-            {
-                IsValid = true,
-                Reason = null,
-                InvariantName = Name
-            };
+            _allowedCapabilities = new HashSet<string>(allowedCapabilities);
         }
 
-        return new InvariantResult
+        public InvariantResult Evaluate(TransitionContext context)
         {
-            IsValid = false,
-            Reason = $"Capability '{action.Capability}' is not in the allowed set of tools or services",
-            InvariantName = Name
-        };
+            var action = context.Transition.ProposedAction;
+
+            if (action == null)
+            {
+                return InvariantResult.Reject("No proposed action.");
+            }
+
+            if (string.IsNullOrWhiteSpace(action.Capability))
+            {
+                return InvariantResult.Reject("No capability selected.");
+            }
+
+            if (_allowedCapabilities.Contains(action.Capability))
+            {
+                return InvariantResult.Allow();
+            }
+
+            return InvariantResult.Reject($"Capability '{action.Capability}' is not allowed.");
+        }
     }
 }

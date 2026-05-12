@@ -1,4 +1,6 @@
 ﻿
+using InvariantAgent.Core.Events;
+
 namespace InvariantAgent.Observability
 {
     public class EventStore
@@ -10,7 +12,6 @@ namespace InvariantAgent.Observability
             _events.Add(evt);
         }
 
-        public IReadOnlyList<AgentEvent> GetAll()
-            => _events;
+        public IReadOnlyList<AgentEvent> GetAll() => _events;
     }
 }

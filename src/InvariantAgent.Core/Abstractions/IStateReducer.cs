@@ -1,8 +1,9 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Transition;
+
 namespace InvariantAgent.Core.Abstractions
 {
     public interface IStateReducer
     {
-        AgentState Reduce(AgentState state, AgentOutcome outcome);
+        void Apply(TransitionContext context);
     }
 }

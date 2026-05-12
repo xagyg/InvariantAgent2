@@ -1,5 +1,5 @@
 ﻿using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.Capability;
 using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Services;
@@ -10,7 +10,7 @@ public class ExampleHttpService : ICapability
 
     public string Name => "http_example";
 
-    public CapabilityResult Execute(CapabilityRequest request, AgentState state)
+    public CapabilityResult Execute(CapabilityRequest request)
     {
         try
         {

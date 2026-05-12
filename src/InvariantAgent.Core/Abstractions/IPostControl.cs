@@ -1,9 +1,10 @@
 ﻿using InvariantAgent.Core.Control.Post;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.Transition;
 
-namespace InvariantAgent.Core.Abstractions;
-
-public interface IPostControl
+namespace InvariantAgent.Core.Abstractions
 {
-    PostControlResult Evaluate(AgentState state, AgentOutcome outcome);
+    public interface IPostControl
+    {
+        PostControlResult Evaluate(TransitionContext context);
+    }
 }

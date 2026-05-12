@@ -8,12 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InvariantAgent.Adaptive\InvariantAgent.Adaptive.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Execution\InvariantAgent.Execution.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Safety\InvariantAgent.Safety.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Simulation\InvariantAgent.Simulation.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Capabilities\InvariantAgent.Capabilities.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Hosting\InvariantAgent.Hosting.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Runtime\InvariantAgent.Runtime.csproj" />
   </ItemGroup>
 
 </Project>

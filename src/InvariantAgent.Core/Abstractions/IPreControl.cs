@@ -1,10 +1,10 @@
-﻿using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Control.Pre;
+﻿using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Core.Abstractions
 {
     public interface IPreControl
     {
-        PreControlResult Evaluate(AgentState state, AgentAction action);
+        ControlDecision Evaluate(TransitionContext context);
     }
 }

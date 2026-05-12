@@ -1,5 +1,4 @@
-﻿
-using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Control;
 
 namespace InvariantAgent.Core.Control.Post
 {

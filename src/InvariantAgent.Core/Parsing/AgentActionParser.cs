@@ -1,4 +1,4 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Agent;
 using System;
 
 namespace InvariantAgent.Core.Parsing;

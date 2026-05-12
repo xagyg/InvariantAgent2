@@ -1,9 +1,11 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Transition;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace InvariantAgent.Core.Abstractions
 {
     public interface IPlanner
     {
-        AgentAction Plan(StateProjection state, string input);
+        Task PlanAsync(TransitionContext context, CancellationToken ct = default);
     }
 }

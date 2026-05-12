@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
 
-namespace InvariantAgent.Core.Model
+namespace InvariantAgent.Core.Abstractions
 {
-    public interface IInvariant<T>
+    public interface IInvariant
     {
         string Name { get; }
 
-        InvariantResult Evaluate(T input);
+        InvariantCategory Category { get; }
+
+        InvariantResult Evaluate(TransitionContext context);
     }
 }

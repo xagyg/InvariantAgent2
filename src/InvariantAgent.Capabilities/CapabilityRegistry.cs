@@ -19,7 +19,7 @@ public class CapabilityRegistry : ICapabilityRegistry
         return null;
     }
 
-    public List<string> GetCapabilityNames()
+    public IReadOnlyCollection<string> GetCapabilityNames()
     {
         return _capabilities.Select(c => c.Key).ToList();
     }

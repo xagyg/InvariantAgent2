@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\InvariantAgent.Adaptive\InvariantAgent.Adaptive.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Capabilities\InvariantAgent.Capabilities.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Execution\InvariantAgent.Execution.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Observability\InvariantAgent.Observability.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Runtime\InvariantAgent.Runtime.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Safety\InvariantAgent.Safety.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Store\InvariantAgent.Storage.csproj" />
+  </ItemGroup>
+
+</Project>

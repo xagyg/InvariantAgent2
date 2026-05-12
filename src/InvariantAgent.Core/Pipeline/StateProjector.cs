@@ -1,4 +1,4 @@
-﻿using InvariantAgent.Core.Model;
+﻿using InvariantAgent.Core.Model.Agent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,30 +10,44 @@ namespace InvariantAgent.Core.Pipeline
         {
             return new StateProjection
             {
-                Mode = state.Mode,
-                ActivePolicies = state.Policies.ToList(),
-
+                Version = state.Version,
+                Goal = state.Goal ?? "",
                 MemorySummary = SummariseMemory(state.Memory),
-
-                LastOutcomeSummary = state.Events.OfType<ExecutionEvent>().LastOrDefault()?.Result,
-
-                GoalContext = state.Goal
+                LastOutcome = GetLastOutcome(state),
+                ActivePolicies = state.Policies?.ToList() ?? new List<string>()
             };
         }
 
-        private static string SummariseMemory(Dictionary<string, object> memory)
+        private static string GetLastOutcome(
+            AgentState state)
         {
+            if (state.Memory.TryGetValue(
+                    "lastOutcome",
+                    out var value))
+            {
+                return value?.ToString() ?? "";
+            }
+
+            return "";
+        }
+
+        private static string SummariseMemory(
+            Dictionary<string, object> memory)
+        {
+            if (memory == null || memory.Count == 0)
+                return "";
+
             var importantKeys = new HashSet<string>
-                {
-                    "goal",
-                    "user_intent",
-                    "last_action",
-                    "error_state"
-                };
+            {
+                "goal",
+                "user_intent",
+                "last_action",
+                "lastOutcome",
+                "error_state"
+            };
 
             var prioritized = memory
-                .Where(kv => importantKeys.Contains(kv.Key))
-                .OrderByDescending(kv => importantKeys.Contains(kv.Key));
+                .Where(kv => importantKeys.Contains(kv.Key));
 
             return string.Join("; ",
                 prioritized

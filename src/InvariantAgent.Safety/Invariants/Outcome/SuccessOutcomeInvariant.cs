@@ -1,21 +1,33 @@
 ﻿using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Model;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Outcome
 {
-    public class SuccessOutcomeInvariant : IOutcomeInvariant
+    public sealed class SuccessOutcomeInvariant : IInvariant
     {
         public string Name => nameof(SuccessOutcomeInvariant);
 
-        public InvariantResult Evaluate(AgentOutcome outcome)
+        public InvariantCategory Category => InvariantCategory.Integrity;
+
+        public InvariantResult Evaluate(TransitionContext context)
         {
-            if (outcome.Result == null)
-                return InvariantResult.Fail(Name, "Execution failed");
+            var outcome = context.Transition.Outcome;
 
-            if (!outcome.Result.Success)
-                return InvariantResult.Fail(Name, outcome.Result.Error);
+            if (outcome == null)
+            {
+                return InvariantResult.Reject("No execution outcome.");
+            }
 
-            return InvariantResult.Pass(Name);
+            if (!outcome.Success)
+            {
+                return InvariantResult.Reject(
+                    string.IsNullOrWhiteSpace(outcome.Error)
+                        ? "Execution failed."
+                        : outcome.Error);
+            }
+
+            return InvariantResult.Allow();
         }
     }
 }

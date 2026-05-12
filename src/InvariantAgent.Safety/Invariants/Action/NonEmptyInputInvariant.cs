@@ -1,18 +1,30 @@
-﻿using InvariantAgent.Core.Model;
-using InvariantAgent.Core.Abstractions;
+﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Action
 {
-    public class NoEmptyInputInvariant : IActionInvariant
+    public sealed class NoEmptyInputInvariant : IInvariant
     {
         public string Name => nameof(NoEmptyInputInvariant);
 
-        public InvariantResult Evaluate(AgentAction input)
-        {
-            if (string.IsNullOrWhiteSpace(input.Input))
-                return InvariantResult.Fail(Name, "Empty input not allowed");
+        public InvariantCategory Category => InvariantCategory.Integrity;
 
-            return InvariantResult.Pass(Name);
+        public InvariantResult Evaluate(TransitionContext context)
+        {
+            var action = context.Transition.ProposedAction;
+
+            if (action == null)
+            {
+                return InvariantResult.Reject("No proposed action.");
+            }
+
+            if (string.IsNullOrWhiteSpace(action.Input))
+            {
+                return InvariantResult.Reject("Empty input not allowed.");
+            }
+
+            return InvariantResult.Allow();
         }
     }
 }
