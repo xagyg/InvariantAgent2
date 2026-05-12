@@ -14,7 +14,7 @@
     <ProjectReference Include="..\InvariantAgent.Observability\InvariantAgent.Observability.csproj" />
     <ProjectReference Include="..\InvariantAgent.Runtime\InvariantAgent.Runtime.csproj" />
     <ProjectReference Include="..\InvariantAgent.Safety\InvariantAgent.Safety.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Store\InvariantAgent.Storage.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Storage\InvariantAgent.Storage.csproj" />
   </ItemGroup>
 
 </Project>
