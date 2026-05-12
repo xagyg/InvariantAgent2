@@ -195,7 +195,7 @@ This creates:
 
 - `echo`
 - `search`
-- `calculator`
+- `calc`
 - `replay`
 - `drift`
 - `memory-set`
