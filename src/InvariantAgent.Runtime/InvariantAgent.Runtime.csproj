@@ -10,7 +10,7 @@
     <ProjectReference Include="..\InvariantAgent.Adaptive\InvariantAgent.Adaptive.csproj" />
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
     <ProjectReference Include="..\InvariantAgent.Execution\InvariantAgent.Execution.csproj" />
-    <ProjectReference Include="..\InvariantAgent.Store\InvariantAgent.Storage.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Storage\InvariantAgent.Storage.csproj" />
   </ItemGroup>
 
 </Project>
