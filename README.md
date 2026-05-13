@@ -1,4 +1,4 @@
-![InvariantAgent2](InvariantAgent2_image.png)
+![InvariantAgent2](assets/InvariantAgent2_image.jpg)
 
 # InvariantAgent 2 (IA2)
 
