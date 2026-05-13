@@ -1,8 +1,8 @@
+![InvariantAgent2](InvariantAgent2_image.png)
+
 # InvariantAgent 2 (IA2)
 
 A reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
-
-![InvariantAgent2](InvariantAgent2_image.png)
 
 InvariantAgent explores governed agent runtimes where:
 - invariants define behavioural boundaries,
