@@ -74,7 +74,8 @@ namespace InvariantAgent.Runtime
             {
                 "Input" => ConsoleColor.Cyan,
                 "Planning" => ConsoleColor.Cyan,
-                "Invariant" => ConsoleColor.Yellow,
+                "PreInvariant" => ConsoleColor.Yellow,
+                "PostInvariant" => ConsoleColor.Yellow,
                 "PreControl" => ConsoleColor.Yellow,
                 "PostControl" => ConsoleColor.Yellow,
                 "Execution" => ConsoleColor.Green,

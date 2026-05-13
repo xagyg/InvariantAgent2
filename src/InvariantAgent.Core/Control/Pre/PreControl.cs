@@ -20,7 +20,7 @@ namespace InvariantAgent.Core.Control.Pre
             {
                 var result = invariant.Evaluate(context);
 
-                context.Transition.Record("Invariant",
+                context.Transition.Record("PreInvariant",
                     $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}");
 
                 if (!result.Passed)
