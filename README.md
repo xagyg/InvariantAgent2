@@ -209,7 +209,7 @@ Additional capabilities can be added through the capability registry.
 
 # Running
 
-InvariantAgent 3 uses a hosted governed runtime architecture.
+InvariantAgent uses a hosted governed runtime architecture.
 
 ```bash
 dotnet run --project InvariantAgent.ConsoleApp
