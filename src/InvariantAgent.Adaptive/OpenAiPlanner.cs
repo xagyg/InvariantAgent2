@@ -4,6 +4,8 @@ namespace InvariantAgent.Adaptive
 {
     public class OpenAiPlanner : LlmPlanner
     {
+        public override string Name => "openai";
+
         private readonly ChatClient _client;
 
         public OpenAiPlanner(string apiKey)

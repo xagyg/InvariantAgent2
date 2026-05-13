@@ -28,9 +28,6 @@ namespace InvariantAgent.Hosting
 
             services.AddSingleton<IPlanner, CommandPlanner>();
 
-            services.AddSingleton<IPreControl, PreControl>();
-            services.AddSingleton<IPostControl, PostControl>();
-
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
 
@@ -61,6 +58,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, ExampleHttpService>();
             services.AddSingleton<ICapability, MemorySetTool>();
             services.AddSingleton<ICapability, MemoryShowTool>();
+            services.AddSingleton<ICapability, ExplainTool>();
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 

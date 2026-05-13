@@ -4,6 +4,8 @@ namespace InvariantAgent.Adaptive
 {
     public class GeminiPlanner : LlmPlanner
     {
+        public override string Name => "gemini";
+
         private readonly GenerativeModel _model;
 
         public GeminiPlanner(string apiKey)

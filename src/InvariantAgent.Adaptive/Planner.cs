@@ -7,6 +7,8 @@ namespace InvariantAgent.Adaptive
 {
     public abstract class Planner : IPlanner
     {
+        public abstract string Name { get; }
+
         public Task PlanAsync(TransitionContext context, CancellationToken ct = default)
         {
             var input = context.Transition.Input;

@@ -54,7 +54,7 @@ namespace InvariantAgent.Runtime
 
                 foreach (var e in context.Transition.Events)
                 {
-                    Console.ForegroundColor = GetColor(e.Stage);
+                    Console.ForegroundColor = GetColor(e.Stage.ToString());
 
                     Console.Write($"[{e.Stage}] ");
 
@@ -74,12 +74,13 @@ namespace InvariantAgent.Runtime
             {
                 "Input" => ConsoleColor.Cyan,
                 "Planning" => ConsoleColor.Cyan,
-                "Invariant" => ConsoleColor.Yellow,
+                "PreInvariant" => ConsoleColor.Yellow,
+                "PostInvariant" => ConsoleColor.Yellow,
                 "PreControl" => ConsoleColor.Yellow,
                 "PostControl" => ConsoleColor.Yellow,
                 "Execution" => ConsoleColor.Green,
-                "Reducer" => ConsoleColor.Cyan,
-                "Rejected" => ConsoleColor.Red,
+                "Reduction" => ConsoleColor.Cyan,
+                "SelfModification" => ConsoleColor.Blue,
                 _ => ConsoleColor.Gray
             };
         }

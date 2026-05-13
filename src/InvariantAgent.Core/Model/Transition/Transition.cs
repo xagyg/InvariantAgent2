@@ -35,12 +35,13 @@ namespace InvariantAgent.Core.Model.Transition
 
         public List<TransitionEvent> Events { get; init; } = new();
 
-        public void Record(string stage, string message)
+        public void AddEvent(TransitionEventStage stage, string message, Dictionary<string, object> metadata = null)
         {
             Events.Add(new TransitionEvent
             {
                 Stage = stage,
-                Message = message
+                Message = message,
+                Metadata = metadata ?? new Dictionary<string, object>()
             });
         }
     }

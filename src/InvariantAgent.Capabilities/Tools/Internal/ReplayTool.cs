@@ -51,7 +51,9 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
                 sb.AppendLine($"State = {beforeVersion} -> {afterVersion}");
 
-                sb.AppendLine($"Status={transition.Status}");
+                sb.AppendLine($"Status={transition.Status}");                
+
+                sb.AppendLine($"Input={transition.Input}");
 
                 if (transition.SelfModification != null)
                 {
