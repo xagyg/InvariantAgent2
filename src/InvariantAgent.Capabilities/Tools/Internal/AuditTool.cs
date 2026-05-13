@@ -32,7 +32,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                     Name,
                     new TextData
                     {
-                        Value = "==== AUDIT START ====\nNo transitions recorded.\n==== AUDIT END ===="
+                        Value = "==== REPLAY START ====\nNo transitions recorded.\n==== REPLAY END ===="
                     });
             }
 
@@ -45,7 +45,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("\n==== AUDIT START ====");
+            sb.AppendLine("\n==== REPLAY START ====");
 
             foreach (var transition in transitions.TakeLast(count))
             {
@@ -93,7 +93,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 sb.AppendLine();
             }
 
-            sb.Append("==== AUDIT END ====");
+            sb.Append("==== REPLAY END ====");
 
             return CapabilityResult.Ok(
                 Name,
