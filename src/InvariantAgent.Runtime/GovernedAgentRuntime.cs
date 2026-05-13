@@ -42,7 +42,11 @@ namespace InvariantAgent.Runtime
                 Before = _state
             };            
 
-            transition.Record("Input", input);
+            transition.AddEvent(TransitionEventStage.Input, input,
+                new()
+                {
+                    ["RawInput"] = input
+                });
 
             var context = new TransitionContext
             {
@@ -52,12 +56,24 @@ namespace InvariantAgent.Runtime
             // PLAN
             await _planner.PlanAsync(context);
 
-            transition.Record("Planning", $"Capability={transition.ProposedAction?.Capability}");
+            transition.AddEvent(TransitionEventStage.Planning, $"Capability={transition.ProposedAction?.Capability}",
+                new()
+                {
+                    ["Capability"] = transition.ProposedAction?.Capability,
+                    ["Input"] = context.Transition.Input,
+                    ["Planner"] = _planner.Name
+                    //["Confidence"] = 0.91
+                });
 
             // PRE-CONTROL
             var decision = _pre.Evaluate(context);
 
-            transition.Record("PreControl", decision.Allowed ? "Allowed" : $"Rejected: {decision.Reason}");
+            transition.AddEvent(TransitionEventStage.PreControl, decision.Allowed ? "Allowed" : $"Rejected: {decision.Reason}",
+                new()
+                {
+                    ["Allowed"] = decision.Allowed,
+                    ["Reason"] = decision.Reason
+                });
 
             if (!decision.Allowed)
             {
@@ -72,14 +88,26 @@ namespace InvariantAgent.Runtime
             // EXECUTION
             _executor.Execute(context);
 
-            transition.Record("Execution", transition.Outcome?.Success == true 
+            transition.AddEvent(TransitionEventStage.Execution, transition.Outcome?.Success == true 
                 ? transition.Outcome.Result
-                : transition.Outcome?.Error ?? "Unknown");
+                : transition.Outcome?.Error ?? "Unknown",
+                new()
+                {
+                    ["Capability"] = transition.Outcome?.Capability,
+                    ["Success"] = transition.Outcome?.Success,
+                    ["Error"] = transition.Outcome?.Error ?? ""
+                    //["DurationMs"] = 12
+                });
 
             var postDecision = _post.Evaluate(context);
 
-            transition.Record("PostControl", postDecision.Accepted ? "Accepted"
-                    : $"Rejected: {postDecision.Reason}");
+            transition.AddEvent(TransitionEventStage.PostControl, postDecision.Accepted ? "Accepted"
+                    : $"Rejected: {postDecision.Reason}",
+                    new()
+                    {
+                        ["Accepted"] = postDecision.Accepted,
+                        ["Reason"] = postDecision.Reason
+                    });
 
             if (!postDecision.Accepted)
             {
@@ -95,7 +123,12 @@ namespace InvariantAgent.Runtime
             // STATE ASSIMILATION
             _reducer.Apply(context);
 
-            transition.Record("Reducer", $"Version={transition.After?.Version}");
+            transition.AddEvent(TransitionEventStage.Reduction, $"Version={transition.After?.Version}",
+                new()
+                {
+                    ["BeforeVersion"] = transition.Before?.Version,
+                    ["AfterVersion"] = transition.After?.Version
+                });
 
             // COMMIT NEW STATE
             if (transition.After != null)

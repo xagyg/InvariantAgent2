@@ -49,8 +49,8 @@ public class CapabilityExecutor : IExecutor
 
         if (transition.SelfModification != null)
         {
-            transition.Record(
-                "SelfModification",
+            transition.AddEvent(
+                TransitionEventStage.SelfModification,
                 $"{transition.SelfModification.Target}.{transition.SelfModification.Operation} {transition.SelfModification.Key}");
         }
     }

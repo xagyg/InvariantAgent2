@@ -5,6 +5,8 @@ namespace InvariantAgent.Adaptive
 {
     public sealed class CommandPlanner : Planner
     {
+        public override string Name => "command";
+
         protected override AgentAction GeneratePlan(StateProjection state, string input)
         {
             return AgentActionParser.Parse(input);

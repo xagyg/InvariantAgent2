@@ -20,8 +20,14 @@ namespace InvariantAgent.Core.Control.Post
             {
                 var result = invariant.Evaluate(context);
 
-                context.Transition.Record("PostInvariant",
-                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}");
+                context.Transition.AddEvent(TransitionEventStage.PostInvariant,
+                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}",
+                    new Dictionary<string, object>()
+                    {
+                        ["Invariant"] = invariant.Name,
+                        ["Passed"] = result.Passed,
+                        ["Reason"] = result.Reason
+                    });
 
                 if (!result.Passed)
                 {

@@ -20,8 +20,14 @@ namespace InvariantAgent.Core.Control.Pre
             {
                 var result = invariant.Evaluate(context);
 
-                context.Transition.Record("PreInvariant",
-                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}");
+                context.Transition.AddEvent(TransitionEventStage.PreInvariant,
+                    $"{invariant.Name}: {(result.Passed ? "Passed" : "Failed")} {result.Reason}",
+                    new Dictionary<string, object>()
+                    {
+                        ["Invariant"] = invariant.Name,
+                        ["Passed"] = result.Passed,
+                        ["Reason"] = result.Reason
+                    });
 
                 if (!result.Passed)
                 {

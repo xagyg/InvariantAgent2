@@ -114,11 +114,11 @@ public sealed class ExplainTool : ICapability
     private static void AppendGovernance(StringBuilder sb, Transition transition)
     {
         var preInvariantEvents = transition.Events
-            .Where(e => e.Stage == "PreInvariant")
+            .Where(e => e.Stage == TransitionEventStage.PreInvariant)
             .ToList();
 
         var postInvariantEvents = transition.Events
-            .Where(e => e.Stage == "PostInvariant")
+            .Where(e => e.Stage == TransitionEventStage.PostInvariant)
             .ToList();
 
         if (preInvariantEvents.Count == 0 && postInvariantEvents.Count == 0)

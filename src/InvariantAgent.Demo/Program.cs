@@ -127,7 +127,7 @@ internal static class Program
 
         foreach (var e in transition.Events)
         {
-            Console.ForegroundColor = GetColor(e.Stage);
+            Console.ForegroundColor = GetColor(e.Stage.ToString());
             Console.Write($"[{e.Stage}] ");
             Console.ResetColor();
             Console.WriteLine(e.Message);

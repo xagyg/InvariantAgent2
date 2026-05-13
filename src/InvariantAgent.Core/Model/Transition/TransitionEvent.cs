@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace InvariantAgent.Core.Model.Transition
 {
@@ -6,8 +7,10 @@ namespace InvariantAgent.Core.Model.Transition
     {
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
-        public string Stage { get; init; } = "";
+        public TransitionEventStage Stage { get; init; }
 
         public string Message { get; init; } = "";
+
+        public Dictionary<string, object> Metadata { get; init; } = new();
     }
 }
