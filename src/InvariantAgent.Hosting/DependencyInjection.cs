@@ -58,6 +58,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, ExampleHttpService>();
             services.AddSingleton<ICapability, MemorySetTool>();
             services.AddSingleton<ICapability, MemoryShowTool>();
+            services.AddSingleton<ICapability, ExplainTool>();
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 
