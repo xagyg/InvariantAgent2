@@ -53,7 +53,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, EchoTool>();
             services.AddSingleton<ICapability, CalculatorTool>();
             services.AddSingleton<ICapability, SearchTool>();
-            services.AddSingleton<ICapability, ReplayTool>();
+            services.AddSingleton<ICapability, AuditTool>();
             services.AddSingleton<ICapability, DriftTool>();
             services.AddSingleton<ICapability, ExampleHttpService>();
             services.AddSingleton<ICapability, MemorySetTool>();
