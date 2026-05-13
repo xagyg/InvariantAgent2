@@ -5,19 +5,20 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
-    public sealed class AuditTool : ICapability
+    public sealed class ReplayTool : ICapability
     {
         private readonly ITransitionStore _store;
 
-        public string Name => "audit";
+        public string Name => "replay";
 
         public IReadOnlyCollection<string> Aliases => new[]
         {
             "history",
-            "replay"
+            "audit",
+            "trace"
         };
 
-        public AuditTool(ITransitionStore store)
+        public ReplayTool(ITransitionStore store)
         {
             _store = store;
         }
