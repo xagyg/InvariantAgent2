@@ -78,7 +78,7 @@ internal static class Program
             new EchoTool(),
             new SearchTool(),
             new CalculatorTool(),
-            new ReplayTool(transitionStore),
+            new AuditTool(transitionStore),
             new ExampleHttpService(),
             new DriftTool(transitionStore, new SimpleDriftAnalyzer())
         });

@@ -8,7 +8,20 @@ public class CapabilityRegistry : ICapabilityRegistry
 
     public CapabilityRegistry(IEnumerable<ICapability> capabilities)
     {
-        _capabilities = capabilities.ToDictionary(c => c.Name);
+        _capabilities = new Dictionary<string, ICapability>(
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var capability in capabilities)
+        {
+            // primary name
+            _capabilities[capability.Name] = capability;
+
+            // aliases
+            foreach (var alias in capability.Aliases)
+            {
+                _capabilities[alias] = capability;
+            }
+        }
     }
 
     public ICapability Get(string name)

@@ -5,13 +5,19 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
-    public sealed class ReplayTool : ICapability
+    public sealed class AuditTool : ICapability
     {
         private readonly ITransitionStore _store;
 
-        public string Name => "replay";
+        public string Name => "audit";
 
-        public ReplayTool(ITransitionStore store)
+        public IReadOnlyCollection<string> Aliases => new[]
+        {
+            "history",
+            "replay"
+        };
+
+        public AuditTool(ITransitionStore store)
         {
             _store = store;
         }
@@ -26,7 +32,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                     Name,
                     new TextData
                     {
-                        Value = "==== REPLAY START ====\nNo transitions recorded.\n==== REPLAY END ===="
+                        Value = "==== AUDIT START ====\nNo transitions recorded.\n==== AUDIT END ===="
                     });
             }
 
@@ -39,7 +45,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
             var sb = new StringBuilder();
 
-            sb.AppendLine("\n==== REPLAY START ====");
+            sb.AppendLine("\n==== AUDIT START ====");
 
             foreach (var transition in transitions.TakeLast(count))
             {
@@ -87,7 +93,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 sb.AppendLine();
             }
 
-            sb.Append("==== REPLAY END ====");
+            sb.Append("==== AUDIT END ====");
 
             return CapabilityResult.Ok(
                 Name,

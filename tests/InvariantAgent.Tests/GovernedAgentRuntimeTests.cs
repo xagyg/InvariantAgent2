@@ -75,10 +75,10 @@ public sealed class GovernedAgentRuntimeTests
         var fixture = CreateFixture();
 
         await fixture.Runtime.RunAsync("echo first");
-        var context = await fixture.Runtime.RunAsync("replay");
+        var context = await fixture.Runtime.RunAsync("audit");
 
         Assert.Equal(TransitionStatus.Completed, context.Transition.Status);
-        Assert.Contains("==== REPLAY START ====", context.Transition.Outcome?.Result);
+        Assert.Contains("==== AUDIT START ====", context.Transition.Outcome?.Result);
         Assert.Contains("Capability=echo", context.Transition.Outcome?.Result);
         Assert.Contains("Status=Completed", context.Transition.Outcome?.Result);
         Assert.Equal(2, fixture.Store.GetAll().Count);

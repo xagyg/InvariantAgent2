@@ -2,6 +2,7 @@
 using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Execution.Engine;
+using System.Transactions;
 
 namespace InvariantAgent.Runtime
 {
@@ -54,7 +55,7 @@ namespace InvariantAgent.Runtime
             };
 
             // PLAN
-            await _planner.PlanAsync(context);
+            await _planner.PlanAsync(context);            
 
             transition.AddEvent(TransitionEventStage.Planning, $"Capability={transition.ProposedAction?.Capability}",
                 new()

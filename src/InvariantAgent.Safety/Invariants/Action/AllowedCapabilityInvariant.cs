@@ -36,7 +36,7 @@ namespace InvariantAgent.Safety.Invariants.Action
                 return InvariantResult.Allow();
             }
 
-            return InvariantResult.Reject($"Capability '{action.Capability}' is not allowed.");
+            return InvariantResult.Reject($"Capability '{action.Capability}' is not allowed or unknown.");
         }
     }
 }
