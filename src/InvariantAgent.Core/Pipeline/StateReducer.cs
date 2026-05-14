@@ -2,6 +2,7 @@
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Model.Agent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace InvariantAgent.Core.Pipeline
 {
@@ -24,7 +25,7 @@ namespace InvariantAgent.Core.Pipeline
                 after.Memory[kv.Key] = kv.Value;
             }
 
-            if (transition.Outcome != null)
+            if (ShouldStoreLastOutcome(transition))                
             {
                 after.Memory["lastOutcome"] = transition.Outcome.Result;
             }
@@ -38,7 +39,7 @@ namespace InvariantAgent.Core.Pipeline
                 if (modification.Target == "memory" && modification.Operation == "set")
                 {
                     // shallow copied earlier
-                    var oldValue = after.Memory.TryGetValue(modification.Key, out var existingValue) 
+                    var oldValue = after.Memory.TryGetValue(modification.Key, out var existingValue)
                         ? existingValue : null;
 
                     after.Memory[modification.Key] = modification.Value;
@@ -59,6 +60,15 @@ namespace InvariantAgent.Core.Pipeline
             }
 
             transition.Status = TransitionStatus.Completed;
+        }
+
+        private static bool ShouldStoreLastOutcome(Transition transition)
+        {
+            var capability = transition.ProposedAction?.Capability;
+
+            // do not store last outcome for introspection tools
+            return transition.Outcome?.Success == true &&
+                   ! new[] { "explain", "drift", "replay", "memory-show" }.Contains(capability.Split()[0]);
         }
     }
 }
