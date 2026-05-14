@@ -4,6 +4,8 @@
 
 A reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
 
+[Quick Start](#current-capabilities)
+
 InvariantAgent explores governed agent runtimes where:
 - invariants define behavioural boundaries,
 - adaptive evolution is runtime-controlled,
@@ -198,7 +200,9 @@ This creates:
 - `echo`
 - `search`
 - `calc`
+- 'explain'
 - `replay`
+- 'replay verbose'
 - `drift`
 - `memory-set`
 - `memory-show`
