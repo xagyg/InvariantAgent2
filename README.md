@@ -200,9 +200,9 @@ This creates:
 - `echo`
 - `search`
 - `calc`
-- 'explain'
+- `explain`
 - `replay`
-- 'replay verbose'
+- `replay verbose`
 - `drift`
 - `memory-set`
 - `memory-show`
