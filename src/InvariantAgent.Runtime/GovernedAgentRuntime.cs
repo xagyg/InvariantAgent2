@@ -1,7 +1,9 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Transition;
+using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Execution.Engine;
+using System.Threading;
 using System.Transactions;
 
 namespace InvariantAgent.Runtime
@@ -55,7 +57,12 @@ namespace InvariantAgent.Runtime
             };
 
             // PLAN
-            await _planner.PlanAsync(context);            
+            var plannerContext = PlannerContextProjector.Project(_state, input);
+
+            var proposedAction = await _planner.PlanAsync(plannerContext, CancellationToken.None);                
+
+            transition.ProposedAction = proposedAction;
+            transition.Status = TransitionStatus.Proposed;
 
             transition.AddEvent(TransitionEventStage.Planning, $"Capability={transition.ProposedAction?.Capability}",
                 new()

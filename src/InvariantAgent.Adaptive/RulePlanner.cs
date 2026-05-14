@@ -1,4 +1,5 @@
 ﻿using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Planning;
 using InvariantAgent.Core.Parsing;
 
 namespace InvariantAgent.Adaptive
@@ -7,9 +8,9 @@ namespace InvariantAgent.Adaptive
     {
         public override string Name => "rule";
 
-        protected override AgentAction GeneratePlan(StateProjection state, string input)
+        protected override AgentAction GeneratePlan(PlannerContext context)
         {
-            return AgentActionParser.Parse(input);
+            return AgentActionParser.Parse(context.Input);
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Agent;
-using InvariantAgent.Core.Model.Transition;
-using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Model.Planning;
 
 namespace InvariantAgent.Adaptive
 {
@@ -9,44 +8,31 @@ namespace InvariantAgent.Adaptive
     {
         public abstract string Name { get; }
 
-        public Task PlanAsync(TransitionContext context, CancellationToken ct = default)
-        {
-            var input = context.Transition.Input;
-            var state = context.Transition.Before;
-
-            var projection = StateProjector.Project(state);
-
-            context.Transition.ProposedAction = Plan(projection, input);
-
-            context.Transition.Status = TransitionStatus.Proposed;
-
-            return Task.CompletedTask;
-        }
-
-        public AgentAction Plan(StateProjection state, string input)
+        public Task<AgentAction> PlanAsync(PlannerContext context, CancellationToken ct = default)
         {
             try
             {
-                return GeneratePlan(state, input);
+                var action = GeneratePlan(context);
+
+                return Task.FromResult(action);
             }
             catch (Exception ex)
             {
-                return HandlePlannerError(ex, state, input);
+                var action = HandlePlannerError(ex, context);
+
+                return Task.FromResult(action);
             }
         }
 
-        protected abstract AgentAction GeneratePlan(StateProjection state, string input);
+        protected abstract AgentAction GeneratePlan(PlannerContext context);
 
-        protected virtual AgentAction HandlePlannerError(
-            Exception ex,
-            StateProjection state,
-            string input)
+        protected virtual AgentAction HandlePlannerError(Exception ex, PlannerContext context)
         {
             return new AgentAction
             {
                 Capability = "planner",
                 Input = $"Planner error: {ex.Message}",
-                Error = ex.Message               
+                Error = ex.Message
             };
         }
     }
