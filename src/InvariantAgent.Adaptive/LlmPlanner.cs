@@ -1,15 +1,14 @@
 ﻿using System.Text;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Planning;
 
 namespace InvariantAgent.Adaptive
 {
     public abstract class LlmPlanner : Planner
     {
-        protected override AgentAction GeneratePlan(
-            StateProjection state,
-            string input)
+        protected override AgentAction GeneratePlan(PlannerContext context)
         {
-            var prompt = BuildPrompt(state, input);
+            var prompt = BuildPrompt(context.State, context.Input);
 
             var response = Complete(prompt);
 
