@@ -2,6 +2,7 @@
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Capability;
 using InvariantAgent.Core.Model.Data;
+using InvariantAgent.Core.Rendering;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
@@ -44,63 +45,17 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 count = Math.Min(requested, transitions.Count);
             }
 
-            var sb = new StringBuilder();
+            var verbose = request.Input.Contains("verbose", StringComparison.OrdinalIgnoreCase);
 
-            sb.AppendLine("\n==== REPLAY START ====");
-
-            foreach (var transition in transitions.TakeLast(count))
-            {
-                sb.AppendLine($"Transition={transition.Id}");
-
-                var beforeVersion = transition.Before?.Version.ToString() ?? "?";
-
-                var afterVersion = transition.After?.Version.ToString() ?? "not applied";
-
-                sb.AppendLine($"State = {beforeVersion} -> {afterVersion}");
-
-                sb.AppendLine($"Status={transition.Status}");                
-
-                sb.AppendLine($"Input={transition.Input}");
-
-                if (transition.SelfModification != null)
-                {
-                    sb.AppendLine(
-                        $"SelfModification={transition.SelfModification.Target}.{transition.SelfModification.Operation} {transition.SelfModification.Key}");
-                }
-
-                if (!string.IsNullOrWhiteSpace(transition.Reason))
-                {
-                    sb.AppendLine($"Reason={transition.Reason}");
-                }
-
-                foreach (var e in transition.Events)
-                {
-                    sb.Append('[')
-                      .Append(e.Stage)
-                      .Append("] ")
-                      .AppendLine(e.Message);
-                }
-
-                if (transition.After?.Memory.Count > 0)
-                {
-                    sb.AppendLine("Memory:");
-
-                    foreach (var item in transition.After.Memory)
-                    {
-                        sb.AppendLine($"  {item.Key}={item.Value}");
-                    }
-                }
-
-                sb.AppendLine();
-            }
-
-            sb.Append("==== REPLAY END ====");
+            var result = verbose 
+                ? TransitionFormatter.FormatReplayVerbose(transitions.TakeLast(count))
+                : TransitionFormatter.FormatReplay(transitions.TakeLast(count));
 
             return CapabilityResult.Ok(
                 Name,
                 new TextData
                 {
-                    Value = sb.ToString()
+                    Value = result
                 });
         }
     }

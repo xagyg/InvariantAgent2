@@ -18,12 +18,9 @@ namespace InvariantAgent.Core.Pipeline
             };
         }
 
-        private static string GetLastOutcome(
-            AgentState state)
+        private static string GetLastOutcome(AgentState state)
         {
-            if (state.Memory.TryGetValue(
-                    "lastOutcome",
-                    out var value))
+            if (state.Memory.TryGetValue("lastOutcome", out var value))
             {
                 return value?.ToString() ?? "";
             }
@@ -31,8 +28,7 @@ namespace InvariantAgent.Core.Pipeline
             return "";
         }
 
-        private static string SummariseMemory(
-            Dictionary<string, object> memory)
+        private static string SummariseMemory(Dictionary<string, object> memory)
         {
             if (memory == null || memory.Count == 0)
                 return "";
@@ -46,8 +42,7 @@ namespace InvariantAgent.Core.Pipeline
                 "error_state"
             };
 
-            var prioritized = memory
-                .Where(kv => importantKeys.Contains(kv.Key));
+            var prioritized = memory.Where(kv => importantKeys.Contains(kv.Key));
 
             return string.Join("; ",
                 prioritized
