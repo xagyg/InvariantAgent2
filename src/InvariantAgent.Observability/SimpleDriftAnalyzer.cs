@@ -15,7 +15,7 @@ namespace InvariantAgent.Observability
 
             var invariantFailures = transitions
                 .SelectMany(t => t.Events)
-                .Where(e => (e.Stage == TransitionEventStage.PreInvariant || e.Stage == TransitionEventStage.PostInvariant) && e.Message.Contains("Failed"))
+                .Where(e => (e.Stage == TransitionEventStage.Invariant) && e.Message.Contains("Failed"))
                 .Select(e => ExtractInvariantName(e.Message))
                 .GroupBy(name => name)
                 .ToDictionary(g => g.Key, g => g.Count());

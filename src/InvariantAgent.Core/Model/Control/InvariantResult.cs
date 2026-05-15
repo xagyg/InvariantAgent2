@@ -6,6 +6,8 @@
 
         public string Reason { get; init; } = "";
 
+        public InvariantSeverity Severity { get; init; } = InvariantSeverity.Error;
+
         public static InvariantResult Allow()
         {
             return new InvariantResult
@@ -14,12 +16,13 @@
             };
         }
 
-        public static InvariantResult Reject(string reason)
+        public static InvariantResult Reject(string reason, InvariantSeverity severity = InvariantSeverity.Error)
         {
             return new InvariantResult
             {
                 Passed = false,
-                Reason = reason
+                Reason = reason,
+                Severity = severity
             };
         }
     }

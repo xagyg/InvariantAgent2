@@ -17,8 +17,11 @@ namespace InvariantAgent.Safety.Invariants.SelfModification
 
         public string Name => nameof(AllowedMemoryKeyInvariant);
 
-        public InvariantCategory Category =>
-            InvariantCategory.SelfModification;
+        public InvariantScope Scope => InvariantScope.SelfModification;
+
+        public InvariantSeverity Severity => InvariantSeverity.Error;
+
+        public InvariantCategory Category => InvariantCategory.SelfModification;
 
         public InvariantResult Evaluate(TransitionContext context)
         {

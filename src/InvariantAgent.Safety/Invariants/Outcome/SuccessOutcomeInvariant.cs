@@ -10,6 +10,10 @@ namespace InvariantAgent.Safety.Invariants.Outcome
 
         public InvariantCategory Category => InvariantCategory.Integrity;
 
+        public InvariantScope Scope => InvariantScope.Execution;
+
+        public InvariantSeverity Severity => InvariantSeverity.Error;
+
         public InvariantResult Evaluate(TransitionContext context)
         {
             var outcome = context.Transition.Outcome;

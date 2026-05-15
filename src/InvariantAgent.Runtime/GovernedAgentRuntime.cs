@@ -1,18 +1,16 @@
 ﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Control;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Pipeline;
-using InvariantAgent.Execution.Engine;
-using System.Threading;
-using System.Transactions;
 
 namespace InvariantAgent.Runtime
 {
     public sealed class GovernedAgentRuntime
     {
         private readonly IPlanner _planner;
-        private readonly IPreControl _pre;
-        private readonly IPostControl _post;
+        private readonly IInvariantEvaluator _evaluator;
         private readonly IExecutor _executor;
         private readonly IStateReducer _reducer;
         private readonly ITransitionStore _store;
@@ -23,15 +21,13 @@ namespace InvariantAgent.Runtime
 
         public GovernedAgentRuntime(
             IPlanner planner,
-            IPreControl pre,
-            IPostControl post,
+            IInvariantEvaluator invariantEvaluator,
             IExecutor executor,
             IStateReducer reducer,
             ITransitionStore store)
         {
             _planner = planner;
-            _pre = pre;
-            _post = post;
+            _evaluator = invariantEvaluator;
             _executor = executor;
             _reducer = reducer;
             _store = store;
@@ -74,19 +70,17 @@ namespace InvariantAgent.Runtime
                 });
 
             // PRE-CONTROL
-            var decision = _pre.Evaluate(context);
+            var decision = _evaluator.Evaluate(context, Core.Model.Control.InvariantScope.Plan);
 
-            transition.AddEvent(TransitionEventStage.PreControl, decision.Allowed ? "Allowed" : $"Rejected: {decision.Reason}",
-                new()
-                {
-                    ["Allowed"] = decision.Allowed,
-                    ["Reason"] = decision.Reason
-                });
+            if (!TryApplyGovernanceOutcome(context, decision)) 
+            {
+                return context;
+            }
 
-            if (!decision.Allowed)
+            if (!decision.Passed)
             {
                 transition.Status = TransitionStatus.Rejected;
-                transition.Reason = decision.Reason;
+                transition.Reason = decision.Summary;
 
                 _store.Append(transition);
 
@@ -107,24 +101,19 @@ namespace InvariantAgent.Runtime
                     //["DurationMs"] = 12
                 });
 
-            var postDecision = _post.Evaluate(context);
+            // POST-CONTROL
+            decision = _evaluator.Evaluate(context, InvariantScope.Execution);
 
-            transition.AddEvent(TransitionEventStage.PostControl, postDecision.Accepted ? "Accepted"
-                    : $"Rejected: {postDecision.Reason}",
-                    new()
-                    {
-                        ["Accepted"] = postDecision.Accepted,
-                        ["Reason"] = postDecision.Reason
-                    });
-
-            if (!postDecision.Accepted)
+            if (!TryApplyGovernanceOutcome(context, decision))
             {
-                transition.Status = TransitionStatus.Rejected;
+                return context;
+            }
 
-                transition.Reason = postDecision.Reason;
+            // SELF-MODIFICATION CHECK
+            decision = _evaluator.Evaluate(context, InvariantScope.SelfModification);
 
-                _store.Append(transition);
-
+            if (!TryApplyGovernanceOutcome(context, decision))
+            {
                 return context;
             }
 
@@ -147,6 +136,46 @@ namespace InvariantAgent.Runtime
             _store.Append(transition);
 
             return context;
+        }
+
+        private bool TryApplyGovernanceOutcome(TransitionContext context, InvariantEvaluationReport report)
+        {
+            var transition = context.Transition;
+
+            transition.AddEvent(
+                TransitionEventStage.Control,
+                report.Passed
+                    ? $"{report.Scope} invariants passed"
+                    : $"{report.Scope} invariants failed: {report.Summary}",
+                new Dictionary<string, object>
+                {
+                    ["Scope"] = report.Scope.ToString(),
+                    ["Allowed"] = report.Passed,
+                    ["Reason"] = report.Summary,
+                    ["ViolationCount"] = report.Violations.Count,
+                    ["Violations"] = report.Violations
+                        .Select(v => new
+                        {
+                            v.Invariant,
+                            Category = v.Category.ToString(),
+                            Scope = v.Scope.ToString(),
+                            Severity = v.Severity.ToString(),
+                            v.Reason
+                        })
+                        .ToArray()
+                });
+
+            if (report.Passed)
+            {
+                return true;
+            }
+
+            transition.Status = TransitionStatus.Rejected;
+            transition.Reason = report.Summary;
+
+            _store.Append(transition);
+
+            return false;
         }
     }
 }

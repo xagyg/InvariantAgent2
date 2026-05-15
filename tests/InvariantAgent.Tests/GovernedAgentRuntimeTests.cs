@@ -185,19 +185,6 @@ public sealed class GovernedAgentRuntimeTests
         Assert.Null(rejected.Transition.After);
     }
 
-    [Fact]
-public void AddInvariantAgent_RegistersSinglePreAndPostControl()
-{
-    var services = new ServiceCollection();
-    services.AddInvariantAgent();
-
-    var preControls = services.Where(s => s.ServiceType == typeof(IPreControl)).ToList();
-    var postControls = services.Where(s => s.ServiceType == typeof(IPostControl)).ToList();
-
-    Assert.Single(preControls);
-    Assert.Single(postControls);
-}
-
     private static RuntimeFixture CreateFixture()
     {
         var services = new ServiceCollection();
