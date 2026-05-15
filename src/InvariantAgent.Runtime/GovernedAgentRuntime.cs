@@ -38,8 +38,10 @@ namespace InvariantAgent.Runtime
             var transition = new Transition
             {
                 Input = input,
-                Before = _state
-            };            
+                Before = _state,
+            };
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.InputReceived);
 
             transition.AddEvent(TransitionEventStage.Input, input,
                 new()
@@ -51,6 +53,8 @@ namespace InvariantAgent.Runtime
             {
                 Transition = transition
             };
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Planning);
 
             // PLAN
             var plannerContext = PlannerContextProjector.Project(_state, input);
@@ -69,11 +73,14 @@ namespace InvariantAgent.Runtime
                     //["Confidence"] = 0.91
                 });
 
+            TransitionPhases.MoveTo(transition, TransitionPhase.PlanValidation);
+
             // PRE-CONTROL
             var decision = _evaluator.Evaluate(context, Core.Model.Control.InvariantScope.Plan);
 
             if (!TryApplyGovernanceOutcome(context, decision)) 
             {
+                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
                 return context;
             }
 
@@ -86,6 +93,8 @@ namespace InvariantAgent.Runtime
 
                 return context;
             }
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Execution);
 
             // EXECUTION
             _executor.Execute(context);
@@ -101,21 +110,35 @@ namespace InvariantAgent.Runtime
                     //["DurationMs"] = 12
                 });
 
+            TransitionPhases.MoveTo(transition, TransitionPhase.ExecutionValidation);
+
             // POST-CONTROL
             decision = _evaluator.Evaluate(context, InvariantScope.Execution);
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
+                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
                 return context;
             }
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.SelfModificationValidation);
 
             // SELF-MODIFICATION CHECK
             decision = _evaluator.Evaluate(context, InvariantScope.SelfModification);
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
+                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
                 return context;
             }
+
+            if (context.Transition.Status == TransitionStatus.Rejected)
+            {
+                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
+                return context;
+            }
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Reduction);
 
             // STATE ASSIMILATION
             _reducer.Apply(context);
@@ -134,6 +157,8 @@ namespace InvariantAgent.Runtime
             }
 
             _store.Append(transition);
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Completed);
 
             return context;
         }

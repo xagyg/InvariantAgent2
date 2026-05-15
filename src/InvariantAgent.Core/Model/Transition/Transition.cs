@@ -10,6 +10,8 @@ namespace InvariantAgent.Core.Model.Transition
         public Guid Id { get; init; } = Guid.NewGuid();
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
+        public TransitionPhase Phase { get; set; } = TransitionPhase.Created;
+
         // Iₜ - external/user input
         public string Input { get; init; } = "";
 

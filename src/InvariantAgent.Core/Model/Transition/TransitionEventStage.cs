@@ -9,6 +9,7 @@ namespace InvariantAgent.Core.Model.Transition
         Control,
         Execution, 
         Reduction,
-        SelfModification
+        SelfModification,
+        Lifecycle
     }
 }

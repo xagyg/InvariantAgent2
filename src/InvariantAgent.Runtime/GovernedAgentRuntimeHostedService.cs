@@ -79,6 +79,7 @@ namespace InvariantAgent.Runtime
                 "Execution" => ConsoleColor.Green,
                 "Reduction" => ConsoleColor.Cyan,
                 "SelfModification" => ConsoleColor.Blue,
+                "Lifecycle" => ConsoleColor.White,
                 _ => ConsoleColor.Gray
             };
         }
