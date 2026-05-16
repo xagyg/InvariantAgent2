@@ -1,8 +1,10 @@
 ﻿namespace InvariantAgent.Core.Rendering;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 
 public static class TransitionFormatter
@@ -144,57 +146,42 @@ public static class TransitionFormatter
 
     private static void AppendGovernance(StringBuilder sb, Transition transition)
     {
-        var pre = transition.Events.Where(e => e.Stage == TransitionEventStage.PreInvariant).ToList();
+        AppendInvariantEvents(sb, transition, InvariantScope.Plan, "Plan invariants");
 
-        var post = transition.Events.Where(e => e.Stage == TransitionEventStage.PostInvariant).ToList();
+        AppendInvariantEvents(sb, transition, InvariantScope.Execution, "Execution invariants");
 
-        if (pre.Count == 0 && post.Count == 0)
-            return;
-
-        sb.AppendLine("Governance:");
-
-        if (pre.Count > 0)
-        {
-            sb.AppendLine("  Pre-Execution:");
-
-            foreach (var e in pre)
-                AppendInvariantEvent(sb, e);
-
-            sb.AppendLine();
-        }
-
-        if (post.Count > 0)
-        {
-            sb.AppendLine("  Post-Execution:");
-
-            foreach (var e in post)
-                AppendInvariantEvent(sb, e);
-
-            sb.AppendLine();
-        }
-
-        if (!string.IsNullOrWhiteSpace(transition.Reason))
-        {
-            sb.AppendLine("Decision:");
-            sb.AppendLine($"  {transition.Reason}");
-            sb.AppendLine();
-        }
+        AppendInvariantEvents(sb, transition, InvariantScope.SelfModification, "Self-modification invariants");
     }
 
-    private static void AppendInvariantEvent(StringBuilder sb, TransitionEvent e)
+    private static void AppendInvariantEvents(StringBuilder sb, Transition transition, InvariantScope scope, string title)
     {
-        var invariant = GetMetadataString(e, "Invariant") ?? "UnknownInvariant";
-        var reason = GetMetadataString(e, "Reason");
+        var events = transition.Events
+            .Where(e => e.Stage == TransitionEventStage.Invariant && HasScope(e, scope))
+            .ToList();
 
-        var passed = e.Metadata.TryGetValue("Passed", out var passedObj) && passedObj is bool b && b;
+        if (events.Count == 0)
+        {
+            return;
+        }
 
-        sb.AppendLine(passed
-            ? $"    [Pass] {invariant}"
-            : $"    [Fail] {invariant}");
+        sb.AppendLine(title + ":");
 
-        if (!passed && !string.IsNullOrWhiteSpace(reason))
-            sb.AppendLine($"           {reason}");
+        foreach (var e in events)
+        {
+            sb.AppendLine($"  - {e.Message}");
+        }
     }
+
+    private static bool HasScope(TransitionEvent e, InvariantScope scope)
+    {
+        return e.Metadata != null &&
+               e.Metadata.TryGetValue("Scope", out var value) &&
+               string.Equals(
+                   Convert.ToString(value),
+                   scope.ToString(),
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
 
     private static void AppendStateImpact(StringBuilder sb, Transition transition)
     {

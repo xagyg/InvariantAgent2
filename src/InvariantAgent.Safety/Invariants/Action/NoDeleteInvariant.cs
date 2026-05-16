@@ -10,6 +10,10 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantCategory Category => InvariantCategory.Safety;
 
+        public InvariantScope Scope => InvariantScope.Plan;
+
+        public InvariantSeverity Severity => InvariantSeverity.Error;
+
         public InvariantResult Evaluate(TransitionContext context)
         {
             var action = context.Transition.ProposedAction;

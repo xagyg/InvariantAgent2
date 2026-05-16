@@ -9,6 +9,10 @@ namespace InvariantAgent.Core.Abstractions
 
         InvariantCategory Category { get; }
 
+        InvariantScope Scope { get; }
+
+        InvariantSeverity Severity { get; }
+
         InvariantResult Evaluate(TransitionContext context);
     }
 }

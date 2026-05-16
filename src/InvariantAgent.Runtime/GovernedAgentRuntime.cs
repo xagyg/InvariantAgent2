@@ -1,18 +1,17 @@
 ﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Control;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Pipeline;
-using InvariantAgent.Execution.Engine;
-using System.Threading;
-using System.Transactions;
+using InvariantAgent.Core.Transitioning;
 
 namespace InvariantAgent.Runtime
 {
     public sealed class GovernedAgentRuntime
     {
         private readonly IPlanner _planner;
-        private readonly IPreControl _pre;
-        private readonly IPostControl _post;
+        private readonly IInvariantEvaluator _evaluator;
         private readonly IExecutor _executor;
         private readonly IStateReducer _reducer;
         private readonly ITransitionStore _store;
@@ -23,15 +22,13 @@ namespace InvariantAgent.Runtime
 
         public GovernedAgentRuntime(
             IPlanner planner,
-            IPreControl pre,
-            IPostControl post,
+            IInvariantEvaluator invariantEvaluator,
             IExecutor executor,
             IStateReducer reducer,
             ITransitionStore store)
         {
             _planner = planner;
-            _pre = pre;
-            _post = post;
+            _evaluator = invariantEvaluator;
             _executor = executor;
             _reducer = reducer;
             _store = store;
@@ -42,8 +39,10 @@ namespace InvariantAgent.Runtime
             var transition = new Transition
             {
                 Input = input,
-                Before = _state
-            };            
+                Before = _state,
+            };
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.InputReceived);
 
             transition.AddEvent(TransitionEventStage.Input, input,
                 new()
@@ -55,6 +54,8 @@ namespace InvariantAgent.Runtime
             {
                 Transition = transition
             };
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Planning);
 
             // PLAN
             var plannerContext = PlannerContextProjector.Project(_state, input);
@@ -73,25 +74,19 @@ namespace InvariantAgent.Runtime
                     //["Confidence"] = 0.91
                 });
 
+            TransitionPhases.MoveTo(transition, TransitionPhase.PlanValidation);
+
             // PRE-CONTROL
-            var decision = _pre.Evaluate(context);
+            var decision = _evaluator.Evaluate(context, Core.Model.Control.InvariantScope.Plan);
 
-            transition.AddEvent(TransitionEventStage.PreControl, decision.Allowed ? "Allowed" : $"Rejected: {decision.Reason}",
-                new()
-                {
-                    ["Allowed"] = decision.Allowed,
-                    ["Reason"] = decision.Reason
-                });
-
-            if (!decision.Allowed)
+            if (!TryApplyGovernanceOutcome(context, decision)) 
             {
-                transition.Status = TransitionStatus.Rejected;
-                transition.Reason = decision.Reason;
-
+                TransitionPhases.Reject(transition, decision.Summary);
                 _store.Append(transition);
-
                 return context;
             }
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Execution);
 
             // EXECUTION
             _executor.Execute(context);
@@ -107,26 +102,38 @@ namespace InvariantAgent.Runtime
                     //["DurationMs"] = 12
                 });
 
-            var postDecision = _post.Evaluate(context);
+            TransitionPhases.MoveTo(transition, TransitionPhase.ExecutionValidation);
 
-            transition.AddEvent(TransitionEventStage.PostControl, postDecision.Accepted ? "Accepted"
-                    : $"Rejected: {postDecision.Reason}",
-                    new()
-                    {
-                        ["Accepted"] = postDecision.Accepted,
-                        ["Reason"] = postDecision.Reason
-                    });
+            // POST-CONTROL
+            decision = _evaluator.Evaluate(context, InvariantScope.Execution);
 
-            if (!postDecision.Accepted)
+            if (!TryApplyGovernanceOutcome(context, decision))
             {
-                transition.Status = TransitionStatus.Rejected;
-
-                transition.Reason = postDecision.Reason;
-
+                TransitionPhases.Reject(transition, decision.Summary);
                 _store.Append(transition);
-
                 return context;
             }
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.SelfModificationValidation);
+
+            // SELF-MODIFICATION CHECK
+            decision = _evaluator.Evaluate(context, InvariantScope.SelfModification);
+
+            if (!TryApplyGovernanceOutcome(context, decision))
+            {
+                TransitionPhases.Reject(transition, decision.Summary);
+                _store.Append(transition);
+                return context;
+            }
+
+            // Do not allow reducer to run if transition rejected
+            if (context.Transition.Status == TransitionStatus.Rejected)
+            {
+                _store.Append(transition);
+                return context;
+            }            
+
+            TransitionPhases.MoveTo(transition, TransitionPhase.Reduction);
 
             // STATE ASSIMILATION
             _reducer.Apply(context);
@@ -138,15 +145,59 @@ namespace InvariantAgent.Runtime
                     ["AfterVersion"] = transition.After?.Version
                 });
 
+            // REDUCTION INVARIANTS
+            decision = _evaluator.Evaluate(context, InvariantScope.Reduction);
+
+            if (!TryApplyGovernanceOutcome(context, decision))
+            {
+                TransitionPhases.Reject(transition, decision.Summary);
+
+                _store.Append(transition);
+
+                return context;
+            }
+
             // COMMIT NEW STATE
             if (transition.After != null)
             {
                 _state = transition.After;
             }
 
+            TransitionPhases.MoveTo(transition, TransitionPhase.Completed);
+
             _store.Append(transition);
 
             return context;
+        }
+
+        private bool TryApplyGovernanceOutcome(TransitionContext context, InvariantEvaluationReport report)
+        {
+            var transition = context.Transition;
+
+            transition.AddEvent(
+                TransitionEventStage.Control,
+                report.Passed
+                    ? $"{report.Scope} invariants passed"
+                    : $"{report.Scope} invariants failed: {report.Summary}",
+                new Dictionary<string, object>
+                {
+                    ["Scope"] = report.Scope.ToString(),
+                    ["Allowed"] = report.Passed,
+                    ["Reason"] = report.Summary,
+                    ["ViolationCount"] = report.Violations.Count,
+                    ["Violations"] = report.Violations
+                        .Select(v => new
+                        {
+                            v.Invariant,
+                            Category = v.Category.ToString(),
+                            Scope = v.Scope.ToString(),
+                            Severity = v.Severity.ToString(),
+                            v.Reason
+                        })
+                        .ToArray()
+                });
+
+            return report.Passed;           
         }
     }
 }

@@ -5,12 +5,11 @@ namespace InvariantAgent.Core.Model.Transition
     {
         Input,
         Planning,
-        PreInvariant,
-        PreControl,
-        Execution,
-        PostInvariant,
-        PostControl,
+        Invariant,
+        Control,
+        Execution, 
         Reduction,
-        SelfModification
+        SelfModification,
+        Lifecycle
     }
 }

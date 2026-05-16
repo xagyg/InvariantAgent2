@@ -63,6 +63,7 @@ namespace InvariantAgent.Runtime
                     Console.WriteLine(e.Message);
                 }
 
+                Console.WriteLine($"Transition Id: {context.Transition.Id}");
                 Console.WriteLine($"Status: {context.Transition.Status}");
                 Console.WriteLine();
             }
@@ -73,14 +74,13 @@ namespace InvariantAgent.Runtime
             return stage switch
             {
                 "Input" => ConsoleColor.Cyan,
-                "Planning" => ConsoleColor.Cyan,
-                "PreInvariant" => ConsoleColor.Yellow,
-                "PostInvariant" => ConsoleColor.Yellow,
-                "PreControl" => ConsoleColor.Yellow,
-                "PostControl" => ConsoleColor.Yellow,
+                "Planning" => ConsoleColor.Cyan,                
+                "Invariant" => ConsoleColor.Yellow,
+                "Control" => ConsoleColor.Yellow,              
                 "Execution" => ConsoleColor.Green,
                 "Reduction" => ConsoleColor.Cyan,
                 "SelfModification" => ConsoleColor.Blue,
+                "Lifecycle" => ConsoleColor.White,
                 _ => ConsoleColor.Gray
             };
         }

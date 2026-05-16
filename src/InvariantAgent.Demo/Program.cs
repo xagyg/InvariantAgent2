@@ -4,15 +4,16 @@ using InvariantAgent.Capabilities.Services;
 using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Control.Post;
-using InvariantAgent.Core.Control.Pre;
 using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Drift;
+using InvariantAgent.Core.Replay;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Runtime;
 using InvariantAgent.Storage;
 using InvariantAgent.Observability;
+using InvariantAgent.Core.Control;
 
 namespace InvariantAgent.Demno;
 
@@ -78,32 +79,27 @@ internal static class Program
             new EchoTool(),
             new SearchTool(),
             new CalculatorTool(),
-            new ReplayTool(transitionStore),
+            new ReplayTool(transitionStore, new ReplayValidator()),
             new ExampleHttpService(),
-            new DriftTool(transitionStore, new SimpleDriftAnalyzer())
+            new DriftTool(transitionStore, new SimpleDriftAnalyzer(new DriftTracker()))
         });
 
-        var preInvariants = new List<IInvariant>
+        var invariants = new List<IInvariant>
         {
             new NoDeleteInvariant(),
-            new AllowedCapabilityInvariant(registry.GetCapabilityNames())
-        };
-
-        var postInvariants = new List<IInvariant>
-        {
+            new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
             new SuccessOutcomeInvariant(),
             new NonEmptyOutcomeInvariant()
         };
 
-        var pre = new PreControl(preInvariants);
-        var post = new PostControl(postInvariants);
+        //var pre = new PreControl(preInvariants);
+        //var post = new PostControl(postInvariants);
         var executor = new CapabilityExecutor(registry);
         var planner = CreatePlanner("command");
 
         return new GovernedAgentRuntime(
             planner,
-            pre,
-            post,
+            new InvariantEvaluator(invariants),
             executor,
             new StateReducer(),
             transitionStore);

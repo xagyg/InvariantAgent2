@@ -4,9 +4,10 @@ using InvariantAgent.Capabilities.Services;
 using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
-using InvariantAgent.Core.Control.Post;
-using InvariantAgent.Core.Control.Pre;
+using InvariantAgent.Core.Control;
+using InvariantAgent.Core.Drift;
 using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Replay;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Observability;
 using InvariantAgent.Runtime;
@@ -28,27 +29,26 @@ namespace InvariantAgent.Hosting
 
             services.AddSingleton<IPlanner, CommandPlanner>();
 
+            services.AddSingleton<ReplayValidator>();
+
+            services.AddSingleton<DriftTracker>();
+
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
 
-            services.AddSingleton<IPreControl>(sp =>
+            services.AddSingleton<IInvariantEvaluator>(sp =>
             {
                 var registry = sp.GetRequiredService<ICapabilityRegistry>();
 
-                return new PreControl(new IInvariant[]
+                return new InvariantEvaluator(new IInvariant[]
                 {
                     new NoDeleteInvariant(),
-                    new AllowedCapabilityInvariant(registry.GetCapabilityNames())
-                });
-            });
-
-            services.AddSingleton<IPostControl>(_ =>
-                new PostControl(new IInvariant[]
-                {
+                    new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
                     new SuccessOutcomeInvariant(),
                     new AllowedMemoryKeyInvariant(),
                     new NonEmptyOutcomeInvariant()
-                }));
+                });
+            });
 
             services.AddSingleton<ICapability, EchoTool>();
             services.AddSingleton<ICapability, CalculatorTool>();

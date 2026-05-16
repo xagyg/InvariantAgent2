@@ -12,9 +12,14 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantCategory Category => InvariantCategory.Safety;
 
+        public InvariantScope Scope => InvariantScope.Plan;
+
+        public InvariantSeverity Severity => InvariantSeverity.Error;
+
         public AllowedCapabilityInvariant(IEnumerable<string> allowedCapabilities)
         {
-            _allowedCapabilities = new HashSet<string>(allowedCapabilities);
+            _allowedCapabilities = new HashSet<string>(
+                allowedCapabilities);
         }
 
         public InvariantResult Evaluate(TransitionContext context)
@@ -23,12 +28,12 @@ namespace InvariantAgent.Safety.Invariants.Action
 
             if (action == null)
             {
-                return InvariantResult.Reject("No proposed action.");
+                return InvariantResult.Reject("No proposed action.", Severity);
             }
 
             if (string.IsNullOrWhiteSpace(action.Capability))
             {
-                return InvariantResult.Reject("No capability selected.");
+                return InvariantResult.Reject("No capability selected.", Severity);
             }
 
             if (_allowedCapabilities.Contains(action.Capability))
@@ -36,7 +41,7 @@ namespace InvariantAgent.Safety.Invariants.Action
                 return InvariantResult.Allow();
             }
 
-            return InvariantResult.Reject($"Capability '{action.Capability}' is not allowed or unknown.");
+            return InvariantResult.Reject($"Capability '{action.Capability}' is not allowed or unknown.", Severity);
         }
     }
 }
