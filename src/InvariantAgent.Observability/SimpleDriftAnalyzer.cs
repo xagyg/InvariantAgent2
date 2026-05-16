@@ -1,4 +1,5 @@
 ﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Drift;
 using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.Transition;
 
@@ -6,6 +7,13 @@ namespace InvariantAgent.Observability
 {
     public sealed class SimpleDriftAnalyzer : IDriftAnalyzer
     {
+        private readonly DriftTracker _driftTracker;
+
+        public SimpleDriftAnalyzer(DriftTracker driftTracker)
+        {
+            _driftTracker = driftTracker;
+        }
+
         public DriftReport Analyze(IReadOnlyList<Transition> transitions)
         {
             var capabilityUsage = transitions
@@ -20,6 +28,10 @@ namespace InvariantAgent.Observability
                 .GroupBy(name => name)
                 .ToDictionary(g => g.Key, g => g.Count());
 
+            var driftCounts = _driftTracker.Records
+                .GroupBy(r => r.Type)
+                .ToDictionary(g => g.Key, g => g.Count());
+
             return new DriftReport
             {
                 TransitionCount = transitions.Count,
@@ -28,12 +40,15 @@ namespace InvariantAgent.Observability
 
                 CapabilityUsage = capabilityUsage,
 
-                InvariantFailures = invariantFailures
+                InvariantFailures = invariantFailures,
+
+                DriftCounts = driftCounts,
+
+                RecentDrift = _driftTracker.GetRecent(10)
             };
         }
 
-        private static string ExtractInvariantName(
-            string message)
+        private static string ExtractInvariantName(string message)
         {
             var index = message.IndexOf(':');
 

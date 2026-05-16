@@ -4,6 +4,7 @@ using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Transitioning;
 
 namespace InvariantAgent.Runtime
 {
@@ -143,6 +144,18 @@ namespace InvariantAgent.Runtime
                     ["BeforeVersion"] = transition.Before?.Version,
                     ["AfterVersion"] = transition.After?.Version
                 });
+
+            // REDUCTION INVARIANTS
+            decision = _evaluator.Evaluate(context, InvariantScope.Reduction);
+
+            if (!TryApplyGovernanceOutcome(context, decision))
+            {
+                TransitionPhases.Reject(transition, decision.Summary);
+
+                _store.Append(transition);
+
+                return context;
+            }
 
             // COMMIT NEW STATE
             if (transition.After != null)

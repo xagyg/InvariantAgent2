@@ -40,7 +40,7 @@ namespace InvariantAgent.Core.Model.Transition
         public void AddEvent(TransitionEventStage stage, string message, Dictionary<string, object> metadata = null)
         {
             Events.Add(new TransitionEvent
-            {
+            {                
                 Stage = stage,
                 Message = message,
                 Metadata = metadata ?? new Dictionary<string, object>()

@@ -12,8 +12,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Observabilit
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Safety", "src\InvariantAgent.Safety\InvariantAgent.Safety.csproj", "{037B311D-BBDF-4749-BC97-298680FA7D26}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Demo", "src\InvariantAgent.Demo\InvariantAgent.Demo.csproj", "{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Capabilities", "src\InvariantAgent.Capabilities\InvariantAgent.Capabilities.csproj", "{CB6A0345-E805-4FE2-92B0-78FAED80F753}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Hosting", "src\InvariantAgent.Hosting\InvariantAgent.Hosting.csproj", "{FF1953B9-3072-4370-A15B-37D168F0230A}"
@@ -52,10 +50,6 @@ Global
 		{037B311D-BBDF-4749-BC97-298680FA7D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{037B311D-BBDF-4749-BC97-298680FA7D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{037B311D-BBDF-4749-BC97-298680FA7D26}.Release|Any CPU.Build.0 = Release|Any CPU
-		{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{312BCD0B-BF3C-4C30-B5F2-C76816CA5B3E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CB6A0345-E805-4FE2-92B0-78FAED80F753}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CB6A0345-E805-4FE2-92B0-78FAED80F753}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CB6A0345-E805-4FE2-92B0-78FAED80F753}.Release|Any CPU.ActiveCfg = Release|Any CPU

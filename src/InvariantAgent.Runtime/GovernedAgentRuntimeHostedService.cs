@@ -63,6 +63,7 @@ namespace InvariantAgent.Runtime
                     Console.WriteLine(e.Message);
                 }
 
+                Console.WriteLine($"Transition Id: {context.Transition.Id}");
                 Console.WriteLine($"Status: {context.Transition.Status}");
                 Console.WriteLine();
             }

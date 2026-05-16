@@ -5,6 +5,8 @@ using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Drift;
+using InvariantAgent.Core.Replay;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Outcome;
@@ -77,9 +79,9 @@ internal static class Program
             new EchoTool(),
             new SearchTool(),
             new CalculatorTool(),
-            new ReplayTool(transitionStore),
+            new ReplayTool(transitionStore, new ReplayValidator()),
             new ExampleHttpService(),
-            new DriftTool(transitionStore, new SimpleDriftAnalyzer())
+            new DriftTool(transitionStore, new SimpleDriftAnalyzer(new DriftTracker()))
         });
 
         var invariants = new List<IInvariant>

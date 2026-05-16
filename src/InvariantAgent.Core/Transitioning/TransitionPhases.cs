@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 
 
-namespace InvariantAgent.Core.Pipeline
+namespace InvariantAgent.Core.Transitioning
 {
     public static class TransitionPhases
     {

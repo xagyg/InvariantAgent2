@@ -8,6 +8,7 @@ namespace InvariantAgent.Core.Model.Control
         Execution,
         State,
         Memory,
+        Reduction,
         SelfModification,
         Observability
     }

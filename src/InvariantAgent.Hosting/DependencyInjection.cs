@@ -5,7 +5,9 @@ using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control;
+using InvariantAgent.Core.Drift;
 using InvariantAgent.Core.Pipeline;
+using InvariantAgent.Core.Replay;
 using InvariantAgent.Execution.Engine;
 using InvariantAgent.Observability;
 using InvariantAgent.Runtime;
@@ -26,6 +28,10 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IDriftAnalyzer, SimpleDriftAnalyzer>();
 
             services.AddSingleton<IPlanner, CommandPlanner>();
+
+            services.AddSingleton<ReplayValidator>();
+
+            services.AddSingleton<DriftTracker>();
 
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
