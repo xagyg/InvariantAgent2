@@ -1,5 +1,6 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Drift;
+using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.Transition;
 
@@ -28,9 +29,13 @@ namespace InvariantAgent.Observability
                 .GroupBy(name => name)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            var driftCounts = _driftTracker.Records
-                .GroupBy(r => r.Type)
-                .ToDictionary(g => g.Key, g => g.Count());
+            var records = _driftTracker.Records;
+
+            var driftCounts = records.GroupBy(r => r.Type).ToDictionary(g => g.Key, g => g.Count());
+
+            var totalDriftScore = records.Sum(r => r.Score);
+
+            var highestSeverity = records.Count == 0 ? InvariantSeverity.Info : records.Max(r => r.Severity);
 
             return new DriftReport
             {
@@ -44,8 +49,12 @@ namespace InvariantAgent.Observability
 
                 DriftCounts = driftCounts,
 
-                RecentDrift = _driftTracker.GetRecent(10)
-            };
+                RecentDrift = _driftTracker.GetRecent(10),
+
+                TotalDriftScore = totalDriftScore,
+
+                HighestDriftSeverity = highestSeverity
+            };        
         }
 
         private static string ExtractInvariantName(string message)

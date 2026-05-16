@@ -17,5 +17,7 @@ namespace InvariantAgent.Core.Model.Drift
         public TransitionPhase Phase { get; init; }
 
         public InvariantSeverity Severity { get; init; }
+
+        public int Score { get; init; }
     }
 }

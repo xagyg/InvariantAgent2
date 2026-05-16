@@ -55,6 +55,30 @@ public sealed class ReplayValidator
             ReplayViolations = replayViolations
         };
 
+        var score = 0;
+
+        if (comparison.OriginalStatus != comparison.ReplayStatus)
+        {
+            score += 100;
+        }
+
+        if (comparison.OriginalPhase != comparison.ReplayPhase)
+        {
+            score += 50;
+        }
+
+        score += Math.Abs(comparison.OriginalViolations.Count - comparison.ReplayViolations.Count) * 10;
+
+        //var severity = comparison.OriginalStatus != comparison.ReplayStatus
+        //    ? InvariantSeverity.Critical
+        //    : comparison.OriginalViolations.Count != comparison.ReplayViolations.Count
+        //    ? InvariantSeverity.Error
+        //    : InvariantSeverity.Info;
+
+        var severity = score >= 100 ? InvariantSeverity.Critical :
+                        score >= 50 ? InvariantSeverity.Error :
+                        score > 0 ? InvariantSeverity.Warning : InvariantSeverity.Info;
+
         if (replayRejected != originalRejected)
         {
             var result = new ReplayValidationResult
@@ -62,7 +86,8 @@ public sealed class ReplayValidator
                 Passed = false,
                 DriftType = DriftType.GovernanceDrift,
                 Reason = "Replay validation mismatch.",
-                Comparison = comparison
+                Comparison = comparison,
+                Severity = severity
             };
 
             _driftTracker.Record(
@@ -73,7 +98,7 @@ public sealed class ReplayValidator
                     TransitionId = context.Transition.Id.ToString(),
                     TimestampUtc = DateTime.UtcNow,
                     Phase = context.Transition.Phase,
-                    Severity = InvariantSeverity.Critical
+                    Severity = severity
                 });
 
             return result;
@@ -83,7 +108,8 @@ public sealed class ReplayValidator
         {
             Passed = true,
             DriftType = DriftType.None,
-            Comparison = comparison
+            Comparison = comparison,
+            Severity = severity
         };
     }
 
