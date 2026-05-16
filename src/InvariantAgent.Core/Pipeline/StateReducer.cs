@@ -12,6 +12,13 @@ namespace InvariantAgent.Core.Pipeline
         {
             var transition = context.Transition;
 
+            // reject if transition in the wrong phase or wrong state
+            if (context.Transition.Phase != TransitionPhase.Reduction
+                || context.Transition.Status == TransitionStatus.Rejected)
+            {
+                return;
+            }
+
             var before = transition.Before;
 
             var after = new AgentState

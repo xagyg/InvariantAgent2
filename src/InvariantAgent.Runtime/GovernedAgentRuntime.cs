@@ -80,17 +80,8 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision)) 
             {
-                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
-                return context;
-            }
-
-            if (!decision.Passed)
-            {
-                transition.Status = TransitionStatus.Rejected;
-                transition.Reason = decision.Summary;
-
+                TransitionPhases.Reject(transition, decision.Summary);
                 _store.Append(transition);
-
                 return context;
             }
 
@@ -117,7 +108,8 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
-                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
+                TransitionPhases.Reject(transition, decision.Summary);
+                _store.Append(transition);
                 return context;
             }
 
@@ -128,15 +120,17 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
-                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
+                TransitionPhases.Reject(transition, decision.Summary);
+                _store.Append(transition);
                 return context;
             }
 
+            // Do not allow reducer to run if transition rejected
             if (context.Transition.Status == TransitionStatus.Rejected)
             {
-                TransitionPhases.MoveTo(transition, TransitionPhase.Rejected);
+                _store.Append(transition);
                 return context;
-            }
+            }            
 
             TransitionPhases.MoveTo(transition, TransitionPhase.Reduction);
 
@@ -156,9 +150,9 @@ namespace InvariantAgent.Runtime
                 _state = transition.After;
             }
 
-            _store.Append(transition);
-
             TransitionPhases.MoveTo(transition, TransitionPhase.Completed);
+
+            _store.Append(transition);
 
             return context;
         }
@@ -190,17 +184,7 @@ namespace InvariantAgent.Runtime
                         .ToArray()
                 });
 
-            if (report.Passed)
-            {
-                return true;
-            }
-
-            transition.Status = TransitionStatus.Rejected;
-            transition.Reason = report.Summary;
-
-            _store.Append(transition);
-
-            return false;
+            return report.Passed;           
         }
     }
 }
