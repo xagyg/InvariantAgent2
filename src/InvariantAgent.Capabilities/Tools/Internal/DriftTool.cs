@@ -29,6 +29,8 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             sb.AppendLine("\n==== DRIFT REPORT ====");
             sb.AppendLine($"Transitions: {report.TransitionCount}");
             sb.AppendLine($"Rejected: {report.RejectedTransitions}");
+            sb.AppendLine($"Total drift score: {report.TotalDriftScore}");
+            sb.AppendLine($"Highest drift severity: {report.HighestDriftSeverity}");
 
             sb.AppendLine();
             sb.AppendLine("Capability usage:");
@@ -57,6 +59,38 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 foreach (var item in report.InvariantFailures)
                 {
                     sb.AppendLine($"  {item.Key}: {item.Value}");
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Drift events:");
+
+            if (report.DriftCounts.Count == 0)
+            {
+                sb.AppendLine("  none");
+            }
+            else
+            {
+                foreach (var item in report.DriftCounts)
+                {
+                    sb.AppendLine($"  {item.Key}: {item.Value}");
+                }
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Recent drift:");
+
+            if (report.RecentDrift.Count == 0)
+            {
+                sb.AppendLine("  none");
+            }
+            else
+            {
+                foreach (var drift in report.RecentDrift)
+                {
+                    sb.AppendLine(
+                        $"  [{drift.Severity}] {drift.Type} Score={drift.Score} Phase={drift.Phase} Transition={drift.TransitionId}");
+                    sb.AppendLine($"    {drift.Reason}");
                 }
             }
 

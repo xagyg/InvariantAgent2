@@ -46,7 +46,7 @@ public static class TransitionFormatter
         foreach (var transition in transitions)
         {
             sb.AppendLine();
-            sb.AppendLine($"Transition={transition.Id}");
+            sb.AppendLine($"Transition Id={transition.Id}");
 
             var beforeVersion = transition.Before?.Version.ToString() ?? "?";
             var afterVersion = transition.After?.Version.ToString() ?? "not applied";

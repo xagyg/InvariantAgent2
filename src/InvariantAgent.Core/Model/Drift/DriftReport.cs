@@ -1,4 +1,5 @@
 ﻿
+using InvariantAgent.Core.Model.Control;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -9,6 +10,11 @@ public sealed class DriftReport
     public int TransitionCount { get; init; }
 
     public int RejectedTransitions { get; init; }
+
+    public int TotalDriftScore { get; init; }
+
+    public InvariantSeverity HighestDriftSeverity { get; init; }
+        = InvariantSeverity.Info;
 
     public IReadOnlyDictionary<string, int> CapabilityUsage { get; init; }
         = new Dictionary<string, int>();
