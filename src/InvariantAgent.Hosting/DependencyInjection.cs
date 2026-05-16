@@ -23,7 +23,12 @@ namespace InvariantAgent.Hosting
     {
         public static IServiceCollection AddInvariantAgent(this IServiceCollection services)
         {
+            // MEMORY STORAGE
             services.AddSingleton<ITransitionStore, InMemoryTransitionStore>();
+
+            // PERSISTENT STORAGE (Comment out the memory storage above, and uncomment the lines below) ...
+            //services.AddSingleton<ITransitionStore>(_ => 
+            //        new FileTransitionStore(Path.Combine(AppContext.BaseDirectory, "data", "transitions.json")));
 
             services.AddSingleton<IDriftAnalyzer, SimpleDriftAnalyzer>();
 
