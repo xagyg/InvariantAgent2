@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace InvariantAgent.Core.Events;
+namespace InvariantAgent.Core.Model.Agent;
 
 public abstract class AgentEvent
 {

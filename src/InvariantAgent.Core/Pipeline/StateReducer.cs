@@ -71,11 +71,11 @@ namespace InvariantAgent.Core.Pipeline
 
         private static bool ShouldStoreLastOutcome(Transition transition)
         {
-            var capability = transition.ProposedAction?.Capability;
+            var capability = transition.ProposedAction.Capability;
 
             // do not store last outcome for introspection tools
             return transition.Outcome?.Success == true &&
-                   ! new[] { "explain", "drift", "replay", "memory-show" }.Contains(capability.Split()[0]);
+                   ! new[] { "explain", "drift", "replay", "memory-show" }.Contains(capability);
         }
     }
 }

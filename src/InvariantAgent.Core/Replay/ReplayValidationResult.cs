@@ -9,5 +9,7 @@ namespace InvariantAgent.Core.Replay
         public DriftType DriftType { get; init; }
 
         public string Reason { get; init; } = "";
+
+        public ReplayComparison Comparison { get; init; }
     }
 }

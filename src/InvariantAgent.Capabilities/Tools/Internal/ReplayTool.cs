@@ -60,7 +60,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
             if (validate)
             {
-                result += FormatValidation(selectedTransitions);
+                result += FormatValidation(selectedTransitions, verbose);
             }
 
             return CapabilityResult.Ok(
@@ -71,7 +71,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 });
         }
 
-        private string FormatValidation(IReadOnlyList<Transition> transitions)
+        private string FormatValidation(IReadOnlyList<Transition> transitions, bool verbose)
         {
             var sb = new StringBuilder();
 
@@ -90,8 +90,42 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
                 var result = validator.Validate(context);
 
-                sb.AppendLine(
-                    result.Passed
+                var showDetails = verbose || !result.Passed;
+
+                if (showDetails && result.Comparison != null)
+                {
+                    var comparison = result.Comparison;
+
+                    sb.AppendLine($"  OriginalStatus={comparison.OriginalStatus}");
+
+                    sb.AppendLine($"  ReplayStatus={comparison.ReplayStatus}");
+
+                    sb.AppendLine($"  OriginalPhase={comparison.OriginalPhase}");
+
+                    sb.AppendLine($"  ReplayPhase={comparison.ReplayPhase}");
+
+                    if (comparison.OriginalViolations.Count > 0)
+                    {
+                        sb.AppendLine($"  OriginalViolations={comparison.OriginalViolations.Count}");
+
+                        foreach (var violation in comparison.OriginalViolations)
+                        {
+                            sb.AppendLine($"    - {violation}");
+                        }
+                    }
+
+                    if (comparison.ReplayViolations.Count > 0)
+                    {
+                        sb.AppendLine($"  ReplayViolations={comparison.ReplayViolations.Count}");
+
+                        foreach (var violation in comparison.ReplayViolations)
+                        {
+                            sb.AppendLine($"    - {violation}");
+                        }
+                    }
+                }
+
+                sb.AppendLine(result.Passed
                         ? $"[{transition.Id} {transition.Status}] Passed"
                         : $"[{transition.Id} {transition.Status}] Drift={result.DriftType}, Reason={result.Reason}");
             }
