@@ -22,6 +22,9 @@ public sealed class DriftReport
     public IReadOnlyDictionary<string, int> InvariantFailures { get; init; }
         = new Dictionary<string, int>();
 
+    public IReadOnlyDictionary<InvariantCategory, int> InvariantFailuresByCategory { get; init; }
+        = new Dictionary<InvariantCategory, int>();
+
     public IReadOnlyDictionary<DriftType, int> DriftCounts { get; init; }
         = new Dictionary<DriftType, int>();
 

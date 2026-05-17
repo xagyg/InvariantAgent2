@@ -28,9 +28,16 @@ namespace InvariantAgent.Observability
 
             var invariantFailures = transitions
                 .SelectMany(t => t.Events)
-                .Where(e => (e.Stage == TransitionEventStage.Invariant) && e.Message.Contains("Failed"))
-                .Select(e => ExtractInvariantName(e.Message))
+                .Where(IsFailedInvariantEvent)
+                .Select(e => ExtractInvariantName(e.Message) + " [" + ExtractInvariantCategory(e) +"]")
                 .GroupBy(name => name)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var invariantFailuresByCategory = transitions
+                .SelectMany(t => t.Events)
+                .Where(IsFailedInvariantEvent)
+                .Select(ExtractInvariantCategory)
+                .GroupBy(category => category)
                 .ToDictionary(g => g.Key, g => g.Count());
 
             var records = _driftTracker.Records
@@ -54,6 +61,8 @@ namespace InvariantAgent.Observability
 
                 InvariantFailures = invariantFailures,
 
+                InvariantFailuresByCategory = invariantFailuresByCategory,
+
                 DriftCounts = driftCounts,
 
                 RecentDrift = records.TakeLast(10).ToList(),
@@ -71,6 +80,35 @@ namespace InvariantAgent.Observability
             if (index <= 0) return "Unknown";
 
             return message.Substring(0, index);
+        }
+
+        private static bool IsFailedInvariantEvent(TransitionEvent e)
+        {
+            if (e.Stage != TransitionEventStage.Invariant)
+            {
+                return false;
+            }
+
+            if (e.Metadata.TryGetValue("Passed", out var passed))
+            {
+                return passed is bool value && !value;
+            }
+
+            return e.Message.Contains("Failed");
+        }
+
+        private static InvariantCategory ExtractInvariantCategory(TransitionEvent e)
+        {
+            if (e.Metadata.TryGetValue("Category", out var value) &&
+                Enum.TryParse<InvariantCategory>(
+                    value?.ToString(),
+                    ignoreCase: true,
+                    out var category))
+            {
+                return category;
+            }
+
+            return InvariantCategory.Integrity;
         }
     }
 }
