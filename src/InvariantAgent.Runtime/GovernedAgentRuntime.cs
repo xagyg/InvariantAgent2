@@ -138,11 +138,12 @@ namespace InvariantAgent.Runtime
             // STATE ASSIMILATION
             _reducer.Apply(context);
 
-            transition.AddEvent(TransitionEventStage.Reduction, $"Version={transition.After?.Version}",
+            transition.AddEvent(TransitionEventStage.Reduction, $"ProposedVersion={transition.After?.Version}",
                 new()
                 {
                     ["BeforeVersion"] = transition.Before?.Version,
-                    ["AfterVersion"] = transition.After?.Version
+                    ["ProposedAfterVersion"] = transition.After?.Version,
+                    ["Committed"] = false
                 });
 
             // REDUCTION INVARIANTS
@@ -161,6 +162,13 @@ namespace InvariantAgent.Runtime
             if (transition.After != null)
             {
                 _state = transition.After;
+
+                transition.AddEvent(TransitionEventStage.Lifecycle, $"CommittedVersion={_state.Version}",
+                    new()
+                    {
+                        ["CommittedVersion"] = _state.Version,
+                        ["Committed"] = true
+                    });
             }
 
             TransitionPhases.MoveTo(transition, TransitionPhase.Completed);

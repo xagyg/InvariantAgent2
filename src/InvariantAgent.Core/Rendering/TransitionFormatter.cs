@@ -151,6 +151,8 @@ public static class TransitionFormatter
         AppendInvariantEvents(sb, transition, InvariantScope.Execution, "Execution invariants");
 
         AppendInvariantEvents(sb, transition, InvariantScope.SelfModification, "Self-modification invariants");
+
+        AppendInvariantEvents(sb, transition, InvariantScope.Reduction, "Reduction invariants");
     }
 
     private static void AppendInvariantEvents(StringBuilder sb, Transition transition, InvariantScope scope, string title)

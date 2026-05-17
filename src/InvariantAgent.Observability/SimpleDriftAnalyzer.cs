@@ -9,10 +9,14 @@ namespace InvariantAgent.Observability
     public sealed class SimpleDriftAnalyzer : IDriftAnalyzer
     {
         private readonly DriftTracker _driftTracker;
+        private readonly BehaviouralDriftDetector _behaviouralDriftDetector;
 
-        public SimpleDriftAnalyzer(DriftTracker driftTracker)
+        public SimpleDriftAnalyzer(
+            DriftTracker driftTracker,
+            BehaviouralDriftDetector behaviouralDriftDetector)
         {
             _driftTracker = driftTracker;
+            _behaviouralDriftDetector = behaviouralDriftDetector;
         }
 
         public DriftReport Analyze(IReadOnlyList<Transition> transitions)
@@ -29,7 +33,10 @@ namespace InvariantAgent.Observability
                 .GroupBy(name => name)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            var records = _driftTracker.Records;
+            var records = _driftTracker.Records
+                .Concat(_behaviouralDriftDetector.Detect(transitions))
+                .OrderBy(r => r.TimestampUtc)
+                .ToList();
 
             var driftCounts = records.GroupBy(r => r.Type).ToDictionary(g => g.Key, g => g.Count());
 
@@ -49,7 +56,7 @@ namespace InvariantAgent.Observability
 
                 DriftCounts = driftCounts,
 
-                RecentDrift = _driftTracker.GetRecent(10),
+                RecentDrift = records.TakeLast(10).ToList(),
 
                 TotalDriftScore = totalDriftScore,
 
