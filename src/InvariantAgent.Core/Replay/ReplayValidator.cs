@@ -98,7 +98,8 @@ public sealed class ReplayValidator
                     TransitionId = context.Transition.Id.ToString(),
                     TimestampUtc = DateTime.UtcNow,
                     Phase = context.Transition.Phase,
-                    Severity = severity
+                    Severity = severity,
+                    Score = score
                 });
 
             return result;

@@ -43,4 +43,18 @@ public sealed class RuntimeRejectionTests
         Assert.Equal(2, fixture.Store.GetAll().Count);
         Assert.Null(rejected.Transition.After);
     }
+
+    [Fact]
+    public async Task RunAsync_WhenRejected_DoesNotRecordCommittedVersion()
+    {
+        var fixture = TestFixture.Create();
+
+        var context = await fixture.Runtime.RunAsync("memory-set password=secret");
+
+        Assert.Equal(TransitionStatus.Rejected, context.Transition.Status);
+        Assert.DoesNotContain(
+            context.Transition.Events,
+            e => e.Metadata.TryGetValue("Committed", out var committed) &&
+                 committed is true);
+    }
 }

@@ -12,6 +12,7 @@ using InvariantAgent.Execution.Engine;
 using InvariantAgent.Observability;
 using InvariantAgent.Runtime;
 using InvariantAgent.Safety.Invariants.Action;
+using InvariantAgent.Safety.Invariants.Identity;
 using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Safety.Invariants.SelfModification;
 using InvariantAgent.Storage;
@@ -37,6 +38,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ReplayValidator>();
 
             services.AddSingleton<DriftTracker>();
+            services.AddSingleton<BehaviouralDriftDetector>();
 
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
@@ -51,7 +53,9 @@ namespace InvariantAgent.Hosting
                     new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
                     new SuccessOutcomeInvariant(),
                     new AllowedMemoryKeyInvariant(),
-                    new NonEmptyOutcomeInvariant()
+                    new NonEmptyOutcomeInvariant(),
+                    new BehaviouralDriftBoundInvariant(
+                        sp.GetRequiredService<BehaviouralDriftDetector>())
                 });
             });
 
