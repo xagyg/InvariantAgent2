@@ -38,6 +38,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ReplayValidator>();
 
             services.AddSingleton<DriftTracker>();
+            services.AddSingleton<IDriftBaselineStore, InMemoryDriftBaselineStore>();
             services.AddSingleton<BehaviouralDriftDetector>();
 
             services.AddSingleton<IExecutor, CapabilityExecutor>();
@@ -68,6 +69,8 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, MemorySetTool>();
             services.AddSingleton<ICapability, MemoryShowTool>();
             services.AddSingleton<ICapability, ExplainTool>();
+            services.AddSingleton<ICapability, BaselineApproveTool>();
+            services.AddSingleton<ICapability, BaselineShowTool>();
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 
