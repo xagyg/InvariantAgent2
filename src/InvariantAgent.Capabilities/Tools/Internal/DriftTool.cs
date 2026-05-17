@@ -63,6 +63,21 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             }
 
             sb.AppendLine();
+            sb.AppendLine("Invariant failures by category:");
+
+            if (report.InvariantFailuresByCategory.Count == 0)
+            {
+                sb.AppendLine("  none");
+            }
+            else
+            {
+                foreach (var item in report.InvariantFailuresByCategory)
+                {
+                    sb.AppendLine($"  {item.Key}: {item.Value}");
+                }
+            }
+
+            sb.AppendLine();
             sb.AppendLine("Drift events:");
 
             if (report.DriftCounts.Count == 0)
