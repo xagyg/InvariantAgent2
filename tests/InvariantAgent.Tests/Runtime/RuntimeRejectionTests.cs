@@ -1,5 +1,11 @@
 
+using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Drift;
+using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Transition;
+using InvariantAgent.Hosting;
+using InvariantAgent.Runtime;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace InvariantAgent.Tests.Runtime;
@@ -56,5 +62,67 @@ public sealed class RuntimeRejectionTests
             context.Transition.Events,
             e => e.Metadata.TryGetValue("Committed", out var committed) &&
                  committed is true);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenBehaviouralDriftExceedsBound_IsRejectedBeforeCommit()
+    {
+        var fixture = CreateFixtureWithReducer<HighDriftReducer>();
+
+        var context = await fixture.Runtime.RunAsync("echo proposed jump");
+
+        Assert.Equal(TransitionStatus.Rejected, context.Transition.Status);
+        Assert.Contains("BehaviouralDriftBoundInvariant", context.Transition.Reason);
+        Assert.Contains("Behavioural drift score", context.Transition.Reason);
+        Assert.Equal(0, fixture.Runtime.State.Version);
+        Assert.NotNull(context.Transition.After);
+        Assert.DoesNotContain(
+            context.Transition.Events,
+            e => e.Metadata.TryGetValue("Committed", out var committed) &&
+                 committed is true);
+    }
+
+    private static TestFixture CreateFixtureWithReducer<TReducer>()
+        where TReducer : class, IStateReducer
+    {
+        var services = new ServiceCollection();
+
+        services.AddInvariantAgent();
+        services.AddSingleton<IStateReducer, TReducer>();
+
+        var provider = services.BuildServiceProvider(validateScopes: true);
+
+        return new TestFixture(
+            provider.GetRequiredService<GovernedAgentRuntime>(),
+            provider.GetRequiredService<ITransitionStore>(),
+            provider.GetRequiredService<IDriftAnalyzer>(),
+            provider.GetRequiredService<DriftTracker>(),
+            provider.GetRequiredService<IDriftBaselineStore>());
+    }
+
+    private sealed class HighDriftReducer : IStateReducer
+    {
+        public void Apply(TransitionContext context)
+        {
+            context.Transition.After = new AgentState
+            {
+                Version = context.Transition.Before.Version + 1,
+                Goal = "replace operating objective",
+                Mode = "experimental",
+                Policies =
+                {
+                    "prefer speed over auditability",
+                    "use unreviewed tools"
+                },
+                Memory =
+                {
+                    ["goal"] = "replace operating objective",
+                    ["notes"] = "skip review",
+                    ["user_intent"] = "act autonomously"
+                }
+            };
+
+            context.Transition.Status = TransitionStatus.Completed;
+        }
     }
 }
