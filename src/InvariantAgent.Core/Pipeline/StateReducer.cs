@@ -75,7 +75,15 @@ namespace InvariantAgent.Core.Pipeline
 
             // do not store last outcome for introspection tools
             return transition.Outcome?.Success == true &&
-                   ! new[] { "explain", "drift", "replay", "memory-show" }.Contains(capability);
+                   ! new[]
+                   {
+                       "explain",
+                       "drift",
+                       "replay",
+                       "memory-show",
+                       "baseline-approve",
+                       "baseline-show"
+                   }.Contains(capability);
         }
     }
 }

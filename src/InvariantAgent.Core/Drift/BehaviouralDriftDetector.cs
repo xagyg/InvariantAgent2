@@ -1,3 +1,4 @@
+using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Drift;
@@ -21,6 +22,17 @@ public sealed class BehaviouralDriftDetector
             "last_action"
         };
 
+    private readonly IDriftBaselineStore _baselineStore;
+
+    public BehaviouralDriftDetector()
+    {
+    }
+
+    public BehaviouralDriftDetector(IDriftBaselineStore baselineStore)
+    {
+        _baselineStore = baselineStore;
+    }
+
     public IReadOnlyList<DriftRecord> Detect(IReadOnlyList<Transition> transitions)
     {
         var records = new List<DriftRecord>();
@@ -35,7 +47,7 @@ public sealed class BehaviouralDriftDetector
                 continue;
             }
 
-            var baseline = GetBaseline(transitions, index);
+            var baseline = _baselineStore?.Current?.State ?? GetBaseline(transitions, index);
 
             var score = Score(baseline, transition.After);
 
@@ -62,17 +74,17 @@ public sealed class BehaviouralDriftDetector
 
     public DriftScore Score(Transition transition)
     {
-        if (transition.Before == null || transition.After == null)
+        if (transition.After == null)
         {
             return new DriftScore
             {
                 Score = 0,
                 Severity = InvariantSeverity.Info,
-                Explanation = "Transition does not contain before and after adaptive state."
+                Explanation = "Transition does not contain proposed adaptive state."
             };
         }
 
-        return Score(transition.Before, transition.After);
+        return Score(GetBaseline(transition), transition.After);
     }
 
     public DriftScore Score(AgentState baseline, AgentState current)
@@ -99,6 +111,11 @@ public sealed class BehaviouralDriftDetector
         }
 
         return transitions[index].Before;
+    }
+
+    private AgentState GetBaseline(Transition transition)
+    {
+        return _baselineStore?.Current?.State ?? transition.Before;
     }
 
     private static BehaviouralDriftComparison Compare(

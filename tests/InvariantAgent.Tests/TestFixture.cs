@@ -11,7 +11,8 @@ internal sealed record TestFixture(
     GovernedAgentRuntime Runtime,
     ITransitionStore Store,
     IDriftAnalyzer DriftAnalyzer,
-    DriftTracker DriftTracker)
+    DriftTracker DriftTracker,
+    IDriftBaselineStore DriftBaselineStore)
 {
     public static TestFixture Create()
     {
@@ -26,6 +27,7 @@ internal sealed record TestFixture(
             provider.GetRequiredService<GovernedAgentRuntime>(),
             provider.GetRequiredService<ITransitionStore>(),
             provider.GetRequiredService<IDriftAnalyzer>(),
-            provider.GetRequiredService<DriftTracker>());
+            provider.GetRequiredService<DriftTracker>(),
+            provider.GetRequiredService<IDriftBaselineStore>());
     }
 }
