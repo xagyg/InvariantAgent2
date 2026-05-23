@@ -449,7 +449,7 @@ InvariantAgent is the reference implementation of the:
 
 Original paper:
 
-https://drive.google.com/file/d/1IVljpg-cmN2Q_pIryRBfT77NqDpSERc-/view
+https://www.researchgate.net/publication/404968308_Engineering_Stable_Behaviour_in_Self-Modifying_LLM_Agents
 
 ---
 
