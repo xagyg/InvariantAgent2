@@ -420,3 +420,73 @@ Current areas of investigation include:
 - invariant-based behavioural stability assessment
 
 The project remains intentionally experimental and architecture-focused.
+
+## Appendix
+
+### Example Drift Report
+Larger or repeated memory changes increase measured behavioural drift, which can move the stability assessment from normal monitoring toward watch or intervention recommendations.
+
+```text
+agent> drift
+[Lifecycle] Phase: InputReceived
+[Input] drift
+[Lifecycle] Phase: Planning
+[Planning] Capability=drift
+[Lifecycle] Phase: PlanValidation
+[Invariant] NoDeleteInvariant: Passed
+[Invariant] AllowedCapabilityInvariant: Passed
+[Control] Plan invariants passed
+[Lifecycle] Phase: Execution
+[Execution]
+==== DRIFT REPORT ====
+Transitions: 1
+Rejected: 0
+Total drift score: 40
+Highest drift severity: Warning
+Stability region: Stable
+Stability confidence: Low
+Stability drift magnitude: 0
+
+Stability vector:
+  Identifiability: 100
+  Continuity: 60
+  Consistency: 100
+  Persistence: 70
+  Recovery: 100
+  Average: 86.0
+
+Governance recommendations:
+  Continue normal monitoring.
+
+Capability usage:
+  memory-set: 1
+
+Invariant failures:
+  none
+
+Invariant failures by category:
+  none
+
+Drift events:
+  BehaviouralDrift: 1
+
+Recent drift:
+  [Warning] BehaviouralDrift Score=40 Phase=Completed Transition=08df9a82-79fc-467d-acba-3984d1dfd6ac
+    goal changed from '<empty>' to 'learn IBAAM'; adaptive memory changed (+1/-0/~0)
+==== END DRIFT REPORT ====
+[Lifecycle] Phase: ExecutionValidation
+[Invariant] SuccessOutcomeInvariant: Passed
+[Invariant] NonEmptyOutcomeInvariant: Passed
+[Control] Execution invariants passed
+[Lifecycle] Phase: SelfModificationValidation
+[Invariant] AllowedMemoryKeyInvariant: Passed
+[Control] SelfModification invariants passed
+[Lifecycle] Phase: Reduction
+[Reduction] ProposedVersion=2
+[Invariant] BehaviouralDriftBoundInvariant: Passed
+[Control] Reduction invariants passed
+[Lifecycle] CommittedVersion=2
+[Lifecycle] Phase: Completed
+Transition Id: 98571e6c-248d-4f7e-a1f1-743754824b5b
+Status: Completed
+```
