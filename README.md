@@ -127,7 +127,7 @@ Adaptive
   Planners, memory, self-modification proposals
 
 Observability
-  Replay, drift analysis, transition tracing
+  Replay, drift analysis, stability evaluation, transition tracing
 
 Storage
   Transition persistence
@@ -321,12 +321,27 @@ The modification becomes part of runtime state only after successful governance 
 
 ---
 
+## Behavioural Stability Evaluation
+
+InvariantAgent2 includes a behavioural stability evaluation layer that measures how agent behaviour changes over time without replacing invariant-based governance.
+
+The stability evaluator consumes transition history, capability usage, state changes, outcomes, and invariant failures to produce:
+
+- stability vectors
+- drift magnitude
+- stability regions
+- governance recommendations
+
+These measurements indicate behavioural change. Invariants remain responsible for determining whether change is acceptable.
+
+---
+
 ## Features
 
 - Governed transition runtime
 - Invariant-bounded execution
 - Replayable transition history
-- Drift analysis
+- Drift and behavioural stability analysis
 - Adaptive memory
 - Governed self-modification
 - Capability mediation
@@ -335,6 +350,7 @@ The modification becomes part of runtime state only after successful governance 
 - Deterministic execution paths
 - Event-oriented state evolution
 - Runtime observability
+- Behavioural stability evaluation
 
 ---
 
