@@ -10,13 +10,16 @@ namespace InvariantAgent.Observability
     {
         private readonly DriftTracker _driftTracker;
         private readonly BehaviouralDriftDetector _behaviouralDriftDetector;
+        private readonly IStabilityEvaluator _stabilityEvaluator;
 
         public SimpleDriftAnalyzer(
             DriftTracker driftTracker,
-            BehaviouralDriftDetector behaviouralDriftDetector)
+            BehaviouralDriftDetector behaviouralDriftDetector,
+            IStabilityEvaluator stabilityEvaluator)
         {
             _driftTracker = driftTracker;
             _behaviouralDriftDetector = behaviouralDriftDetector;
+            _stabilityEvaluator = stabilityEvaluator;
         }
 
         public DriftReport Analyze(IReadOnlyList<Transition> transitions)
@@ -69,7 +72,9 @@ namespace InvariantAgent.Observability
 
                 TotalDriftScore = totalDriftScore,
 
-                HighestDriftSeverity = highestSeverity
+                HighestDriftSeverity = highestSeverity,
+
+                Stability = _stabilityEvaluator.Evaluate(transitions)
             };        
         }
 

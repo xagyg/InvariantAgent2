@@ -32,6 +32,7 @@ namespace InvariantAgent.Hosting
             //        new FileTransitionStore(Path.Combine(AppContext.BaseDirectory, "data", "transitions.json")));
 
             services.AddSingleton<IDriftAnalyzer, SimpleDriftAnalyzer>();
+            services.AddSingleton<IStabilityEvaluator, TransitionHistoryStabilityEvaluator>();
 
             services.AddSingleton<IPlanner, CommandPlanner>();
 

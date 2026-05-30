@@ -1,5 +1,6 @@
 ﻿
 using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Stability;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -30,6 +31,8 @@ public sealed class DriftReport
 
     public IReadOnlyList<DriftRecord> RecentDrift { get; init; }
         = new List<DriftRecord>();
+
+    public StabilityAssessment Stability { get; init; } = new();
 
     public bool HasDrift => DriftCounts.Count > 0;
 
