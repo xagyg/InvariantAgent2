@@ -1,41 +1,90 @@
-![InvariantAgent2](assets/InvariantAgent2_image.jpg)
+# InvariantAgent2 (IA2)
 
-# InvariantAgent 2 (IA2)
+![InvariantAgent2](assets/InvariantAgent2_image.jpg)
 
 A reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
 
-[Quick Start](#current-capabilities)
-
-InvariantAgent explores governed agent runtimes where:
-- invariants define behavioural boundaries,
-- adaptive evolution is runtime-controlled,
-- planners are replaceable cognitive components,
-- and capabilities operate inside governed execution.
+InvariantAgent2 explores governed agent runtimes where behavioural constraints remain external to adaptive cognition. Rather than allowing an LLM to directly govern system behaviour, all actions, state transitions, and self-modifications are evaluated under invariant-based runtime control.
 
 ---
 
-# Core Idea
+## Why InvariantAgent2?
 
-LLMs are treated as **untrusted cognitive generators**.
+Most agent frameworks place the LLM at the centre of decision making.
 
-They do not govern the system.
+InvariantAgent2 takes a different approach.
 
-Instead, all proposed actions pass through invariant-bounded runtime control.
+The planner (LLM or otherwise) is treated as an untrusted cognitive component that proposes actions. Runtime governance, invariant enforcement, and state transition control remain external to the planner.
+
+This enables adaptive agents to evolve while maintaining:
+
+- explicit behavioural constraints
+- replayable execution
+- auditable decision making
+- governed self-modification
+- bounded behavioural evolution
+
+InvariantAgent2 serves as a reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
+
+---
+
+## Quick Start
+
+```bash
+dotnet run --project InvariantAgent.ConsoleApp
+```
+
+Example:
+
+```text
+agent> calc 10+20
+[Lifecycle] Phase: InputReceived
+[Input] calc 10+20
+[Lifecycle] Phase: Planning
+[Planning] Capability=calc
+[Lifecycle] Phase: PlanValidation
+[Invariant] NoDeleteInvariant: Passed
+[Invariant] AllowedCapabilityInvariant: Passed
+[Control] Plan invariants passed
+[Lifecycle] Phase: Execution
+[Execution] 30
+[Lifecycle] Phase: ExecutionValidation
+[Invariant] SuccessOutcomeInvariant: Passed
+[Invariant] NonEmptyOutcomeInvariant: Passed
+[Control] Execution invariants passed
+[Lifecycle] Phase: SelfModificationValidation
+[Invariant] AllowedMemoryKeyInvariant: Passed
+[Control] SelfModification invariants passed
+[Lifecycle] Phase: Reduction
+[Reduction] ProposedVersion=1
+[Invariant] BehaviouralDriftBoundInvariant: Passed
+[Control] Reduction invariants passed
+[Lifecycle] CommittedVersion=1
+[Lifecycle] Phase: Completed
+Transition Id: 5594c376-2201-4616-b35f-dd126458bf57
+Status: Completed
+```
+
+---
+
+## Core Idea
+
+LLMs are treated as **cognitive generators**, not governing authorities.
+
+Every proposed action passes through invariant-bounded runtime control before execution or state mutation occurs.
 
 The runtime governs:
-- planning,
-- execution,
-- adaptive state evolution,
-- self-modification,
-- and transition assimilation.
 
-LLMs therefore become:
-- planning components,
-- not governing authorities.
+- planning
+- execution
+- state evolution
+- self-modification
+- transition persistence
+- behavioural auditing
 
 ---
 
-# Runtime Hierarchy
+## Runtime Hierarchy
 
 ```text
 invariants
@@ -47,18 +96,19 @@ planner
 capabilities
 ```
 
-This differs philosophically from many current agent frameworks, where the LLM itself implicitly becomes the governing entity.
+Invariants define admissible behavioural boundaries.
 
-In InvariantAgent:
-- invariants define admissible boundaries,
-- the runtime governs transitions,
-- planners propose actions,
-- capabilities execute actions,
-- reducers assimilate approved evolution.
+The runtime governs transitions.
+
+Planners propose actions.
+
+Capabilities perform execution.
+
+Reducers assimilate approved state evolution.
 
 ---
 
-# Architecture
+## Architecture
 
 ```text
 Core
@@ -85,9 +135,22 @@ Storage
 
 ---
 
-# Governed Transition Lifecycle
+## IBAAM Mapping
 
-InvariantAgent executes through governed state transitions:
+| InvariantAgent2 Component | IBAAM Layer |
+|--------------------------|-------------|
+| Planner | Adaptive Layer |
+| Runtime | Execution Layer |
+| Invariants | Control Layer |
+| Replay & Drift Analysis | Observability Layer |
+| Reducers | State Assimilation |
+| Transition Store | Persistence |
+
+---
+
+## Governed Transition Lifecycle
+
+Every interaction executes through a governed transition pipeline:
 
 ```text
 Input
@@ -100,61 +163,153 @@ Input
 ```
 
 Every transition records:
-- before state,
-- proposed action,
-- execution outcome,
-- invariant decisions,
-- adaptive modifications,
-- resulting state evolution.
 
-Rejected transitions are preserved for:
-- replay,
-- audit,
-- drift analysis,
-- governance inspection.
+- prior state
+- proposed action
+- execution outcome
+- invariant decisions
+- adaptive modifications
+- resulting state
+
+Rejected transitions are also persisted and remain available for:
+
+- replay
+- auditing
+- drift analysis
+- governance inspection
 
 ---
 
-# State Projection
+## Example Governed Transition
 
-Planners do not receive unrestricted mutable runtime state.
+The following session demonstrates:
 
-Instead, they operate on a controlled projection:
+- planning
+- invariant evaluation
+- capability execution
+- state evolution
+- rejected actions
+- replay and auditing
+- governed self-modification
+- drift analysis
+
+All state changes occur only after invariant approval.
+
+### Quick Example
+
+```text
+agent> calc 10+20
+[Lifecycle] Phase: InputReceived
+[Input] calc 10+20
+[Lifecycle] Phase: Planning
+[Planning] Capability=calc
+[Lifecycle] Phase: PlanValidation
+[Invariant] NoDeleteInvariant: Passed
+[Invariant] AllowedCapabilityInvariant: Passed
+[Control] Plan invariants passed
+[Lifecycle] Phase: Execution
+[Execution] 30
+[Lifecycle] Phase: ExecutionValidation
+[Invariant] SuccessOutcomeInvariant: Passed
+[Invariant] NonEmptyOutcomeInvariant: Passed
+[Control] Execution invariants passed
+[Lifecycle] Phase: SelfModificationValidation
+[Invariant] AllowedMemoryKeyInvariant: Passed
+[Control] SelfModification invariants passed
+[Lifecycle] Phase: Reduction
+[Reduction] ProposedVersion=1
+[Invariant] BehaviouralDriftBoundInvariant: Passed
+[Control] Reduction invariants passed
+[Lifecycle] CommittedVersion=1
+[Lifecycle] Phase: Completed
+Transition Id: 5594c376-2201-4616-b35f-dd126458bf57
+Status: Completed
+
+agent> memory-set goal=learn IBAAM
+[Lifecycle] Phase: InputReceived
+[Input] memory-set goal=learn IBAAM
+[Lifecycle] Phase: Planning
+[Planning] Capability=memory-set
+[Lifecycle] Phase: PlanValidation
+[Invariant] NoDeleteInvariant: Passed
+[Invariant] AllowedCapabilityInvariant: Passed
+[Control] Plan invariants passed
+[Lifecycle] Phase: Execution
+[SelfModification] memory.set goal
+[Execution] Proposed memory update: goal
+[Lifecycle] Phase: ExecutionValidation
+[Invariant] SuccessOutcomeInvariant: Passed
+[Invariant] NonEmptyOutcomeInvariant: Passed
+[Control] Execution invariants passed
+[Lifecycle] Phase: SelfModificationValidation
+[Invariant] AllowedMemoryKeyInvariant: Passed
+[Control] SelfModification invariants passed
+[Lifecycle] Phase: Reduction
+[SelfModification] Set goal
+[Reduction] ProposedVersion=2
+[Invariant] BehaviouralDriftBoundInvariant: Passed
+[Control] Reduction invariants passed
+[Lifecycle] CommittedVersion=2
+[Lifecycle] Phase: Completed
+Transition Id: 90a02255-8610-4b90-99fe-380151a9e5cd
+Status: Completed
+
+agent> boo
+[Lifecycle] Phase: InputReceived
+[Input] boo
+[Lifecycle] Phase: Planning
+[Planning] Capability=boo
+[Lifecycle] Phase: PlanValidation
+[Invariant] NoDeleteInvariant: Passed
+[Invariant] AllowedCapabilityInvariant: Failed Capability 'boo' is not allowed or unknown.
+[Control] Plan invariants failed: AllowedCapabilityInvariant: Capability 'boo' is not allowed or unknown.
+[Lifecycle] Phase: Rejected
+Transition Id: ced39314-d599-4813-9f9b-b0d8cadf82d4
+Status: Rejected
+```
+
+---
+
+## State Projection
+
+Planners do not receive unrestricted access to runtime state.
+
+Instead they operate on a bounded projection:
 
 ```text
 π(Sₜ)
 ```
 
-including:
-- goals,
-- memory summaries,
-- prior outcomes,
-- active policies,
-- runtime versioning.
+containing:
 
-This creates a bounded cognitive interface between:
-- adaptive reasoning,
-- and governed execution.
+- goals
+- memory summaries
+- prior outcomes
+- active policies
+- runtime versioning
+
+This creates a controlled cognitive interface between adaptive reasoning and governed execution.
 
 ---
 
-# Self-Modification Governance
+## Self-Modification Governance
 
-InvariantAgent supports governed adaptive evolution.
+InvariantAgent2 supports governed adaptive evolution.
 
 Capabilities may propose:
-- memory changes,
-- goal updates,
-- policy evolution,
-- future adaptive modifications.
 
-However:
-- capabilities cannot directly mutate runtime state.
+- memory updates
+- goal changes
+- policy evolution
+- future adaptive modifications
+
+Capabilities cannot directly modify runtime state.
 
 Instead:
-- modifications are proposed,
-- invariants govern admissibility,
-- reducers assimilate approved changes.
+
+1. A modification is proposed.
+2. Invariants evaluate admissibility.
+3. Approved changes are assimilated by reducers.
 
 Example:
 
@@ -162,14 +317,11 @@ Example:
 memory-set goal=plan a healthy weekly routine
 ```
 
-This creates:
-- a proposed self-modification,
-- evaluated under invariant governance,
-- before becoming part of runtime memory.
+The modification becomes part of runtime state only after successful governance evaluation.
 
 ---
 
-# Features
+## Features
 
 - Governed transition runtime
 - Invariant-bounded execution
@@ -186,7 +338,7 @@ This creates:
 
 ---
 
-# Planner Support
+## Planner Support
 
 - OpenAI planners
 - Google Gemini planners
@@ -195,7 +347,7 @@ This creates:
 
 ---
 
-# Current Capabilities
+## Current Capabilities
 
 - `echo`
 - `search`
@@ -206,14 +358,14 @@ This creates:
 - `drift`
 - `memory-set`
 - `memory-show`
+- `baseline-show`
+- `baseline-approve`
 
 Additional capabilities can be added through the capability registry.
 
 ---
 
-# Running
-
-InvariantAgent uses a hosted governed runtime architecture.
+## Running
 
 ```bash
 dotnet run --project InvariantAgent.ConsoleApp
@@ -227,240 +379,28 @@ InvariantAgent.ConsoleApp/Program.cs
 
 ---
 
-# Example Session
+## Research
 
-```text
-=== InvariantAgent REPL ===
-Commands:
-  exit  - quit
-  clear - clear screen
+InvariantAgent2 serves as the reference implementation of the:
 
-agent> echo hello
-[Input] echo hello
-[Planning] Capability=echo
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution] hello
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=1
-Status: Completed
-
-agent> calc 10+20
-[Input] calc 10+20
-[Planning] Capability=calc
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution] 30
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=2
-Status: Completed
-
-agent> memory-show
-[Input] memory-show
-[Planning] Capability=memory-show
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution]
-==== MEMORY ====
-lastOutcome=30
-==== END MEMORY ====
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=3
-Status: Completed
-
-agent> boo
-[Input] boo
-[Planning] Capability=boo
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Failed Capability 'boo' is not allowed.
-[PreControl] Rejected: Invariant 'AllowedCapabilityInvariant' failed: Capability 'boo' is not allowed.
-Status: Rejected
-
-agent> replay
-[Input] replay
-[Planning] Capability=replay
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution]
-==== REPLAY START ====
-Transition=b63e6414-15bd-4f23-a8bf-183971a07bf1
-State = 0 -> 1
-Status=Completed
-[Input] echo hello
-[Planning] Capability=echo
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution] hello
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=1
-Memory:
-  lastOutcome=hello
-
-Transition=7df0cdcd-5142-47a0-abda-4ac85611ad1d
-State = 1 -> 2
-Status=Completed
-[Input] calc 10+20
-[Planning] Capability=calc
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution] 30
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=2
-Memory:
-  lastOutcome=30
-
-Transition=b19b9cf2-b577-4b2e-9ddb-cc247524a030
-State = 2 -> 3
-Status=Completed
-[Input] memory-show
-[Planning] Capability=memory-show
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution]
-==== MEMORY ====
-lastOutcome=30
-==== END MEMORY ====
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=3
-Memory:
-  lastOutcome=
-==== MEMORY ====
-lastOutcome=30
-==== END MEMORY ====
-
-Transition=91ab5f68-455c-48ba-8c0d-9cc5a0d2e695
-State = 3 -> not applied
-Status=Rejected
-Reason=Invariant 'AllowedCapabilityInvariant' failed: Capability 'boo' is not allowed.
-[Input] boo
-[Planning] Capability=boo
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Failed Capability 'boo' is not allowed.
-[PreControl] Rejected: Invariant 'AllowedCapabilityInvariant' failed: Capability 'boo' is not allowed.
-
-==== REPLAY END ====
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=4
-Status: Completed
-
-agent> memory-set goal=learn IBAAM
-[Input] memory-set goal=learn IBAAM
-[Planning] Capability=memory-set
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[SelfModification] memory.set goal
-[Execution] Proposed memory update: goal
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Memory] Set goal
-[Reducer] Version=5
-Status: Completed
-
-agent> memory-show
-[Input] memory-show
-[Planning] Capability=memory-show
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution]
-==== MEMORY ====
-lastOutcome=Proposed memory update: goal
-goal=learn IBAAM
-==== END MEMORY ====
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=6
-Status: Completed
-
-agent> drift
-[Input] drift
-[Planning] Capability=drift
-[Invariant] NoDeleteInvariant: Passed
-[Invariant] AllowedCapabilityInvariant: Passed
-[PreControl] Allowed
-[Execution]
-==== DRIFT REPORT ====
-Transitions: 7
-Rejected: 1
-
-Capability usage:
-  echo: 1
-  calc: 1
-  memory-show: 2
-  boo: 1
-  replay: 1
-  memory-set: 1
-
-Invariant failures:
-  AllowedCapabilityInvariant: 1
-==== END DRIFT REPORT ====
-[Invariant] SuccessOutcomeInvariant: Passed
-[Invariant] AllowedMemoryKeyInvariant: Passed
-[Invariant] NonEmptyOutcomeInvariant: Passed
-[PostControl] Accepted
-[Reducer] Version=7
-Status: Completed
-
-agent> quit
-
-F:\InvariantAgent.ConsoleApp.exe (process 22392) exited with code 0 (0x0).
-Press any key to close this window . . .
-```
----
-
-# IBAAM
-
-InvariantAgent is the reference implementation of the:
-
-## Invariant-Bounded Agent Alignment Model (IBAAM)
+### Invariant-Bounded Agent Alignment Model (IBAAM)
 
 Original paper:
 
-https://www.researchgate.net/publication/405207593_Engineering_Stable_Behaviour_in_Self-Modifying_LLM_Agents
+![Engineering Stable Behaviour in Self-Modifying LLMs](https://www.researchgate.net/publication/405207593_Engineering_Stable_Behaviour_in_Self-Modifying_LLM_Agents)
 
 ---
 
-# Current Research Direction
+## Research Directions
 
-InvariantAgent is currently exploring:
-- governed adaptive evolution,
-- bounded self-modification,
-- runtime-enforced alignment,
-- transition-governed cognition,
-- drift-aware agent architectures,
-- replayable agent execution systems.
+Current areas of investigation include:
 
-The project is intentionally architecture-focused and experimental.
+- governed adaptive evolution
+- bounded self-modification
+- runtime-enforced alignment
+- transition-governed cognition
+- behavioural drift measurement
+- replayable agent execution
+- invariant-based behavioural stability assessment
+
+The project remains intentionally experimental and architecture-focused.
