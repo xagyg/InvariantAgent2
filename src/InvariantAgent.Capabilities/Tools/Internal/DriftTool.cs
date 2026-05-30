@@ -31,6 +31,33 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             sb.AppendLine($"Rejected: {report.RejectedTransitions}");
             sb.AppendLine($"Total drift score: {report.TotalDriftScore}");
             sb.AppendLine($"Highest drift severity: {report.HighestDriftSeverity}");
+            sb.AppendLine($"Stability region: {report.Stability.Region}");
+            sb.AppendLine($"Stability confidence: {report.Stability.Confidence}");
+            sb.AppendLine($"Stability drift magnitude: {report.Stability.DriftMagnitude}");
+
+            sb.AppendLine();
+            sb.AppendLine("Stability vector:");
+            sb.AppendLine($"  Identifiability: {report.Stability.Current.Identifiability}");
+            sb.AppendLine($"  Continuity: {report.Stability.Current.Continuity}");
+            sb.AppendLine($"  Consistency: {report.Stability.Current.Consistency}");
+            sb.AppendLine($"  Persistence: {report.Stability.Current.Persistence}");
+            sb.AppendLine($"  Recovery: {report.Stability.Current.Recovery}");
+            sb.AppendLine($"  Average: {report.Stability.Current.AverageScore:0.0}");
+
+            sb.AppendLine();
+            sb.AppendLine("Governance recommendations:");
+
+            if (report.Stability.Recommendations.Count == 0)
+            {
+                sb.AppendLine("  none");
+            }
+            else
+            {
+                foreach (var recommendation in report.Stability.Recommendations)
+                {
+                    sb.AppendLine($"  {recommendation}");
+                }
+            }
 
             sb.AppendLine();
             sb.AppendLine("Capability usage:");
