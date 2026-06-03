@@ -14,6 +14,9 @@ namespace InvariantAgent.Core.Model.Control
 
         public string MetaInvariantCategory { get; init; } = "Priority";
 
+        public IReadOnlyList<MetaInvariantCategory> MetaInvariantCategories { get; init; }
+            = Array.Empty<MetaInvariantCategory>();
+
         public InvariantLayer OverriddenLayer => OverriddenViolation.Layer;
     }
 }

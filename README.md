@@ -125,7 +125,14 @@ Override decisions are recorded as control events with:
 - a generated justification
 - audit metadata for governance review
 
-This implements a conservative form of meta-invariant governance: priority, justification, auditability, and review signals without weakening existing hard safety constraints.
+Meta-invariants are first-class governance components:
+
+- `PriorityMetaInvariant` validates hierarchy precedence.
+- `OverrideSeverityMetaInvariant` keeps `Error` and `Critical` violations blocking by default.
+- `JustificationMetaInvariant` requires an inspectable override rationale.
+- `AuditMetaInvariant` marks override decisions for governance review.
+
+This keeps priority, justification, auditability, and review signals explicit without weakening existing hard safety constraints.
 
 ---
 

@@ -29,6 +29,10 @@ public sealed class HierarchicalInvariantGovernanceTests
         Assert.Equal("PersonalisationPreference", overrideDecision.OverriddenViolation.Invariant);
         Assert.Equal(InvariantLayer.AdaptiveHeuristic, overrideDecision.OverriddenLayer);
         Assert.Contains("SystemIntegrity", overrideDecision.PreservedHigherPriorityInvariants);
+        Assert.Contains(MetaInvariantCategory.Priority, overrideDecision.MetaInvariantCategories);
+        Assert.Contains(MetaInvariantCategory.OverrideSeverity, overrideDecision.MetaInvariantCategories);
+        Assert.Contains(MetaInvariantCategory.Justification, overrideDecision.MetaInvariantCategories);
+        Assert.Contains(MetaInvariantCategory.Audit, overrideDecision.MetaInvariantCategories);
         Assert.Contains(
             context.Transition.Events,
             e => e.Metadata.TryGetValue("Audit", out var audit) &&
@@ -80,6 +84,30 @@ public sealed class HierarchicalInvariantGovernanceTests
         {
             TestInvariant.Fail("HelpfulTone", InvariantLayer.Behavioural)
         });
+
+        var report = evaluator.Evaluate(NewContext(), InvariantScope.Plan);
+
+        Assert.False(report.Passed);
+        Assert.Single(report.Violations);
+        Assert.Empty(report.Overrides);
+    }
+
+    [Fact]
+    public void Evaluate_WhenCustomMetaInvariantRejects_DoesNotOverride()
+    {
+        var evaluator = new InvariantEvaluator(
+            new IInvariant[]
+            {
+                TestInvariant.Pass("SystemIntegrity", InvariantLayer.Fundamental),
+                TestInvariant.Fail(
+                    "PersonalisationPreference",
+                    InvariantLayer.AdaptiveHeuristic,
+                    InvariantSeverity.Warning)
+            },
+            new IMetaInvariant[]
+            {
+                new RejectingMetaInvariant()
+            });
 
         var report = evaluator.Evaluate(NewContext(), InvariantScope.Plan);
 
@@ -147,6 +175,18 @@ public sealed class HierarchicalInvariantGovernanceTests
             InvariantSeverity severity)
         {
             return new TestInvariant(name, layer, false, severity);
+        }
+    }
+
+    private sealed class RejectingMetaInvariant : IMetaInvariant
+    {
+        public string Name => nameof(RejectingMetaInvariant);
+
+        public MetaInvariantCategory Category => MetaInvariantCategory.Review;
+
+        public MetaInvariantResult Evaluate(MetaInvariantContext context)
+        {
+            return MetaInvariantResult.Reject("Manual governance review required.");
         }
     }
 }

@@ -49,6 +49,27 @@ public sealed class DriftReportTests
     }
 
     [Fact]
+    public async Task Analyze_WithRepeatedDriftTool_DoesNotReportReadOnlyTransitionsAsNewBehaviouralDrift()
+    {
+        var fixture = TestFixture.Create();
+
+        await fixture.Runtime.RunAsync("echo before-goal");
+        await fixture.Runtime.RunAsync("memory-set goal=go to shop");
+        await fixture.Runtime.RunAsync("drift");
+        await fixture.Runtime.RunAsync("drift");
+
+        var report = fixture.DriftAnalyzer.Analyze(fixture.Store.GetAll());
+
+        Assert.Equal(1, report.DriftCounts[DriftType.BehaviouralDrift]);
+        var drift = Assert.Single(
+            report.RecentDrift,
+            d => d.Type == DriftType.BehaviouralDrift);
+        Assert.Equal("memory-set", fixture.Store.GetAll()
+            .Single(t => t.Id.ToString() == drift.TransitionId)
+            .ProposedAction.Capability);
+    }
+
+    [Fact]
     public async Task Analyze_WithOnlyVolatileOutcomeMemory_DoesNotReturnBehaviouralDrift()
     {
         var fixture = TestFixture.Create();
