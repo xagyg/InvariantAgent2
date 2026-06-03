@@ -193,6 +193,7 @@ namespace InvariantAgent.Runtime
                     ["Allowed"] = report.Passed,
                     ["Reason"] = report.Summary,
                     ["ViolationCount"] = report.Violations.Count,
+                    ["OverrideCount"] = report.Overrides.Count,
                     ["Violations"] = report.Violations
                         .Select(v => new
                         {
@@ -200,7 +201,18 @@ namespace InvariantAgent.Runtime
                             Category = v.Category.ToString(),
                             Scope = v.Scope.ToString(),
                             Severity = v.Severity.ToString(),
+                            Layer = v.Layer.ToString(),
                             v.Reason
+                        })
+                        .ToArray(),
+                    ["Overrides"] = report.Overrides
+                        .Select(o => new
+                        {
+                            OverriddenInvariant = o.OverriddenViolation.Invariant,
+                            OverriddenLayer = o.OverriddenLayer.ToString(),
+                            o.PreservedHigherPriorityInvariants,
+                            o.Justification,
+                            o.MetaInvariantCategory
                         })
                         .ToArray()
                 });

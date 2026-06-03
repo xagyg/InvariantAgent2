@@ -13,6 +13,8 @@ namespace InvariantAgent.Core.Abstractions
 
         InvariantSeverity Severity { get; }
 
+        InvariantLayer Layer => InvariantLayer.Fundamental;
+
         InvariantResult Evaluate(TransitionContext context);
     }
 }

@@ -10,6 +10,8 @@
 
         public InvariantSeverity Severity { get; init; }
 
+        public InvariantLayer Layer { get; init; } = InvariantLayer.Fundamental;
+
         public string Reason { get; init; } = "";
     }
 }

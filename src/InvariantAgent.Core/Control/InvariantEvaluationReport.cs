@@ -13,9 +13,14 @@ namespace InvariantAgent.Core.Model.Control
         public IReadOnlyList<InvariantViolation> Violations { get; init; }
             = Array.Empty<InvariantViolation>();
 
+        public IReadOnlyList<InvariantOverride> Overrides { get; init; }
+            = Array.Empty<InvariantOverride>();
+
         public string Summary =>
             Passed
-                ? "All invariants passed."
+                ? Overrides.Count == 0
+                    ? "All invariants passed."
+                    : "All unresolved invariants passed; lower-priority violations were overridden."
                 : string.Join(
                     Environment.NewLine,
                     Violations.Select(v =>
