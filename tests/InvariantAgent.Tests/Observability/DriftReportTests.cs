@@ -70,6 +70,32 @@ public sealed class DriftReportTests
     }
 
     [Fact]
+    public async Task Analyze_WithSequentialGoalChanges_ReportsTransitionLocalDeltas()
+    {
+        var fixture = TestFixture.Create();
+
+        await fixture.Runtime.RunAsync("memory-set goal=sss");
+        await fixture.Runtime.RunAsync("memory-set goal=we");
+        await fixture.Runtime.RunAsync("memory-set goal=ppppp");
+        await fixture.Runtime.RunAsync("memory-set goal=iuewiuer23423");
+
+        var report = fixture.DriftAnalyzer.Analyze(fixture.Store.GetAll());
+
+        Assert.Contains(
+            report.RecentDrift,
+            drift => drift.Reason.Contains("goal changed from '<empty>' to 'sss'"));
+        Assert.Contains(
+            report.RecentDrift,
+            drift => drift.Reason.Contains("goal changed from 'sss' to 'we'"));
+        Assert.Contains(
+            report.RecentDrift,
+            drift => drift.Reason.Contains("goal changed from 'we' to 'ppppp'"));
+        Assert.Contains(
+            report.RecentDrift,
+            drift => drift.Reason.Contains("goal changed from 'ppppp' to 'iuewiuer23423'"));
+    }
+
+    [Fact]
     public async Task Analyze_WithOnlyVolatileOutcomeMemory_DoesNotReturnBehaviouralDrift()
     {
         var fixture = TestFixture.Create();

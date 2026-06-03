@@ -33,6 +33,9 @@ public sealed class HierarchicalInvariantGovernanceTests
         Assert.Contains(MetaInvariantCategory.OverrideSeverity, overrideDecision.MetaInvariantCategories);
         Assert.Contains(MetaInvariantCategory.Justification, overrideDecision.MetaInvariantCategories);
         Assert.Contains(MetaInvariantCategory.Audit, overrideDecision.MetaInvariantCategories);
+        Assert.Contains(MetaInvariantCategory.Review, overrideDecision.MetaInvariantCategories);
+        Assert.False(overrideDecision.RequiresReview);
+        Assert.Empty(overrideDecision.ReviewReasons);
         Assert.Contains(
             context.Transition.Events,
             e => e.Metadata.TryGetValue("Audit", out var audit) &&
@@ -90,6 +93,38 @@ public sealed class HierarchicalInvariantGovernanceTests
         Assert.False(report.Passed);
         Assert.Single(report.Violations);
         Assert.Empty(report.Overrides);
+    }
+
+    [Fact]
+    public void Evaluate_WhenSameLayerSoftViolationsAreOverridden_FlagsReview()
+    {
+        var evaluator = new InvariantEvaluator(new IInvariant[]
+        {
+            TestInvariant.Pass("SystemIntegrity", InvariantLayer.Fundamental),
+            TestInvariant.Fail(
+                "HelpfulTone",
+                InvariantLayer.Behavioural,
+                InvariantSeverity.Warning),
+            TestInvariant.Fail(
+                "ConciseStyle",
+                InvariantLayer.Behavioural,
+                InvariantSeverity.Warning)
+        });
+        var context = NewContext();
+
+        var report = evaluator.Evaluate(context, InvariantScope.Plan);
+
+        Assert.True(report.Passed);
+        Assert.Equal(2, report.Overrides.Count);
+        Assert.All(report.Overrides, o =>
+        {
+            Assert.True(o.RequiresReview);
+            Assert.NotEmpty(o.ReviewReasons);
+        });
+        Assert.Contains(
+            context.Transition.Events,
+            e => e.Metadata.TryGetValue("RequiresReview", out var requiresReview) &&
+                 requiresReview is true);
     }
 
     [Fact]

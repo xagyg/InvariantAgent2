@@ -131,6 +131,7 @@ Meta-invariants are first-class governance components:
 - `OverrideSeverityMetaInvariant` keeps `Error` and `Critical` violations blocking by default.
 - `JustificationMetaInvariant` requires an inspectable override rationale.
 - `AuditMetaInvariant` marks override decisions for governance review.
+- `ReviewMetaInvariant` flags ambiguous or noisy override situations, such as same-layer conflicts or multiple simultaneous violations.
 
 This keeps priority, justification, auditability, and review signals explicit without weakening existing hard safety constraints.
 

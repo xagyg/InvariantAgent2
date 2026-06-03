@@ -50,6 +50,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IMetaInvariant, OverrideSeverityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, JustificationMetaInvariant>();
             services.AddSingleton<IMetaInvariant, AuditMetaInvariant>();
+            services.AddSingleton<IMetaInvariant, ReviewMetaInvariant>();
 
             services.AddSingleton<IInvariantEvaluator>(sp =>
             {

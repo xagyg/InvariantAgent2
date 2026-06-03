@@ -212,7 +212,9 @@ namespace InvariantAgent.Runtime
                             OverriddenLayer = o.OverriddenLayer.ToString(),
                             o.PreservedHigherPriorityInvariants,
                             o.Justification,
-                            o.MetaInvariantCategory
+                            o.MetaInvariantCategory,
+                            o.RequiresReview,
+                            o.ReviewReasons
                         })
                         .ToArray()
                 });

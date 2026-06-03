@@ -128,6 +128,10 @@ namespace InvariantAgent.Core.Control
                     GetMetadata<string>(metaEvaluations, "Justification")
                     ?? $"{violation.Invariant} was overridden by meta-invariant policy.";
                 var audit = GetMetadata<bool>(metaEvaluations, "Audit");
+                var requiresReview = GetMetadata<bool>(metaEvaluations, "RequiresReview");
+                var reviewReasons =
+                    GetMetadata<string[]>(metaEvaluations, "ReviewReasons")
+                    ?? new string[0];
                 var categories = metaEvaluations
                     .Select(e => e.MetaInvariant.Category)
                     .Distinct()
@@ -139,7 +143,9 @@ namespace InvariantAgent.Core.Control
                     PreservedHigherPriorityInvariants = preservedHigherPriorityInvariants,
                     Justification = justification,
                     MetaInvariantCategory = string.Join(", ", categories),
-                    MetaInvariantCategories = categories
+                    MetaInvariantCategories = categories,
+                    RequiresReview = requiresReview,
+                    ReviewReasons = reviewReasons
                 };
 
                 overrides.Add(overrideDecision);
@@ -155,6 +161,8 @@ namespace InvariantAgent.Core.Control
                         ["PreservedHigherPriorityInvariants"] = preservedHigherPriorityInvariants,
                         ["Justification"] = justification,
                         ["Audit"] = audit,
+                        ["RequiresReview"] = requiresReview,
+                        ["ReviewReasons"] = reviewReasons,
                         ["MetaInvariants"] = metaEvaluations
                             .Select(e => e.MetaInvariant.Name)
                             .ToArray()
@@ -171,7 +179,8 @@ namespace InvariantAgent.Core.Control
                 new PriorityMetaInvariant(),
                 new OverrideSeverityMetaInvariant(),
                 new JustificationMetaInvariant(),
-                new AuditMetaInvariant()
+                new AuditMetaInvariant(),
+                new ReviewMetaInvariant()
             };
         }
 
