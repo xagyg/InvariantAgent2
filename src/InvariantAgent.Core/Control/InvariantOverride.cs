@@ -17,6 +17,11 @@ namespace InvariantAgent.Core.Model.Control
         public IReadOnlyList<MetaInvariantCategory> MetaInvariantCategories { get; init; }
             = Array.Empty<MetaInvariantCategory>();
 
+        public bool RequiresReview { get; init; }
+
+        public IReadOnlyList<string> ReviewReasons { get; init; }
+            = Array.Empty<string>();
+
         public InvariantLayer OverriddenLayer => OverriddenViolation.Layer;
     }
 }
