@@ -47,6 +47,13 @@ public sealed class BehaviouralDriftDetector
                 continue;
             }
 
+            var transitionDelta = Score(transition.Before, transition.After);
+
+            if (transitionDelta.Score == 0)
+            {
+                continue;
+            }
+
             var baseline = _baselineStore?.Current?.State ?? GetBaseline(transitions, index);
 
             var score = Score(baseline, transition.After);
