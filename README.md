@@ -401,10 +401,6 @@ InvariantAgent2 serves as the reference implementation of the:
 
 ### Invariant-Bounded Agent Alignment Model (IBAAM)
 
-Original paper:
-
-[Engineering Stable Behaviour in Self-Modifying LLMs](https://www.researchgate.net/publication/405207593_Engineering_Stable_Behaviour_in_Self-Modifying_LLM_Agents)
-
 ---
 
 ## Research Directions
