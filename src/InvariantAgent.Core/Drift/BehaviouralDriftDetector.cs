@@ -54,11 +54,7 @@ public sealed class BehaviouralDriftDetector
                 continue;
             }
 
-            var baseline = _baselineStore?.Current?.State ?? GetBaseline(transitions, index);
-
-            var score = Score(baseline, transition.After);
-
-            if (score.Score < ReportingThreshold)
+            if (transitionDelta.Score < ReportingThreshold)
             {
                 continue;
             }
@@ -67,12 +63,12 @@ public sealed class BehaviouralDriftDetector
                 new DriftRecord
                 {
                     Type = DriftType.BehaviouralDrift,
-                    Reason = score.Explanation,
+                    Reason = transitionDelta.Explanation,
                     TransitionId = transition.Id.ToString(),
                     TimestampUtc = transition.Timestamp,
                     Phase = transition.Phase,
-                    Severity = score.Severity,
-                    Score = score.Score
+                    Severity = transitionDelta.Severity,
+                    Score = transitionDelta.Score
                 });
         }
 
