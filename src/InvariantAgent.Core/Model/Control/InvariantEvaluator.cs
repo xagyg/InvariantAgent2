@@ -1,4 +1,5 @@
-﻿using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Abstractions;
+using InvariantAgent.Core.Control.MetaInvariants;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 using System.Collections.Generic;
@@ -9,29 +10,38 @@ namespace InvariantAgent.Core.Control
     public sealed class InvariantEvaluator : IInvariantEvaluator
     {
         private readonly IReadOnlyList<IInvariant> _invariants;
+        private readonly IReadOnlyList<IMetaInvariant> _metaInvariants;
 
-        private sealed class EvaluationRecord
+        private sealed class MetaEvaluation
         {
-            public IInvariant Invariant { get; init; } = default!;
+            public IMetaInvariant MetaInvariant { get; init; } = default!;
 
-            public InvariantResult Result { get; init; } = default!;
+            public MetaInvariantResult Result { get; init; } = default!;
         }
 
         public InvariantEvaluator(IEnumerable<IInvariant> invariants)
+            : this(invariants, DefaultMetaInvariants())
+        {
+        }
+
+        public InvariantEvaluator(
+            IEnumerable<IInvariant> invariants,
+            IEnumerable<IMetaInvariant> metaInvariants)
         {
             _invariants = invariants.ToList();
+            _metaInvariants = metaInvariants.ToList();
         }
 
         public InvariantEvaluationReport Evaluate(TransitionContext context, InvariantScope scope)
         {
-            var records = new List<EvaluationRecord>();
+            var records = new List<InvariantEvaluationRecord>();
 
             foreach (var invariant in _invariants.Where(i =>
                 i.Scope == scope ||
                 i.Scope == InvariantScope.Transition))
             {
                 var result = invariant.Evaluate(context);
-                records.Add(new EvaluationRecord
+                records.Add(new InvariantEvaluationRecord
                 {
                     Invariant = invariant,
                     Result = result
@@ -81,49 +91,55 @@ namespace InvariantAgent.Core.Control
             };
         }
 
-        private static IReadOnlyList<InvariantOverride> ResolveOverrides(
+        private IReadOnlyList<InvariantOverride> ResolveOverrides(
             TransitionContext context,
-            IReadOnlyList<EvaluationRecord> records,
+            IReadOnlyList<InvariantEvaluationRecord> records,
             IReadOnlyList<InvariantViolation> violations)
         {
             var overrides = new List<InvariantOverride>();
 
             foreach (var violation in violations)
             {
-                if (violation.Layer == InvariantLayer.Fundamental ||
-                    violation.Severity >= InvariantSeverity.Error)
+                var metaContext = new MetaInvariantContext
                 {
-                    continue;
-                }
+                    TransitionContext = context,
+                    CandidateViolation = violation,
+                    AllViolations = violations,
+                    EvaluationRecords = records
+                };
 
-                var higherPriorityFailures = violations
-                    .Where(v => v.Layer > violation.Layer)
+                var metaEvaluations = _metaInvariants
+                    .Select(m => new MetaEvaluation
+                    {
+                        MetaInvariant = m,
+                        Result = m.Evaluate(metaContext)
+                    })
                     .ToList();
 
-                if (higherPriorityFailures.Count > 0)
+                if (metaEvaluations.Any(e => !e.Result.Passed))
                 {
                     continue;
                 }
 
-                var preservedHigherPriorityInvariants = records
-                    .Where(r => r.Result.Passed && r.Invariant.Layer > violation.Layer)
-                    .Select(r => r.Invariant.Name)
-                    .ToArray();
-
-                if (preservedHigherPriorityInvariants.Length == 0)
-                {
-                    continue;
-                }
-
+                var preservedHigherPriorityInvariants =
+                    GetMetadata<string[]>(metaEvaluations, "PreservedHigherPriorityInvariants")
+                    ?? new string[0];
                 var justification =
-                    $"{violation.Invariant} was overridden because higher-priority invariants " +
-                    $"{string.Join(", ", preservedHigherPriorityInvariants)} were preserved.";
+                    GetMetadata<string>(metaEvaluations, "Justification")
+                    ?? $"{violation.Invariant} was overridden by meta-invariant policy.";
+                var audit = GetMetadata<bool>(metaEvaluations, "Audit");
+                var categories = metaEvaluations
+                    .Select(e => e.MetaInvariant.Category)
+                    .Distinct()
+                    .ToArray();
 
                 var overrideDecision = new InvariantOverride
                 {
                     OverriddenViolation = violation,
                     PreservedHigherPriorityInvariants = preservedHigherPriorityInvariants,
-                    Justification = justification
+                    Justification = justification,
+                    MetaInvariantCategory = string.Join(", ", categories),
+                    MetaInvariantCategories = categories
                 };
 
                 overrides.Add(overrideDecision);
@@ -138,11 +154,41 @@ namespace InvariantAgent.Core.Control
                         ["OverriddenLayer"] = violation.Layer.ToString(),
                         ["PreservedHigherPriorityInvariants"] = preservedHigherPriorityInvariants,
                         ["Justification"] = justification,
-                        ["Audit"] = true
+                        ["Audit"] = audit,
+                        ["MetaInvariants"] = metaEvaluations
+                            .Select(e => e.MetaInvariant.Name)
+                            .ToArray()
                     });
             }
 
             return overrides;
+        }
+
+        private static IReadOnlyList<IMetaInvariant> DefaultMetaInvariants()
+        {
+            return new IMetaInvariant[]
+            {
+                new PriorityMetaInvariant(),
+                new OverrideSeverityMetaInvariant(),
+                new JustificationMetaInvariant(),
+                new AuditMetaInvariant()
+            };
+        }
+
+        private static T GetMetadata<T>(
+            IEnumerable<MetaEvaluation> metaEvaluations,
+            string key)
+        {
+            foreach (var evaluation in metaEvaluations)
+            {
+                if (evaluation.Result.Metadata.TryGetValue(key, out var value) &&
+                    value is T typed)
+                {
+                    return typed;
+                }
+            }
+
+            return default(T);
         }
     }
 }

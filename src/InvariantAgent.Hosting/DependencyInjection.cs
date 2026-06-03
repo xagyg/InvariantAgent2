@@ -5,6 +5,7 @@ using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control;
+using InvariantAgent.Core.Control.MetaInvariants;
 using InvariantAgent.Core.Drift;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Core.Replay;
@@ -45,20 +46,28 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
 
+            services.AddSingleton<IMetaInvariant, PriorityMetaInvariant>();
+            services.AddSingleton<IMetaInvariant, OverrideSeverityMetaInvariant>();
+            services.AddSingleton<IMetaInvariant, JustificationMetaInvariant>();
+            services.AddSingleton<IMetaInvariant, AuditMetaInvariant>();
+
             services.AddSingleton<IInvariantEvaluator>(sp =>
             {
                 var registry = sp.GetRequiredService<ICapabilityRegistry>();
+                var metaInvariants = sp.GetServices<IMetaInvariant>();
 
-                return new InvariantEvaluator(new IInvariant[]
-                {
-                    new NoDeleteInvariant(),
-                    new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
-                    new SuccessOutcomeInvariant(),
-                    new AllowedMemoryKeyInvariant(),
-                    new NonEmptyOutcomeInvariant(),
-                    new BehaviouralDriftBoundInvariant(
-                        sp.GetRequiredService<BehaviouralDriftDetector>())
-                });
+                return new InvariantEvaluator(
+                    new IInvariant[]
+                    {
+                        new NoDeleteInvariant(),
+                        new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
+                        new SuccessOutcomeInvariant(),
+                        new AllowedMemoryKeyInvariant(),
+                        new NonEmptyOutcomeInvariant(),
+                        new BehaviouralDriftBoundInvariant(
+                            sp.GetRequiredService<BehaviouralDriftDetector>())
+                    },
+                    metaInvariants);
             });
 
             services.AddSingleton<ICapability, EchoTool>();
