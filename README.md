@@ -116,11 +116,14 @@ Invariants can be assigned a governance layer:
 Fundamental > Mission > Behavioural > AdaptiveHeuristic
 ```
 
+Context-aware hierarchical governance (HIG-C) extends same-layer conflict handling with invariant criticality and the current operational context. Priority is still evaluated first; criticality and context help distinguish equal-priority soft conflicts.
+
 Fundamental invariants are non-negotiable by default. Lower-layer `Info` and `Warning` violations may be overridden only when all applicable higher-priority invariants are preserved. `Error` and `Critical` violations remain blocking unless a future domain-specific policy explicitly authorises otherwise.
 
 Override decisions are recorded as control events with:
 
 - the overridden invariant and layer
+- HIG-C criticality, context, and conflict outcome when applicable
 - the preserved higher-priority invariants
 - a generated justification
 - audit metadata for governance review

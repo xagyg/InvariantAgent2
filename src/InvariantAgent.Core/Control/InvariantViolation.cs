@@ -12,6 +12,11 @@
 
         public InvariantLayer Layer { get; init; } = InvariantLayer.Fundamental;
 
+        public InvariantCriticality Criticality { get; init; } = InvariantCriticality.Medium;
+
+        public System.Collections.Generic.IReadOnlyList<OperationalContext> Contexts { get; init; }
+            = System.Array.Empty<OperationalContext>();
+
         public string Reason { get; init; } = "";
     }
 }

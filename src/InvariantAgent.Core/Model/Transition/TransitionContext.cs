@@ -4,6 +4,9 @@
     {
         public Transition Transition { get; set; }
 
+        public InvariantAgent.Core.Model.Control.OperationalContext OperationalContext { get; set; }
+            = InvariantAgent.Core.Model.Control.OperationalContext.Normal;
+
         public bool IsRejected => Transition?.Status == TransitionStatus.Rejected;
 
         public bool IsCompleted => Transition?.Status == TransitionStatus.Completed;

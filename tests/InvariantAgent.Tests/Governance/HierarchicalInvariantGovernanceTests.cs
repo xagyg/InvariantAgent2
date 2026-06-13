@@ -128,6 +128,75 @@ public sealed class HierarchicalInvariantGovernanceTests
     }
 
     [Fact]
+    public void Evaluate_WhenSameLayerConflictHasHigherCriticality_PreservesHigherCriticalityInvariant()
+    {
+        var evaluator = new InvariantEvaluator(new IInvariant[]
+        {
+            TestInvariant.Pass("SystemIntegrity", InvariantLayer.Fundamental),
+            TestInvariant.Fail(
+                "SearchCoverage",
+                InvariantLayer.Mission,
+                InvariantSeverity.Warning,
+                InvariantCriticality.Medium),
+            TestInvariant.Fail(
+                "InspectionQuality",
+                InvariantLayer.Mission,
+                InvariantSeverity.Warning,
+                InvariantCriticality.Critical)
+        });
+        var context = NewContext();
+
+        var report = evaluator.Evaluate(context, InvariantScope.Plan);
+
+        Assert.False(report.Passed);
+        var unresolved = Assert.Single(report.Violations);
+        Assert.Equal("InspectionQuality", unresolved.Invariant);
+        var overrideDecision = Assert.Single(report.Overrides);
+        Assert.Equal("SearchCoverage", overrideDecision.OverriddenViolation.Invariant);
+        Assert.Equal(
+            ContextualGovernanceOutcome.Subordinate,
+            overrideDecision.ContextualDecision.Outcome);
+        Assert.Contains("InspectionQuality", overrideDecision.ContextualDecision.ComparedInvariants);
+        Assert.Contains(
+            context.Transition.Events,
+            e => e.Message == "HIG-C preserved same-layer invariant: InspectionQuality");
+    }
+
+    [Fact]
+    public void Evaluate_WhenSameCriticalityConflictMatchesOperationalContext_PreservesContextualInvariant()
+    {
+        var evaluator = new InvariantEvaluator(new IInvariant[]
+        {
+            TestInvariant.Pass("SystemIntegrity", InvariantLayer.Fundamental),
+            TestInvariant.Fail(
+                "ResponseCompleteness",
+                InvariantLayer.Behavioural,
+                InvariantSeverity.Warning,
+                InvariantCriticality.High,
+                OperationalContext.Normal),
+            TestInvariant.Fail(
+                "ResponseLatency",
+                InvariantLayer.Behavioural,
+                InvariantSeverity.Warning,
+                InvariantCriticality.High,
+                OperationalContext.Degraded)
+        });
+        var context = NewContext(OperationalContext.Degraded);
+
+        var report = evaluator.Evaluate(context, InvariantScope.Plan);
+
+        Assert.False(report.Passed);
+        var unresolved = Assert.Single(report.Violations);
+        Assert.Equal("ResponseLatency", unresolved.Invariant);
+        var overrideDecision = Assert.Single(report.Overrides);
+        Assert.Equal("ResponseCompleteness", overrideDecision.OverriddenViolation.Invariant);
+        Assert.Equal(OperationalContext.Degraded, overrideDecision.ContextualDecision.OperationalContext);
+        Assert.Equal(
+            ContextualGovernanceOutcome.Subordinate,
+            overrideDecision.ContextualDecision.Outcome);
+    }
+
+    [Fact]
     public void Evaluate_WhenCustomMetaInvariantRejects_DoesNotOverride()
     {
         var evaluator = new InvariantEvaluator(
@@ -151,11 +220,13 @@ public sealed class HierarchicalInvariantGovernanceTests
         Assert.Empty(report.Overrides);
     }
 
-    private static TransitionContext NewContext()
+    private static TransitionContext NewContext(
+        OperationalContext operationalContext = OperationalContext.Normal)
     {
         return new TransitionContext
         {
-            Transition = new Transition()
+            Transition = new Transition(),
+            OperationalContext = operationalContext
         };
     }
 
@@ -165,16 +236,24 @@ public sealed class HierarchicalInvariantGovernanceTests
 
         private readonly InvariantSeverity _severity;
 
+        private readonly InvariantCriticality _criticality;
+
+        private readonly IReadOnlyList<OperationalContext> _contexts;
+
         private TestInvariant(
             string name,
             InvariantLayer layer,
             bool passed,
-            InvariantSeverity severity = InvariantSeverity.Error)
+            InvariantSeverity severity = InvariantSeverity.Error,
+            InvariantCriticality criticality = InvariantCriticality.Medium,
+            params OperationalContext[] contexts)
         {
             Name = name;
             Layer = layer;
             _passed = passed;
             _severity = severity;
+            _criticality = criticality;
+            _contexts = contexts;
         }
 
         public string Name { get; }
@@ -186,6 +265,10 @@ public sealed class HierarchicalInvariantGovernanceTests
         public InvariantSeverity Severity => _severity;
 
         public InvariantLayer Layer { get; }
+
+        public InvariantCriticality Criticality => _criticality;
+
+        public IReadOnlyList<OperationalContext> Contexts => _contexts;
 
         public InvariantResult Evaluate(TransitionContext context)
         {
@@ -210,6 +293,16 @@ public sealed class HierarchicalInvariantGovernanceTests
             InvariantSeverity severity)
         {
             return new TestInvariant(name, layer, false, severity);
+        }
+
+        public static TestInvariant Fail(
+            string name,
+            InvariantLayer layer,
+            InvariantSeverity severity,
+            InvariantCriticality criticality,
+            params OperationalContext[] contexts)
+        {
+            return new TestInvariant(name, layer, false, severity, criticality, contexts);
         }
     }
 

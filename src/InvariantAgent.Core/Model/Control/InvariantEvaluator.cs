@@ -57,6 +57,9 @@ namespace InvariantAgent.Core.Control
                         ["Scope"] = invariant.Scope.ToString(),
                         ["Severity"] = invariant.Severity.ToString(),
                         ["Layer"] = invariant.Layer.ToString(),
+                        ["Criticality"] = invariant.Criticality.ToString(),
+                        ["Contexts"] = invariant.Contexts.Select(c => c.ToString()).ToArray(),
+                        ["OperationalContext"] = context.OperationalContext.ToString(),
                         ["Passed"] = result.Passed,
                         ["Reason"] = result.Reason
                     });
@@ -71,6 +74,8 @@ namespace InvariantAgent.Core.Control
                     Scope = r.Invariant.Scope,
                     Severity = r.Invariant.Severity,
                     Layer = r.Invariant.Layer,
+                    Criticality = r.Invariant.Criticality,
+                    Contexts = r.Invariant.Contexts,
                     Reason = r.Result.Reason
                 })
                 .ToList();
@@ -100,6 +105,29 @@ namespace InvariantAgent.Core.Control
 
             foreach (var violation in violations)
             {
+                var contextualDecision = ResolveContextualDecision(
+                    context.OperationalContext,
+                    violation,
+                    violations);
+
+                if (contextualDecision.Outcome == ContextualGovernanceOutcome.Preserve)
+                {
+                    context.Transition.AddEvent(
+                        TransitionEventStage.Control,
+                        $"HIG-C preserved same-layer invariant: {violation.Invariant}",
+                        new Dictionary<string, object>
+                        {
+                            ["Invariant"] = violation.Invariant,
+                            ["Layer"] = violation.Layer.ToString(),
+                            ["Criticality"] = violation.Criticality.ToString(),
+                            ["OperationalContext"] = context.OperationalContext.ToString(),
+                            ["ComparedInvariants"] = contextualDecision.ComparedInvariants,
+                            ["Reason"] = contextualDecision.Reason
+                        });
+
+                    continue;
+                }
+
                 var metaContext = new MetaInvariantContext
                 {
                     TransitionContext = context,
@@ -145,7 +173,8 @@ namespace InvariantAgent.Core.Control
                     MetaInvariantCategory = string.Join(", ", categories),
                     MetaInvariantCategories = categories,
                     RequiresReview = requiresReview,
-                    ReviewReasons = reviewReasons
+                    ReviewReasons = reviewReasons,
+                    ContextualDecision = contextualDecision
                 };
 
                 overrides.Add(overrideDecision);
@@ -158,6 +187,11 @@ namespace InvariantAgent.Core.Control
                         ["MetaInvariantCategory"] = overrideDecision.MetaInvariantCategory,
                         ["OverriddenInvariant"] = violation.Invariant,
                         ["OverriddenLayer"] = violation.Layer.ToString(),
+                        ["Criticality"] = violation.Criticality.ToString(),
+                        ["OperationalContext"] = context.OperationalContext.ToString(),
+                        ["ContextualGovernanceOutcome"] = contextualDecision.Outcome.ToString(),
+                        ["ContextualGovernanceReason"] = contextualDecision.Reason,
+                        ["ComparedInvariants"] = contextualDecision.ComparedInvariants,
                         ["PreservedHigherPriorityInvariants"] = preservedHigherPriorityInvariants,
                         ["Justification"] = justification,
                         ["Audit"] = audit,
@@ -170,6 +204,100 @@ namespace InvariantAgent.Core.Control
             }
 
             return overrides;
+        }
+
+        private static ContextualGovernanceDecision ResolveContextualDecision(
+            OperationalContext operationalContext,
+            InvariantViolation violation,
+            IReadOnlyList<InvariantViolation> violations)
+        {
+            var sameLayerConflicts = violations
+                .Where(v =>
+                    v.Invariant != violation.Invariant &&
+                    v.Layer == violation.Layer)
+                .ToArray();
+
+            if (sameLayerConflicts.Length == 0)
+            {
+                return new ContextualGovernanceDecision
+                {
+                    Outcome = ContextualGovernanceOutcome.NotApplicable,
+                    Criticality = violation.Criticality,
+                    OperationalContext = operationalContext,
+                    Contexts = violation.Contexts,
+                    Reason = "No equal-priority conflict was detected."
+                };
+            }
+
+            var candidateScore = ContextualScore(violation, operationalContext);
+            var conflictScores = sameLayerConflicts
+                .Select(v => new
+                {
+                    Violation = v,
+                    Score = ContextualScore(v, operationalContext)
+                })
+                .ToArray();
+            var highestConflictScore = conflictScores.Max(v => v.Score);
+            var compared = sameLayerConflicts
+                .Select(v => v.Invariant)
+                .ToArray();
+
+            if (candidateScore > highestConflictScore)
+            {
+                return new ContextualGovernanceDecision
+                {
+                    Outcome = ContextualGovernanceOutcome.Preserve,
+                    Criticality = violation.Criticality,
+                    OperationalContext = operationalContext,
+                    Contexts = violation.Contexts,
+                    ComparedInvariants = compared,
+                    Reason =
+                        $"{violation.Invariant} has the strongest HIG-C score for {operationalContext} " +
+                        "and remains unresolved."
+                };
+            }
+
+            if (candidateScore < highestConflictScore)
+            {
+                var strongerInvariants = conflictScores
+                    .Where(v => v.Score > candidateScore)
+                    .Select(v => v.Violation.Invariant)
+                    .ToArray();
+
+                return new ContextualGovernanceDecision
+                {
+                    Outcome = ContextualGovernanceOutcome.Subordinate,
+                    Criticality = violation.Criticality,
+                    OperationalContext = operationalContext,
+                    Contexts = violation.Contexts,
+                    ComparedInvariants = compared,
+                    Reason =
+                        $"{violation.Invariant} is subordinated to equal-priority invariant(s) " +
+                        $"{string.Join(", ", strongerInvariants)} under HIG-C."
+                };
+            }
+
+            return new ContextualGovernanceDecision
+            {
+                Outcome = ContextualGovernanceOutcome.Unresolved,
+                Criticality = violation.Criticality,
+                OperationalContext = operationalContext,
+                Contexts = violation.Contexts,
+                ComparedInvariants = compared,
+                Reason =
+                    $"{violation.Invariant} has no HIG-C distinction from equal-priority invariant(s) " +
+                    $"{string.Join(", ", compared)}."
+            };
+        }
+
+        private static int ContextualScore(
+            InvariantViolation violation,
+            OperationalContext operationalContext)
+        {
+            var score = (int)violation.Criticality * 10;
+            return violation.Contexts.Contains(operationalContext)
+                ? score + 1
+                : score;
         }
 
         private static IReadOnlyList<IMetaInvariant> DefaultMetaInvariants()
