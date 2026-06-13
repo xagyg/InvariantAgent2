@@ -15,6 +15,11 @@ namespace InvariantAgent.Core.Abstractions
 
         InvariantLayer Layer => InvariantLayer.Fundamental;
 
+        InvariantCriticality Criticality => InvariantCriticality.Medium;
+
+        System.Collections.Generic.IReadOnlyList<OperationalContext> Contexts =>
+            System.Array.Empty<OperationalContext>();
+
         InvariantResult Evaluate(TransitionContext context);
     }
 }

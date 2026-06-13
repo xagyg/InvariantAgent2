@@ -22,6 +22,9 @@ namespace InvariantAgent.Core.Model.Control
         public IReadOnlyList<string> ReviewReasons { get; init; }
             = Array.Empty<string>();
 
+        public ContextualGovernanceDecision ContextualDecision { get; init; }
+            = new();
+
         public InvariantLayer OverriddenLayer => OverriddenViolation.Layer;
     }
 }
