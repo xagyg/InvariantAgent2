@@ -449,6 +449,20 @@ Current areas of investigation include:
 
 The project remains intentionally experimental and architecture-focused.
 
+
+## Citing InvariantAgent2
+
+If you use Invariant Agent 2 in your research, please cite it:
+
+```bibtex
+@software{invariantagent2026,
+  author  = {Long, Brad},
+  title   = {Invariant Agent 2 (IA2)},
+  year    = {2026},
+  url     = {https://github.com/xagyg/InvariantAgent2}
+}
+```
+
 ## Appendix
 
 ### Example Drift Report
