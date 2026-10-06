@@ -6,8 +6,6 @@ A reference implementation of the **Invariant-Bounded Agent Alignment Model (IBA
 
 InvariantAgent2 explores governed agent runtimes where behavioural constraints remain external to adaptive cognition. Rather than allowing an LLM to directly govern system behaviour, all actions, state transitions, and self-modifications are evaluated under invariant-based runtime control.
 
----
-
 ## Why InvariantAgent2?
 
 Most agent frameworks place the LLM at the centre of decision making.
@@ -25,8 +23,6 @@ This enables adaptive agents to evolve while maintaining:
 - bounded behavioural evolution
 
 InvariantAgent2 serves as a reference implementation of the **Invariant-Bounded Agent Alignment Model (IBAAM)**.
-
----
 
 ## Quick Start
 
@@ -65,8 +61,6 @@ Transition Id: 5594c376-2201-4616-b35f-dd126458bf57
 Status: Completed
 ```
 
----
-
 ## Core Idea
 
 LLMs are treated as **cognitive generators**, not governing authorities.
@@ -81,8 +75,6 @@ The runtime governs:
 - self-modification
 - transition persistence
 - behavioural auditing
-
----
 
 ## Runtime Hierarchy
 
@@ -105,8 +97,6 @@ Planners propose actions.
 Capabilities perform execution.
 
 Reducers assimilate approved state evolution.
-
----
 
 ## Hierarchical Invariant Governance
 
@@ -138,8 +128,6 @@ Meta-invariants are first-class governance components:
 
 This keeps priority, justification, auditability, and review signals explicit without weakening existing hard safety constraints.
 
----
-
 ## Architecture
 
 ```text
@@ -165,8 +153,6 @@ Storage
   Transition persistence
 ```
 
----
-
 ## IBAAM Mapping
 
 | InvariantAgent2 Component | IBAAM Layer |
@@ -177,8 +163,6 @@ Storage
 | Replay & Drift Analysis | Observability Layer |
 | Reducers | State Assimilation |
 | Transition Store | Persistence |
-
----
 
 ## Governed Transition Lifecycle
 
@@ -209,8 +193,6 @@ Rejected transitions are also persisted and remain available for:
 - auditing
 - drift analysis
 - governance inspection
-
----
 
 ## Example Governed Transition
 
@@ -300,8 +282,6 @@ Transition Id: ced39314-d599-4813-9f9b-b0d8cadf82d4
 Status: Rejected
 ```
 
----
-
 ## State Projection
 
 Planners do not receive unrestricted access to runtime state.
@@ -321,8 +301,6 @@ containing:
 - runtime versioning
 
 This creates a controlled cognitive interface between adaptive reasoning and governed execution.
-
----
 
 ## Self-Modification Governance
 
@@ -351,8 +329,6 @@ memory-set goal=plan a healthy weekly routine
 
 The modification becomes part of runtime state only after successful governance evaluation.
 
----
-
 ## Behavioural Stability Evaluation
 
 InvariantAgent2 includes a behavioural stability evaluation layer that measures how agent behaviour changes over time without replacing invariant-based governance.
@@ -365,8 +341,6 @@ The stability evaluator consumes transition history, capability usage, state cha
 - governance recommendations
 
 These measurements indicate behavioural change. Invariants remain responsible for determining whether change is acceptable.
-
----
 
 ## Features
 
@@ -384,16 +358,12 @@ These measurements indicate behavioural change. Invariants remain responsible fo
 - Runtime observability
 - Behavioural stability evaluation
 
----
-
 ## Planner Support
 
 - OpenAI planners
 - Google Gemini planners
 - Deterministic command planners
 - Extensible planner abstraction
-
----
 
 ## Current Capabilities
 
@@ -411,8 +381,6 @@ These measurements indicate behavioural change. Invariants remain responsible fo
 
 Additional capabilities can be added through the capability registry.
 
----
-
 ## Running
 
 ```bash
@@ -425,15 +393,11 @@ Entry point:
 InvariantAgent.ConsoleApp/Program.cs
 ```
 
----
-
 ## Research
 
 InvariantAgent2 serves as the reference implementation of the:
 
 ### Invariant-Bounded Agent Alignment Model (IBAAM)
-
----
 
 ## Research Directions
 
@@ -448,7 +412,6 @@ Current areas of investigation include:
 - invariant-based behavioural stability assessment
 
 The project remains intentionally experimental and architecture-focused.
-
 
 ## Citing InvariantAgent2
 
