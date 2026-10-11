@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Invariant Agent 2 (IA2)"
+authors:
+  - family-names: Long
+    given-names: Brad
+year: 2026
+url: "https://github.com/xagyg/InvariantAgent2"
