@@ -8,6 +8,7 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Runtime;
 
+/// <summary>End-to-end tests for successful governed transitions through the runtime.</summary>
 public sealed class RuntimeExecutionTests
 {
     [Fact]

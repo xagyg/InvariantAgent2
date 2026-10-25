@@ -6,6 +6,11 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Governance;
 
+/// <summary>
+/// Tests for Hierarchical Invariant Governance (HIG) and context-aware HIG (HIG-C) in
+/// <c>InvariantEvaluator</c>: override authorisation, non-overrideable fundamental invariants,
+/// layer precedence, review flags, criticality and context tie-breaking, and custom meta-invariants.
+/// </summary>
 public sealed class HierarchicalInvariantGovernanceTests
 {
     [Fact]
@@ -230,6 +235,7 @@ public sealed class HierarchicalInvariantGovernanceTests
         };
     }
 
+    /// <summary>Configurable invariant with a fixed pass/fail result, used to construct governance scenarios.</summary>
     private sealed class TestInvariant : IInvariant
     {
         private readonly bool _passed;
@@ -306,6 +312,7 @@ public sealed class HierarchicalInvariantGovernanceTests
         }
     }
 
+    /// <summary>Meta-invariant that always rejects, used to verify that any meta-invariant can veto an override.</summary>
     private sealed class RejectingMetaInvariant : IMetaInvariant
     {
         public string Name => nameof(RejectingMetaInvariant);

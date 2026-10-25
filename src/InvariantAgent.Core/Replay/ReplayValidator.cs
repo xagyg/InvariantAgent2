@@ -9,18 +9,31 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Replay;
 
+/// <summary>
+/// Re-evaluates invariants against a recorded transition to verify that governance decisions are
+/// reproducible. A different accept/reject outcome is recorded as <see cref="DriftType.GovernanceDrift"/>.
+/// </summary>
+/// <remarks>
+/// Callers should pass a cloned transition, because invariant evaluation appends events to it.
+/// </remarks>
 public sealed class ReplayValidator
 {
     private readonly IInvariantEvaluator _evaluator;
 
     private readonly DriftTracker _driftTracker;
 
+    /// <summary>Creates a replay validator.</summary>
+    /// <param name="evaluator">Invariant evaluator used for re-evaluation.</param>
+    /// <param name="driftTracker">Tracker that receives governance drift records.</param>
     public ReplayValidator(IInvariantEvaluator evaluator, DriftTracker driftTracker)
     {
         _evaluator = evaluator;
         _driftTracker = driftTracker;
     }
 
+    /// <summary>Replays governance for one transition and compares the result with the original.</summary>
+    /// <param name="context">Context wrapping (a copy of) the recorded transition.</param>
+    /// <returns>The validation result and comparison.</returns>
     public ReplayValidationResult Validate(TransitionContext context)
     {
         var originalViolations = ExtractViolations(context.Transition);
@@ -55,6 +68,7 @@ public sealed class ReplayValidator
             ReplayViolations = replayViolations
         };
 
+        // Mismatch score: status change +100, phase change +50, +10 per difference in violation count.
         var score = 0;
 
         if (comparison.OriginalStatus != comparison.ReplayStatus)
@@ -79,6 +93,7 @@ public sealed class ReplayValidator
                         score >= 50 ? InvariantSeverity.Error :
                         score > 0 ? InvariantSeverity.Warning : InvariantSeverity.Info;
 
+        // A flip in the accept/reject decision is governance drift.
         if (replayRejected != originalRejected)
         {
             var result = new ReplayValidationResult
@@ -114,6 +129,7 @@ public sealed class ReplayValidator
         };
     }
 
+    // Failed-invariant messages from the original event trail.
     private static IReadOnlyList<string> ExtractViolations(Transition transition)
     {
         return transition.Events
@@ -124,6 +140,10 @@ public sealed class ReplayValidator
             .ToList();
     }
 
+    /// <summary>
+    /// Chooses which scopes to re-evaluate. For rejected transitions, evaluation stops at the scope
+    /// that originally failed (mirroring the runtime pipeline); otherwise all checkpoints are replayed.
+    /// </summary>
     private static IReadOnlyList<InvariantScope> GetScopesForReplay(Transition transition)
     {
         if (transition.Status == TransitionStatus.Rejected)
@@ -169,6 +189,7 @@ public sealed class ReplayValidator
         };
     }
 
+    // True if the original trail contains a failed invariant event for the given scope.
     private static bool HasInvariantFailure(Transition transition, InvariantScope scope)
     {
         return transition.Events.Any(e =>

@@ -6,6 +6,10 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Governance;
 
+/// <summary>
+/// Unit tests for <c>BehaviouralDriftBoundInvariant</c>: small adaptive changes stay within the bound,
+/// large combined changes (goal, mode, policies, memory) are rejected.
+/// </summary>
 public sealed class BehaviouralDriftBoundInvariantTests
 {
     [Fact]

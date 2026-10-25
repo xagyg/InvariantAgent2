@@ -4,8 +4,16 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Pipeline;
 
+/// <summary>
+/// Builds the <see cref="PlannerContext"/> handed to planners, enforcing the bounded state
+/// projection <c>π(Sₜ)</c> rather than exposing full runtime state.
+/// </summary>
 public static class PlannerContextProjector
 {
+    /// <summary>Projects <paramref name="state"/> and <paramref name="input"/> into a planner context.</summary>
+    /// <param name="state">The current committed agent state.</param>
+    /// <param name="input">Raw user input.</param>
+    /// <returns>A planner context exposing only whitelisted memory (<c>goal</c>, <c>lastOutcome</c>).</returns>
     public static PlannerContext Project(AgentState state, string input)
     {
         return new PlannerContext

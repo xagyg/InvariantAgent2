@@ -5,6 +5,10 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Observability;
 
+/// <summary>
+/// Tests for drift reporting: drift counts, behavioural drift from goal changes, exclusion of read-only
+/// and volatile changes, transition-local deltas, and grouping of invariant failures by category.
+/// </summary>
 public sealed class DriftReportTests
 {
     [Fact]

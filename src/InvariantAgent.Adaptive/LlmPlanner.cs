@@ -4,8 +4,17 @@ using InvariantAgent.Core.Model.Planning;
 
 namespace InvariantAgent.Adaptive
 {
+    /// <summary>
+    /// Base class for LLM-backed planners. Builds a prompt from the bounded state projection, sends it to
+    /// the model and parses a <c>capability:</c> / <c>input:</c> response into an <see cref="AgentAction"/>.
+    /// </summary>
+    /// <remarks>
+    /// The LLM is treated as an untrusted cognitive generator: whatever it returns is still subject to
+    /// full invariant governance before execution.
+    /// </remarks>
     public abstract class LlmPlanner : Planner
     {
+        /// <inheritdoc />
         protected override AgentAction GeneratePlan(PlannerContext context)
         {
             var prompt = BuildPrompt(context.State, context.Input);
@@ -15,6 +24,8 @@ namespace InvariantAgent.Adaptive
             return ParseAction(response);
         }
 
+        /// <summary>Sends the prompt to the underlying model and returns its raw text response.</summary>
+        /// <param name="prompt">The fully constructed planner prompt.</param>
         protected abstract string Complete(string prompt);
 
         //        protected virtual string BuildPrompt(StateProjection state, string input)
@@ -43,6 +54,12 @@ namespace InvariantAgent.Adaptive
         //            return sb.ToString();
         //        }
 
+        /// <summary>
+        /// Builds the planner prompt: role, available capabilities, required output format, the projected
+        /// runtime state and the user input.
+        /// </summary>
+        /// <param name="state">Bounded state projection <c>π(Sₜ)</c>.</param>
+        /// <param name="input">User input.</param>
         protected virtual string BuildPrompt(StateProjection state, string input)
         {
             var sb = new StringBuilder();
@@ -110,6 +127,11 @@ Do not return JSON.
             return sb.ToString();
         }
 
+        /// <summary>Parses the model response into an action.</summary>
+        /// <param name="text">Raw model output containing <c>capability:</c> and <c>input:</c> lines.</param>
+        /// <exception cref="InvalidOperationException">
+        /// Either line is missing. <see cref="Planner"/> turns this into an error action that is then rejected.
+        /// </exception>
         protected virtual AgentAction ParseAction(string text)
         {
             var lines = text

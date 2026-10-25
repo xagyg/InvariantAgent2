@@ -4,6 +4,10 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Action
 {
+    /// <summary>
+    /// Plan-scope integrity invariant: the proposed action must have non-empty input. Not registered by default.
+    /// </summary>
+    /// <remarks>The class name differs from the file name (NonEmptyInputInvariant.cs).</remarks>
     public sealed class NoEmptyInputInvariant : IInvariant
     {
         public string Name => nameof(NoEmptyInputInvariant);
@@ -14,6 +18,7 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantSeverity Severity => InvariantSeverity.Error;
 
+        /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {
             var action = context.Transition.ProposedAction;

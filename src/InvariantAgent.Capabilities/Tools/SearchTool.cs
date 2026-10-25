@@ -4,10 +4,13 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools;
 
+/// <summary>Stub search capability that returns two placeholder results for the query.</summary>
 public class SearchTool : ICapability
 {
+    /// <inheritdoc />
     public string Name => "search";
 
+    /// <inheritdoc />
     public CapabilityResult Execute(CapabilityRequest request)
     {
         return CapabilityResult.Ok(Name, new ListData {                    

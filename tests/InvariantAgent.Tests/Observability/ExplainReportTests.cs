@@ -3,6 +3,7 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Observability;
 
+/// <summary>Tests for the explain report produced by <c>TransitionFormatter.FormatExplain</c>.</summary>
 public sealed class ExplainReportTests
 {
     [Fact]

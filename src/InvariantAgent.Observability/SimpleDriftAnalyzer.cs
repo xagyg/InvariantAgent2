@@ -6,12 +6,20 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Observability
 {
+    /// <summary>
+    /// Default <see cref="IDriftAnalyzer"/>. Combines runtime drift records (e.g. governance drift from
+    /// replay validation) with behavioural drift detected from history, and attaches a stability assessment.
+    /// </summary>
     public sealed class SimpleDriftAnalyzer : IDriftAnalyzer
     {
         private readonly DriftTracker _driftTracker;
         private readonly BehaviouralDriftDetector _behaviouralDriftDetector;
         private readonly IStabilityEvaluator _stabilityEvaluator;
 
+        /// <summary>Creates the analyzer.</summary>
+        /// <param name="driftTracker">Source of drift records raised at runtime.</param>
+        /// <param name="behaviouralDriftDetector">Detector for transition-local behavioural drift.</param>
+        /// <param name="stabilityEvaluator">Evaluator producing the stability assessment.</param>
         public SimpleDriftAnalyzer(
             DriftTracker driftTracker,
             BehaviouralDriftDetector behaviouralDriftDetector,
@@ -22,6 +30,7 @@ namespace InvariantAgent.Observability
             _stabilityEvaluator = stabilityEvaluator;
         }
 
+        /// <inheritdoc />
         public DriftReport Analyze(IReadOnlyList<Transition> transitions)
         {
             var capabilityUsage = transitions
@@ -43,6 +52,7 @@ namespace InvariantAgent.Observability
                 .GroupBy(category => category)
                 .ToDictionary(g => g.Key, g => g.Count());
 
+            // Merge tracked (runtime) drift with behavioural drift recomputed from history.
             var records = _driftTracker.Records
                 .Concat(_behaviouralDriftDetector.Detect(transitions))
                 .OrderBy(r => r.TimestampUtc)
@@ -78,6 +88,7 @@ namespace InvariantAgent.Observability
             };        
         }
 
+        // Invariant events are formatted "Name: Passed|Failed reason"; take the text before the colon.
         private static string ExtractInvariantName(string message)
         {
             var index = message.IndexOf(':');
@@ -87,6 +98,7 @@ namespace InvariantAgent.Observability
             return message.Substring(0, index);
         }
 
+        // Prefers structured "Passed" metadata; falls back to message text for older events.
         private static bool IsFailedInvariantEvent(TransitionEvent e)
         {
             if (e.Stage != TransitionEventStage.Invariant)
@@ -102,6 +114,7 @@ namespace InvariantAgent.Observability
             return e.Message.Contains("Failed");
         }
 
+        // Reads the "Category" metadata; defaults to Integrity when missing.
         private static InvariantCategory ExtractInvariantCategory(TransitionEvent e)
         {
             if (e.Metadata.TryGetValue("Category", out var value) &&

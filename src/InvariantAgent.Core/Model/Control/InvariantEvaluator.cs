@@ -7,11 +7,28 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Control
 {
+    /// <summary>
+    /// Default <see cref="IInvariantEvaluator"/> implementing invariant enforcement with
+    /// Hierarchical Invariant Governance (HIG) and its context-aware extension (HIG-C).
+    /// </summary>
+    /// <remarks>
+    /// <para>For a given scope the evaluator:</para>
+    /// <list type="number">
+    /// <item>Evaluates every invariant whose scope matches (plus <c>Transition</c>-scoped invariants) and records an Invariant event for each.</item>
+    /// <item>Collects failures as <see cref="InvariantViolation"/>s.</item>
+    /// <item>For each violation, applies HIG-C to same-layer conflicts; a violation that HIG-C preserves stays blocking.</item>
+    /// <item>Otherwise asks every meta-invariant; only if all allow is an auditable <see cref="InvariantOverride"/> created.</item>
+    /// <item>Returns the remaining (unresolved) violations together with the overrides.</item>
+    /// </list>
+    /// </remarks>
     public sealed class InvariantEvaluator : IInvariantEvaluator
     {
+        // Object-level invariants (behavioural constraints).
         private readonly IReadOnlyList<IInvariant> _invariants;
+        // Meta-invariants governing whether a violation may be overridden.
         private readonly IReadOnlyList<IMetaInvariant> _metaInvariants;
 
+        // Pairs a meta-invariant with its result so metadata can be harvested afterwards.
         private sealed class MetaEvaluation
         {
             public IMetaInvariant MetaInvariant { get; init; } = default!;
@@ -19,11 +36,16 @@ namespace InvariantAgent.Core.Control
             public MetaInvariantResult Result { get; init; } = default!;
         }
 
+        /// <summary>Creates an evaluator using the default meta-invariant set.</summary>
+        /// <param name="invariants">Invariants to enforce.</param>
         public InvariantEvaluator(IEnumerable<IInvariant> invariants)
             : this(invariants, DefaultMetaInvariants())
         {
         }
 
+        /// <summary>Creates an evaluator with an explicit meta-invariant set.</summary>
+        /// <param name="invariants">Invariants to enforce.</param>
+        /// <param name="metaInvariants">Meta-invariants governing overrides.</param>
         public InvariantEvaluator(
             IEnumerable<IInvariant> invariants,
             IEnumerable<IMetaInvariant> metaInvariants)
@@ -32,8 +54,10 @@ namespace InvariantAgent.Core.Control
             _metaInvariants = metaInvariants.ToList();
         }
 
+        /// <inheritdoc />
         public InvariantEvaluationReport Evaluate(TransitionContext context, InvariantScope scope)
         {
+            // 1. Evaluate applicable invariants and record an auditable event for each result.
             var records = new List<InvariantEvaluationRecord>();
 
             foreach (var invariant in _invariants.Where(i =>
@@ -65,6 +89,7 @@ namespace InvariantAgent.Core.Control
                     });
             }
 
+            // 2. Convert failures into violations carrying the invariant's governance metadata.
             var allViolations = records
                 .Where(r => !r.Result.Passed)
                 .Select(r => new InvariantViolation
@@ -80,6 +105,7 @@ namespace InvariantAgent.Core.Control
                 })
                 .ToList();
 
+            // 3. Resolve which violations may be overridden; everything else stays blocking.
             var overrides = ResolveOverrides(context, records, allViolations);
             var overriddenNames = overrides
                 .Select(o => o.OverriddenViolation.Invariant)
@@ -96,6 +122,10 @@ namespace InvariantAgent.Core.Control
             };
         }
 
+        /// <summary>
+        /// Determines which violations can be overridden under HIG/HIG-C and records a Control event
+        /// for every preservation or authorised override.
+        /// </summary>
         private IReadOnlyList<InvariantOverride> ResolveOverrides(
             TransitionContext context,
             IReadOnlyList<InvariantEvaluationRecord> records,
@@ -110,6 +140,7 @@ namespace InvariantAgent.Core.Control
                     violation,
                     violations);
 
+                // HIG-C: this violation outranks its same-layer peers, so it must not be overridden.
                 if (contextualDecision.Outcome == ContextualGovernanceOutcome.Preserve)
                 {
                     context.Transition.AddEvent(
@@ -136,6 +167,7 @@ namespace InvariantAgent.Core.Control
                     EvaluationRecords = records
                 };
 
+                // All meta-invariants must allow the override (priority, severity, justification, audit, review).
                 var metaEvaluations = _metaInvariants
                     .Select(m => new MetaEvaluation
                     {
@@ -149,6 +181,7 @@ namespace InvariantAgent.Core.Control
                     continue;
                 }
 
+                // Harvest metadata contributed by individual meta-invariants for the override record.
                 var preservedHigherPriorityInvariants =
                     GetMetadata<string[]>(metaEvaluations, "PreservedHigherPriorityInvariants")
                     ?? new string[0];
@@ -206,6 +239,10 @@ namespace InvariantAgent.Core.Control
             return overrides;
         }
 
+        /// <summary>
+        /// HIG-C: compares a violation with other violations in the same layer using criticality and
+        /// operational context, producing NotApplicable, Preserve, Subordinate or Unresolved.
+        /// </summary>
         private static ContextualGovernanceDecision ResolveContextualDecision(
             OperationalContext operationalContext,
             InvariantViolation violation,
@@ -290,6 +327,10 @@ namespace InvariantAgent.Core.Control
             };
         }
 
+        /// <summary>
+        /// HIG-C score: criticality dominates (x10); a matching operational context adds +1 so context
+        /// only breaks ties between equal criticalities.
+        /// </summary>
         private static int ContextualScore(
             InvariantViolation violation,
             OperationalContext operationalContext)
@@ -300,6 +341,7 @@ namespace InvariantAgent.Core.Control
                 : score;
         }
 
+        /// <summary>The standard HIG meta-invariant set.</summary>
         private static IReadOnlyList<IMetaInvariant> DefaultMetaInvariants()
         {
             return new IMetaInvariant[]
@@ -312,6 +354,7 @@ namespace InvariantAgent.Core.Control
             };
         }
 
+        /// <summary>Returns the first metadata value of type <typeparamref name="T"/> found under <paramref name="key"/>.</summary>
         private static T GetMetadata<T>(
             IEnumerable<MetaEvaluation> metaEvaluations,
             string key)

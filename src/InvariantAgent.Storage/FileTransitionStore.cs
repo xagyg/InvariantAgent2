@@ -5,6 +5,13 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Storage
 {
+    /// <summary>
+    /// Durable <see cref="ITransitionStore"/> that appends each transition as one JSON line (JSONL).
+    /// </summary>
+    /// <remarks>
+    /// Thread-safe within one process. Polymorphic members (e.g. <c>AgentEvent</c>) and
+    /// <c>object</c>-typed metadata may not round-trip exactly through System.Text.Json.
+    /// </remarks>
     public sealed class FileTransitionStore : ITransitionStore
     {
         private readonly string _filePath;
@@ -17,6 +24,8 @@ namespace InvariantAgent.Storage
                 IncludeFields = true
             };
 
+        /// <summary>Creates the store, ensuring the directory and file exist.</summary>
+        /// <param name="filePath">Path of the JSONL file.</param>
         public FileTransitionStore(string filePath)
         {
             _filePath = filePath;
@@ -34,6 +43,7 @@ namespace InvariantAgent.Storage
             }
         }
 
+        /// <inheritdoc />
         public void Append(Transition transition)
         {
             var json = JsonSerializer.Serialize(
@@ -49,6 +59,8 @@ namespace InvariantAgent.Storage
             }
         }
 
+        /// <inheritdoc />
+        /// <remarks>Reads and deserialises the whole file on every call.</remarks>
         public IReadOnlyList<Transition> GetAll()
         {
             lock (_lock)

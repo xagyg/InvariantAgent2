@@ -2,12 +2,22 @@
 
 namespace InvariantAgent.Runtime
 {
+    /// <summary>
+    /// Hosted background service providing the interactive console REPL for the governed runtime.
+    /// </summary>
+    /// <remarks>
+    /// Each line of input runs one governed transition; the transition's events are printed with
+    /// stage-specific colours. <c>exit</c>/<c>quit</c> stops the host; <c>clear</c> clears the screen.
+    /// </remarks>
     public sealed class GovernedAgentRuntimeHostedService
         : BackgroundService
     {
         private readonly GovernedAgentRuntime _runtime;
         private readonly IHostApplicationLifetime _lifetime;
 
+        /// <summary>Creates the hosted service.</summary>
+        /// <param name="runtime">The governed runtime.</param>
+        /// <param name="lifetime">Host lifetime used to stop the application on exit.</param>
         public GovernedAgentRuntimeHostedService(
             GovernedAgentRuntime runtime, IHostApplicationLifetime lifetime)
         {
@@ -15,6 +25,8 @@ namespace InvariantAgent.Runtime
             _lifetime = lifetime;
         }
 
+        /// <summary>Runs the REPL loop until cancellation or the user exits.</summary>
+        /// <param name="stoppingToken">Signalled when the host is shutting down.</param>
         protected override async Task ExecuteAsync(
             CancellationToken stoppingToken)
         {
@@ -69,6 +81,7 @@ namespace InvariantAgent.Runtime
             }
         }
 
+        // Console colour for each transition event stage.
         private static ConsoleColor GetColor(string stage)
         {
             return stage switch

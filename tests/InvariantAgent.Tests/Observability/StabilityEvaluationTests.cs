@@ -3,6 +3,10 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Observability;
 
+/// <summary>
+/// Tests for behavioural stability evaluation (AIE metrics): stable traces, the effect of goal changes on
+/// continuity and persistence, invariant failures moving the region to Watch, and drift-tool output.
+/// </summary>
 public sealed class StabilityEvaluationTests
 {
     [Fact]

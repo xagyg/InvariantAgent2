@@ -21,8 +21,17 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InvariantAgent.Hosting
 {
+    /// <summary>
+    /// Composition root: registers all InvariantAgent components with dependency injection.
+    /// </summary>
     public static class DependencyInjection
     {
+        /// <summary>
+        /// Registers storage, observability, planner, executor, reducer, meta-invariants, invariants,
+        /// capabilities and the governed runtime (all as singletons).
+        /// </summary>
+        /// <param name="services">The service collection to populate.</param>
+        /// <returns>The same service collection, for chaining.</returns>
         public static IServiceCollection AddInvariantAgent(this IServiceCollection services)
         {
             // MEMORY STORAGE
@@ -32,9 +41,11 @@ namespace InvariantAgent.Hosting
             //services.AddSingleton<ITransitionStore>(_ => 
             //        new FileTransitionStore(Path.Combine(AppContext.BaseDirectory, "data", "transitions.json")));
 
+            // OBSERVABILITY: drift analysis and behavioural stability evaluation.
             services.AddSingleton<IDriftAnalyzer, SimpleDriftAnalyzer>();
             services.AddSingleton<IStabilityEvaluator, TransitionHistoryStabilityEvaluator>();
 
+            // ADAPTIVE: swap in OpenAiPlanner/GeminiPlanner here to use an LLM planner.
             services.AddSingleton<IPlanner, CommandPlanner>();
 
             services.AddSingleton<ReplayValidator>();
@@ -43,15 +54,18 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IDriftBaselineStore, InMemoryDriftBaselineStore>();
             services.AddSingleton<BehaviouralDriftDetector>();
 
+            // EXECUTION and STATE ASSIMILATION.
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
 
+            // HIG META-INVARIANTS: govern whether lower-priority violations may be overridden.
             services.AddSingleton<IMetaInvariant, PriorityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, OverrideSeverityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, JustificationMetaInvariant>();
             services.AddSingleton<IMetaInvariant, AuditMetaInvariant>();
             services.AddSingleton<IMetaInvariant, ReviewMetaInvariant>();
 
+            // CONTROL: the active invariant set. Each invariant declares its own scope (lifecycle checkpoint).
             services.AddSingleton<IInvariantEvaluator>(sp =>
             {
                 var registry = sp.GetRequiredService<ICapabilityRegistry>();
@@ -71,6 +85,7 @@ namespace InvariantAgent.Hosting
                     metaInvariants);
             });
 
+            // CAPABILITIES: user-facing tools followed by internal introspection tools.
             services.AddSingleton<ICapability, EchoTool>();
             services.AddSingleton<ICapability, CalculatorTool>();
             services.AddSingleton<ICapability, SearchTool>();
@@ -85,6 +100,7 @@ namespace InvariantAgent.Hosting
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 
+            // RUNTIME: orchestrates the governed transition lifecycle.
             services.AddSingleton<GovernedAgentRuntime>();
 
             return services;

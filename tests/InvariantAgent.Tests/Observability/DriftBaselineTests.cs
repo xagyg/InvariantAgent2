@@ -4,6 +4,7 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Observability;
 
+/// <summary>Tests for approving and showing drift baselines, and scoring drift against the approved baseline.</summary>
 public sealed class DriftBaselineTests
 {
     [Fact]

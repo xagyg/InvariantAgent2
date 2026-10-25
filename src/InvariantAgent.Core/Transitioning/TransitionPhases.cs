@@ -6,8 +6,14 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Transitioning
 {
+    /// <summary>
+    /// Lifecycle state machine for transitions. Enforces legal phase moves and records a Lifecycle
+    /// event for each move.
+    /// </summary>
     public static class TransitionPhases
     {
+        // Legal next phases from each phase. Every non-terminal phase may move to Rejected;
+        // ExecutionValidation may skip straight to Reduction; Completed and Rejected are terminal.
         private static readonly Dictionary<TransitionPhase, TransitionPhase[]> AllowedMoves =
             new Dictionary<TransitionPhase, TransitionPhase[]>
             {
@@ -64,6 +70,10 @@ namespace InvariantAgent.Core.Transitioning
                 [TransitionPhase.Rejected] = Array.Empty<TransitionPhase>()
             };
 
+        /// <summary>Moves the transition to <paramref name="nextPhase"/> and records a Lifecycle event.</summary>
+        /// <param name="transition">The transition to advance.</param>
+        /// <param name="nextPhase">The target phase.</param>
+        /// <exception cref="InvalidOperationException">The move is not allowed from the current phase.</exception>
         public static void MoveTo(Transition transition, TransitionPhase nextPhase)
         {
             var currentPhase = transition.Phase;
@@ -83,6 +93,9 @@ namespace InvariantAgent.Core.Transitioning
                 });
         }
 
+        /// <summary>Moves the transition to <see cref="TransitionPhase.Rejected"/> and records the reason.</summary>
+        /// <param name="transition">The transition to reject.</param>
+        /// <param name="reason">Governance summary explaining the rejection.</param>
         public static void Reject(Transition transition, string reason)
         {
             MoveTo(transition, TransitionPhase.Rejected);

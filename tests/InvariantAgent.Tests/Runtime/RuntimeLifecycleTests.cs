@@ -4,6 +4,7 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Runtime;
 
+/// <summary>Verifies that the runtime records each lifecycle phase in order.</summary>
 public sealed class RuntimeLifecycleTests
 {
     [Fact]

@@ -5,6 +5,10 @@ using InvariantAgent.Core.Transitioning;
 
 namespace InvariantAgent.Safety.Invariants.Runtime
 {
+    /// <summary>
+    /// Execution-scope lifecycle invariant: execution must not occur unless the transition passed through
+    /// plan validation. Not registered by default.
+    /// </summary>
     public sealed class ExecutionRequiresPlanValidationInvariant
         : IInvariant
     {
@@ -16,6 +20,7 @@ namespace InvariantAgent.Safety.Invariants.Runtime
 
         public InvariantSeverity Severity => InvariantSeverity.Critical;
 
+        /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {
             var transition = context.Transition;

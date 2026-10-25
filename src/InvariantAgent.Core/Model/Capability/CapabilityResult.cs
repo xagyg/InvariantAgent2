@@ -6,20 +6,38 @@ using InvariantAgent.Core.Model.SelfModification;
 
 namespace InvariantAgent.Core.Model.Capability
 {
+    /// <summary>
+    /// The result returned by a capability, optionally carrying a proposed self-modification.
+    /// </summary>
+    /// <remarks>
+    /// Capabilities cannot modify runtime state directly. Instead they attach a
+    /// <see cref="SelfModificationRequest"/> to <see cref="ProposedModification"/>, which the runtime
+    /// evaluates against self-modification invariants before the reducer applies it.
+    /// </remarks>
     public sealed class CapabilityResult
     {
+        /// <summary><c>true</c> if the capability executed successfully.</summary>
         public bool Success { get; init; }
 
+        /// <summary>Name of the capability that produced the result.</summary>
         public string Capability { get; init; } = "";
 
+        /// <summary>Typed payload produced on success.</summary>
         public CapabilityData Data { get; init; }
 
+        /// <summary>Failure reason when <see cref="Success"/> is <c>false</c>.</summary>
         public string Error { get; init; } = "";
 
+        /// <summary>UTC time the result was created.</summary>
         public DateTime Timestamp { get; init; } = DateTime.UtcNow;
 
+        /// <summary>A proposed change to agent state, subject to governance. <c>null</c> if none.</summary>
         public SelfModificationRequest ProposedModification { get; set; }
 
+        /// <summary>Creates a successful result.</summary>
+        /// <param name="capability">Capability name.</param>
+        /// <param name="data">Result payload.</param>
+        /// <param name="proposed">Optional proposed self-modification.</param>
         public static CapabilityResult Ok(
             string capability,
             CapabilityData data,
@@ -34,6 +52,9 @@ namespace InvariantAgent.Core.Model.Capability
             };
         }
 
+        /// <summary>Creates a failed result.</summary>
+        /// <param name="capability">Capability name.</param>
+        /// <param name="error">Failure reason.</param>
         public static CapabilityResult Fail(
             string capability,
             string error)
@@ -46,6 +67,7 @@ namespace InvariantAgent.Core.Model.Capability
             };
         }
 
+        /// <summary>Diagnostic string showing either the data or the error.</summary>
         public override string ToString()
         {
             if (!Success)
@@ -54,6 +76,7 @@ namespace InvariantAgent.Core.Model.Capability
             return $"Capability={Capability}, Data={Format(Data)}";
         }
 
+        // Recursively formats strings, collections, primitives and simple objects (via public properties).
         private static string Format(object value)
         {
             if (value is null)
