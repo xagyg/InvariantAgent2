@@ -15,6 +15,7 @@ using InvariantAgent.Runtime;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Identity;
 using InvariantAgent.Safety.Invariants.Outcome;
+using InvariantAgent.Safety.Invariants.Runtime;
 using InvariantAgent.Safety.Invariants.SelfModification;
 using InvariantAgent.Storage;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,7 +81,9 @@ namespace InvariantAgent.Hosting
                         new AllowedMemoryKeyInvariant(),
                         new NonEmptyOutcomeInvariant(),
                         new BehaviouralDriftBoundInvariant(
-                            sp.GetRequiredService<BehaviouralDriftDetector>())
+                            sp.GetRequiredService<BehaviouralDriftDetector>()),
+                        // Backstop: a rejected transition must never carry state into a commit.
+                        new RejectedTransitionCannotCommitInvariant()
                     },
                     metaInvariants);
             });

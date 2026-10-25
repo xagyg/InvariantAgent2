@@ -27,8 +27,11 @@ namespace InvariantAgent.Safety.Invariants.Action
         /// <param name="allowedCapabilities">Capability names and aliases that may be invoked.</param>
         public AllowedCapabilityInvariant(IEnumerable<string> allowedCapabilities)
         {
+            // Case-insensitive to match CapabilityRegistry, so LLM planners that return "Calc" are not
+            // rejected for a capability the registry would resolve.
             _allowedCapabilities = new HashSet<string>(
-                allowedCapabilities);
+                allowedCapabilities,
+                StringComparer.OrdinalIgnoreCase);
         }
 
         /// <inheritdoc />
@@ -46,7 +49,6 @@ namespace InvariantAgent.Safety.Invariants.Action
                 return InvariantResult.Reject("No capability selected.", Severity);
             }
 
-            // Note: case-sensitive match, whereas the registry itself resolves names case-insensitively.
             if (_allowedCapabilities.Contains(action.Capability))
             {
                 return InvariantResult.Allow();

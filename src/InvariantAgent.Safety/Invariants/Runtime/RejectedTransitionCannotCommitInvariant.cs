@@ -6,7 +6,7 @@ namespace InvariantAgent.Safety.Invariants.Runtime
 {
     /// <summary>
     /// Reduction-scope lifecycle invariant: a rejected transition must not carry a proposed next state.
-    /// Not registered by default.
+    /// Registered by default as a backstop alongside the runtime's own rejection handling.
     /// </summary>
     public sealed class RejectedTransitionCannotCommitInvariant : IInvariant
     {

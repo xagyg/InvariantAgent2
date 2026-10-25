@@ -8,7 +8,10 @@ namespace InvariantAgent.Capabilities.Tools;
 /// <summary>
 /// Evaluates arithmetic expressions (e.g. <c>calc 10+20</c>) using <see cref="DataTable.Compute"/>.
 /// </summary>
-/// <remarks>Invalid expressions throw; the exception is not caught here.</remarks>
+/// <remarks>
+/// Invalid expressions throw. <c>CapabilityExecutor</c> converts the exception into a failed result,
+/// which execution invariants then reject.
+/// </remarks>
 public class CalculatorTool : ICapability
 {
     /// <inheritdoc />

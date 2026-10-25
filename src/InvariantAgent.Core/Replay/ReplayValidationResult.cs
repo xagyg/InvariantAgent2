@@ -15,7 +15,7 @@ namespace InvariantAgent.Core.Replay
         /// <summary>Severity derived from the mismatch score.</summary>
         public InvariantSeverity Severity { get; init; }
 
-        /// <summary>Mismatch score (note: currently only recorded on the drift record, not set here).</summary>
+        /// <summary>Mismatch score: status change +100, phase change +50, +10 per difference in violation count.</summary>
         public int Score { get; init; }
 
         /// <summary>Explanation of the mismatch.</summary>

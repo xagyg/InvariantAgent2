@@ -7,10 +7,9 @@ namespace InvariantAgent.Safety.Invariants.Action
     /// <summary>
     /// Plan-scope integrity invariant: the proposed action must have non-empty input. Not registered by default.
     /// </summary>
-    /// <remarks>The class name differs from the file name (NonEmptyInputInvariant.cs).</remarks>
-    public sealed class NoEmptyInputInvariant : IInvariant
+    public sealed class NonEmptyInputInvariant : IInvariant
     {
-        public string Name => nameof(NoEmptyInputInvariant);
+        public string Name => nameof(NonEmptyInputInvariant);
 
         public InvariantCategory Category => InvariantCategory.Integrity;
 
