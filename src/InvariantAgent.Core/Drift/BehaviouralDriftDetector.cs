@@ -9,12 +9,31 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Drift;
 
+/// <summary>
+/// Scores behavioural drift by comparing the adaptive parts of two agent states
+/// (goal, mode, policies and non-volatile memory).
+/// </summary>
+/// <remarks>
+/// <para>
+/// Scoring weights: goal change +30, mode change +20, policy changes +10 each (max 30),
+/// memory changes +10 per added/removed key and +5 per changed value (max 40).
+/// </para>
+/// <para>
+/// Scores are mapped to severity: at or above <see cref="DefaultBoundThreshold"/> is Error,
+/// 40 or more is Warning, otherwise Info. The same scores feed both the
+/// <c>BehaviouralDriftBoundInvariant</c> (governance) and drift/stability reports (observability).
+/// </para>
+/// </remarks>
 public sealed class BehaviouralDriftDetector
 {
+    /// <summary>Number of transitions used as a comparison window by horizon-based measurements.</summary>
     public const int DefaultHorizon = 3;
+    /// <summary>Minimum per-transition score that is reported as a drift record.</summary>
     public const int ReportingThreshold = 25;
+    /// <summary>Default maximum admissible drift score before the drift-bound invariant rejects.</summary>
     public const int DefaultBoundThreshold = 70;
 
+    // Memory keys that change on almost every transition and so are excluded from drift scoring.
     private static readonly HashSet<string> VolatileMemoryKeys =
         new(StringComparer.OrdinalIgnoreCase)
         {
@@ -24,15 +43,24 @@ public sealed class BehaviouralDriftDetector
 
     private readonly IDriftBaselineStore _baselineStore;
 
+    /// <summary>Creates a detector that always scores against the transition's prior state.</summary>
     public BehaviouralDriftDetector()
     {
     }
 
+    /// <summary>Creates a detector that prefers an approved drift baseline when one exists.</summary>
+    /// <param name="baselineStore">Store holding the approved baseline.</param>
     public BehaviouralDriftDetector(IDriftBaselineStore baselineStore)
     {
         _baselineStore = baselineStore;
     }
 
+    /// <summary>
+    /// Produces a drift record for each completed transition whose local (before vs after) drift
+    /// score reaches <see cref="ReportingThreshold"/>.
+    /// </summary>
+    /// <param name="transitions">Ordered transition history.</param>
+    /// <returns>Behavioural drift records, one per qualifying transition.</returns>
     public IReadOnlyList<DriftRecord> Detect(IReadOnlyList<Transition> transitions)
     {
         var records = new List<DriftRecord>();
@@ -41,6 +69,7 @@ public sealed class BehaviouralDriftDetector
         {
             var transition = transitions[index];
 
+            // Only completed transitions with a resulting state can exhibit behavioural drift.
             if (transition.After == null ||
                 transition.Status != TransitionStatus.Completed)
             {
@@ -75,6 +104,12 @@ public sealed class BehaviouralDriftDetector
         return records;
     }
 
+    /// <summary>
+    /// Scores the proposed state of <paramref name="transition"/> against the approved baseline if one
+    /// exists, otherwise against the transition's prior state. Used by the drift-bound invariant.
+    /// </summary>
+    /// <param name="transition">A transition whose <c>After</c> state has been proposed by the reducer.</param>
+    /// <returns>The drift score, severity and explanation.</returns>
     public DriftScore Score(Transition transition)
     {
         if (transition.After == null)
@@ -90,6 +125,10 @@ public sealed class BehaviouralDriftDetector
         return Score(GetBaseline(transition), transition.After);
     }
 
+    /// <summary>Scores the adaptive difference between two states.</summary>
+    /// <param name="baseline">Reference state.</param>
+    /// <param name="current">State to compare.</param>
+    /// <returns>The drift score, severity and explanation.</returns>
     public DriftScore Score(AgentState baseline, AgentState current)
     {
         var baselineSnapshot = AdaptiveStateSnapshot.From(baseline);
@@ -104,6 +143,8 @@ public sealed class BehaviouralDriftDetector
         };
     }
 
+    // Horizon-based baseline: the state DefaultHorizon transitions earlier.
+    // NOTE: currently unused - Detect() scores transition-local deltas instead.
     private static AgentState GetBaseline(IReadOnlyList<Transition> transitions, int index)
     {
         var baselineIndex = index - DefaultHorizon;
@@ -116,11 +157,13 @@ public sealed class BehaviouralDriftDetector
         return transitions[index].Before;
     }
 
+    // Prefer the operator-approved baseline; fall back to the transition's prior state.
     private AgentState GetBaseline(Transition transition)
     {
         return _baselineStore?.Current?.State ?? transition.Before;
     }
 
+    // Weighted comparison of goal, mode, policies and memory; returns total score and reasons.
     private static BehaviouralDriftComparison Compare(
         AdaptiveStateSnapshot baseline,
         AdaptiveStateSnapshot current)
@@ -167,6 +210,7 @@ public sealed class BehaviouralDriftDetector
         };
     }
 
+    // Counts added, removed and changed memory keys (case-insensitive) and caps the score at 40.
     private static BehaviouralDriftComparison CompareMemory(
         IReadOnlyDictionary<string, string> baseline,
         IReadOnlyDictionary<string, string> current)
@@ -197,6 +241,7 @@ public sealed class BehaviouralDriftDetector
         };
     }
 
+    // Maps a drift score to an invariant severity band.
     private static InvariantSeverity ToSeverity(int score)
     {
         return score >= DefaultBoundThreshold ? InvariantSeverity.Error :
@@ -209,6 +254,7 @@ public sealed class BehaviouralDriftDetector
         return string.IsNullOrWhiteSpace(value) ? "<empty>" : value;
     }
 
+    // Normalised, order-independent view of the adaptive parts of an AgentState.
     private sealed class AdaptiveStateSnapshot
     {
         public string Goal { get; init; } = "";
@@ -230,6 +276,7 @@ public sealed class BehaviouralDriftDetector
                     kvp => kvp.Value?.ToString() ?? "",
                     StringComparer.OrdinalIgnoreCase);
 
+            // Goals may be stored on AgentState.Goal or as a "goal" memory entry; prefer the explicit field.
             var memoryGoal = memory.TryGetValue("goal", out var goal) ? goal : "";
 
             return new AdaptiveStateSnapshot
@@ -244,6 +291,7 @@ public sealed class BehaviouralDriftDetector
         }
     }
 
+    // Intermediate score and explanation produced by Compare/CompareMemory.
     private sealed class BehaviouralDriftComparison
     {
         public int Score { get; init; }

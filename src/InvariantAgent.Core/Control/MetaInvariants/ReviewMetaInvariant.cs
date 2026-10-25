@@ -5,10 +5,20 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Control.MetaInvariants
 {
+    /// <summary>
+    /// Flags ambiguous or noisy override situations for human review without blocking them.
+    /// </summary>
+    /// <remarks>
+    /// Review is requested when the candidate violation conflicts with another violation in the same
+    /// layer, or when the number of simultaneous violations reaches the configured threshold.
+    /// </remarks>
     public sealed class ReviewMetaInvariant : IMetaInvariant
     {
+        /// <summary>Number of simultaneous violations at or above which review is requested.</summary>
         private readonly int _violationReviewThreshold;
 
+        /// <summary>Creates the meta-invariant.</summary>
+        /// <param name="violationReviewThreshold">Violation count that triggers review (default 3).</param>
         public ReviewMetaInvariant(int violationReviewThreshold = 3)
         {
             _violationReviewThreshold = violationReviewThreshold;
@@ -18,6 +28,7 @@ namespace InvariantAgent.Core.Control.MetaInvariants
 
         public MetaInvariantCategory Category => MetaInvariantCategory.Review;
 
+        /// <inheritdoc />
         public MetaInvariantResult Evaluate(MetaInvariantContext context)
         {
             var reasons = new List<string>();

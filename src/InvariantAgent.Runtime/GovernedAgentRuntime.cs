@@ -8,6 +8,26 @@ using InvariantAgent.Core.Transitioning;
 
 namespace InvariantAgent.Runtime
 {
+    /// <summary>
+    /// The governed agent runtime: orchestrates every input through the invariant-bounded transition lifecycle.
+    /// </summary>
+    /// <remarks>
+    /// <para>Runtime hierarchy: invariants, then runtime governance, then planner, then capabilities.</para>
+    /// <para>Pipeline for each input:</para>
+    /// <list type="number">
+    /// <item>Input received and the planner proposes an action from the bounded projection <c>π(Sₜ)</c>.</item>
+    /// <item>Pre-control: Plan invariants.</item>
+    /// <item>Capability execution.</item>
+    /// <item>Post-control: Execution invariants.</item>
+    /// <item>Self-modification invariants.</item>
+    /// <item>Reduction: the reducer proposes <c>Sₜ₊₁</c>, then Reduction invariants (e.g. drift bound) are checked.</item>
+    /// <item>Commit the new state and persist the transition.</item>
+    /// </list>
+    /// <para>
+    /// A failure at any checkpoint rejects the transition. Rejected transitions are persisted too, but
+    /// never change runtime state.
+    /// </para>
+    /// </remarks>
     public sealed class GovernedAgentRuntime
     {
         private readonly IPlanner _planner;
@@ -16,10 +36,18 @@ namespace InvariantAgent.Runtime
         private readonly IStateReducer _reducer;
         private readonly ITransitionStore _store;
 
+        // The last committed state. Replaced only after all governance checkpoints pass.
         private AgentState _state = new();
 
+        /// <summary>The last committed agent state.</summary>
         public AgentState State => _state;
 
+        /// <summary>Creates the runtime from its governed components.</summary>
+        /// <param name="planner">Untrusted planner that proposes actions.</param>
+        /// <param name="invariantEvaluator">Evaluator enforcing invariants at each checkpoint.</param>
+        /// <param name="executor">Executes approved actions.</param>
+        /// <param name="reducer">Assimilates approved outcomes into a proposed next state.</param>
+        /// <param name="store">Persists every transition, completed or rejected.</param>
         public GovernedAgentRuntime(
             IPlanner planner,
             IInvariantEvaluator invariantEvaluator,
@@ -34,6 +62,9 @@ namespace InvariantAgent.Runtime
             _store = store;
         }
 
+        /// <summary>Processes one input through the full governed transition lifecycle.</summary>
+        /// <param name="input">Raw user input.</param>
+        /// <returns>The transition context, including the full event trail and final status.</returns>
         public async Task<TransitionContext> RunAsync(string input)
         {
             var transition = new Transition
@@ -178,6 +209,10 @@ namespace InvariantAgent.Runtime
             return context;
         }
 
+        /// <summary>
+        /// Records a Control event describing the evaluation report (violations and overrides) and
+        /// returns whether the transition may proceed.
+        /// </summary>
         private bool TryApplyGovernanceOutcome(TransitionContext context, InvariantEvaluationReport report)
         {
             var transition = context.Transition;

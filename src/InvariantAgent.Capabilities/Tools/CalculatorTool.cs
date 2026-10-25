@@ -5,10 +5,16 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools;
 
+/// <summary>
+/// Evaluates arithmetic expressions (e.g. <c>calc 10+20</c>) using <see cref="DataTable.Compute"/>.
+/// </summary>
+/// <remarks>Invalid expressions throw; the exception is not caught here.</remarks>
 public class CalculatorTool : ICapability
 {
+    /// <inheritdoc />
     public string Name => "calc";
 
+    /// <inheritdoc />
     public CapabilityResult Execute(CapabilityRequest request)
     {
         var table = new DataTable();

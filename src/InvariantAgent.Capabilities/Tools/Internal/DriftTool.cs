@@ -5,19 +5,28 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
+    /// <summary>
+    /// <c>drift</c>: renders a drift report over the full transition history, including the
+    /// behavioural stability vector, region and governance recommendations.
+    /// </summary>
     public sealed class DriftTool : ICapability
     {
         private readonly ITransitionStore _store;
         private readonly IDriftAnalyzer _analyzer;
 
+        /// <inheritdoc />
         public string Name => "drift";
 
+        /// <summary>Creates the tool.</summary>
+        /// <param name="store">Transition history source.</param>
+        /// <param name="analyzer">Drift analyzer used to build the report.</param>
         public DriftTool(ITransitionStore store, IDriftAnalyzer analyzer)
         {
             _store = store;
             _analyzer = analyzer;
         }
 
+        /// <inheritdoc />
         public CapabilityResult Execute(CapabilityRequest request)
         {
             var transitions = _store.GetAll();

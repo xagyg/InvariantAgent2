@@ -4,6 +4,10 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Runtime
 {
+    /// <summary>
+    /// Reduction-scope lifecycle invariant: a rejected transition must not carry a proposed next state.
+    /// Not registered by default.
+    /// </summary>
     public sealed class RejectedTransitionCannotCommitInvariant : IInvariant
     {
         public string Name => nameof(RejectedTransitionCannotCommitInvariant);
@@ -14,6 +18,7 @@ namespace InvariantAgent.Safety.Invariants.Runtime
 
         public InvariantSeverity Severity => InvariantSeverity.Critical;
 
+        /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {
             var transition = context.Transition;

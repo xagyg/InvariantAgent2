@@ -4,13 +4,26 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
+    /// <summary>
+    /// <c>baseline-approve [reason]</c>: approves the latest committed state as the drift baseline.
+    /// </summary>
+    /// <remarks>
+    /// After approval, behavioural drift (and the drift-bound invariant) is measured against this state.
+    /// The "latest state" is the last transition with a non-null <c>After</c>, which can include a transition
+    /// rejected at the Reduction checkpoint.
+    /// Approval is the human-in-the-loop mechanism for accepting intentional behavioural evolution.
+    /// </remarks>
     public sealed class BaselineApproveTool : ICapability
     {
         private readonly ITransitionStore _transitions;
         private readonly IDriftBaselineStore _baselines;
 
+        /// <inheritdoc />
         public string Name => "baseline-approve";
 
+        /// <summary>Creates the tool.</summary>
+        /// <param name="transitions">Transition store used to find the latest committed state.</param>
+        /// <param name="baselines">Baseline store to update.</param>
         public BaselineApproveTool(
             ITransitionStore transitions,
             IDriftBaselineStore baselines)
@@ -19,6 +32,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             _baselines = baselines;
         }
 
+        /// <inheritdoc />
         public CapabilityResult Execute(CapabilityRequest request)
         {
             var latestState = _transitions.GetAll()

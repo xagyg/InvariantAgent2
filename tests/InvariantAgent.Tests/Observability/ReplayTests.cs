@@ -4,6 +4,7 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Observability;
 
+/// <summary>Tests for the replay capability's history output and count filtering.</summary>
 public sealed class ReplayTests
 {
     [Fact]

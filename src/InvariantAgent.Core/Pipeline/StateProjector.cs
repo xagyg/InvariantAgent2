@@ -4,8 +4,14 @@ using System.Linq;
 
 namespace InvariantAgent.Core.Pipeline
 {
+    /// <summary>
+    /// Produces the bounded <see cref="StateProjection"/> <c>π(Sₜ)</c> that planners operate on.
+    /// </summary>
     public static class StateProjector
     {
+        /// <summary>Creates a projection of the given state.</summary>
+        /// <param name="state">The full agent state.</param>
+        /// <returns>A read-only, summarised view of the state.</returns>
         public static StateProjection Project(AgentState state)
         {
             return new StateProjection
@@ -18,6 +24,7 @@ namespace InvariantAgent.Core.Pipeline
             };
         }
 
+        // Returns the "lastOutcome" memory entry, or an empty string.
         private static string GetLastOutcome(AgentState state)
         {
             if (state.Memory.TryGetValue("lastOutcome", out var value))
@@ -28,6 +35,7 @@ namespace InvariantAgent.Core.Pipeline
             return "";
         }
 
+        // Summarises only an allow-list of memory keys (max 10) so planners cannot see arbitrary memory.
         private static string SummariseMemory(Dictionary<string, object> memory)
         {
             if (memory == null || memory.Count == 0)

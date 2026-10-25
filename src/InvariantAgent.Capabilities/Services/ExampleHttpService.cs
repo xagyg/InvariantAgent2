@@ -4,12 +4,22 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Services;
 
+/// <summary>
+/// Example external-service capability that performs an HTTP GET against a fixed URL.
+/// </summary>
+/// <remarks>
+/// Demonstrates wrapping an external service as a capability. Note that it does not set
+/// <c>CapabilityResult.Capability</c>, so outcomes will show an empty capability name.
+/// </remarks>
 public class ExampleHttpService : ICapability
 {
+    // Shared HttpClient to avoid socket exhaustion.
     private static readonly HttpClient _httpClient = new HttpClient();
 
+    /// <inheritdoc />
     public string Name => "http_example";
 
+    /// <inheritdoc />
     public CapabilityResult Execute(CapabilityRequest request)
     {
         try

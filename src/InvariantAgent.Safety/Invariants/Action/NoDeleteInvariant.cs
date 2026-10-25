@@ -4,6 +4,9 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Action
 {
+    /// <summary>
+    /// Plan-scope safety invariant: forbids the <c>delete</c> capability. An example hard safety constraint.
+    /// </summary>
     public sealed class NoDeleteInvariant : IInvariant
     {
         public string Name => nameof(NoDeleteInvariant);
@@ -14,6 +17,7 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantSeverity Severity => InvariantSeverity.Error;
 
+        /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {
             var action = context.Transition.ProposedAction;

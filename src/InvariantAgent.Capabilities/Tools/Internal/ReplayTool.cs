@@ -10,13 +10,25 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
+    /// <summary>
+    /// <c>replay [N] [verbose] [validate]</c> (aliases: history, audit, trace): replays recorded transitions.
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><c>N</c> limits output to the last N transitions.</item>
+    /// <item><c>verbose</c> includes each transition's full event trail.</item>
+    /// <item><c>validate</c> re-evaluates invariants on a copy of each transition and reports governance drift.</item>
+    /// </list>
+    /// </remarks>
     public sealed class ReplayTool : ICapability
     {
         private readonly ITransitionStore _store;
         private readonly IServiceProvider _services;
 
+        /// <inheritdoc />
         public string Name => "replay";
 
+        /// <inheritdoc />
         public IReadOnlyCollection<string> Aliases => new[]
         {
             "history",
@@ -24,12 +36,19 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             "trace"
         };
 
+        /// <summary>Creates the tool.</summary>
+        /// <param name="store">Transition history source.</param>
+        /// <param name="services">
+        /// Service provider used to resolve <c>ReplayValidator</c> lazily (avoids a construction-time
+        /// dependency cycle through the invariant evaluator and capability registry).
+        /// </param>
         public ReplayTool(ITransitionStore store, IServiceProvider services)
         {
             _store = store;
             _services = services;
         }
 
+        /// <inheritdoc />
         public CapabilityResult Execute(CapabilityRequest request)
         {
             var transitions = _store.GetAll();
@@ -71,6 +90,8 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                 });
         }
 
+        // Runs replay validation for each transition and formats the comparison.
+        // Details are shown when verbose, or always for mismatches.
         private string FormatValidation(IReadOnlyList<Transition> transitions, bool verbose)
         {
             var sb = new StringBuilder();
@@ -135,6 +156,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             return sb.ToString();
         }
 
+        // Returns the first integer token in the input (capped at the history length), or all transitions.
         private static int ParseCount(string input, int defaultCount)
         {
             var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);

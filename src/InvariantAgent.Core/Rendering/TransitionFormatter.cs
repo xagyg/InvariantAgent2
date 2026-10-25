@@ -7,8 +7,13 @@ using System.Text;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Transition;
 
+/// <summary>
+/// Renders transitions as human-readable text for the replay and explain capabilities.
+/// </summary>
 public static class TransitionFormatter
 {
+    /// <summary>Compact replay: status, input, state version change and rejection reason per transition.</summary>
+    /// <param name="transitions">Transitions to render, in order.</param>
     public static string FormatReplay(IEnumerable<Transition> transitions)
     {
         var sb = new StringBuilder();
@@ -37,6 +42,8 @@ public static class TransitionFormatter
         return sb.ToString();
     }
 
+    /// <summary>Verbose replay: as <see cref="FormatReplay"/> plus the full event trail of each transition.</summary>
+    /// <param name="transitions">Transitions to render, in order.</param>
     public static string FormatReplayVerbose(IEnumerable<Transition> transitions)
     {
         var sb = new StringBuilder();
@@ -75,6 +82,11 @@ public static class TransitionFormatter
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Explains a single transition: summary, plan, invariant results grouped by scope, and state impact
+    /// (version change, memory diff and self-modifications).
+    /// </summary>
+    /// <param name="transition">The transition to explain.</param>
     public static string FormatExplain(Transition transition)
     {
         var sb = new StringBuilder();
@@ -97,6 +109,7 @@ public static class TransitionFormatter
         return sb.ToString();
     }
 
+    // One-paragraph narrative of what the runtime did and how the transition ended.
     private static void AppendSummary(StringBuilder sb, Transition transition)
     {
         var capability = transition.ProposedAction?.Capability ?? "unknown";
@@ -125,6 +138,7 @@ public static class TransitionFormatter
         sb.AppendLine();
     }
 
+    // The planner's proposed capability and input.
     private static void AppendPlan(StringBuilder sb, Transition transition)
     {
         sb.AppendLine("Plan:");
@@ -144,6 +158,7 @@ public static class TransitionFormatter
         sb.AppendLine();
     }
 
+    // Invariant results for each lifecycle checkpoint, in pipeline order.
     private static void AppendGovernance(StringBuilder sb, Transition transition)
     {
         AppendInvariantEvents(sb, transition, InvariantScope.Plan, "Plan invariants");
@@ -155,6 +170,7 @@ public static class TransitionFormatter
         AppendInvariantEvents(sb, transition, InvariantScope.Reduction, "Reduction invariants");
     }
 
+    // Lists Invariant-stage events whose "Scope" metadata matches the requested scope.
     private static void AppendInvariantEvents(StringBuilder sb, Transition transition, InvariantScope scope, string title)
     {
         var events = transition.Events
@@ -174,6 +190,7 @@ public static class TransitionFormatter
         }
     }
 
+    // True if the event's "Scope" metadata equals the given scope (case-insensitive).
     private static bool HasScope(TransitionEvent e, InvariantScope scope)
     {
         return e.Metadata != null &&
@@ -185,6 +202,7 @@ public static class TransitionFormatter
     }
 
 
+    // Version change, memory diff and any self-modification events.
     private static void AppendStateImpact(StringBuilder sb, Transition transition)
     {
         sb.AppendLine("State Impact:");
@@ -216,11 +234,13 @@ public static class TransitionFormatter
         }
     }
 
+    // Reads a metadata value as a string, or null if absent.
     private static string? GetMetadataString(TransitionEvent e, string key)
     {
         return e.Metadata.TryGetValue(key, out var value) ? value?.ToString() : null;
     }
 
+    // Lists added (+), removed (-) and changed (~) memory keys between Before and After.
     private static void AppendMemoryDiff(StringBuilder sb, Transition transition)
     {
         if (transition.Before == null || transition.After == null)

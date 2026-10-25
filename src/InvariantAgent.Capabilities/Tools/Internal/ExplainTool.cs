@@ -5,17 +5,25 @@ using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Rendering;
 using System.Text;
 
+/// <summary>
+/// <c>explain [last | id-prefix]</c>: explains a transition's plan, invariant decisions and state impact.
+/// </summary>
+/// <remarks>Declared in the global namespace (no namespace declaration in this file).</remarks>
 public sealed class ExplainTool : ICapability
 {
     private readonly ITransitionStore _store;
 
+    /// <inheritdoc />
     public string Name => "explain";
 
+    /// <summary>Creates the tool.</summary>
+    /// <param name="store">Transition history source.</param>
     public ExplainTool(ITransitionStore store)
     {
         _store = store;
     }
 
+    /// <inheritdoc />
     public CapabilityResult Execute(CapabilityRequest request)
     {
         var input = request.Input;
@@ -42,6 +50,8 @@ public sealed class ExplainTool : ICapability
             });
     }
 
+    // Empty input or "last" selects the latest transition; otherwise matches by Id prefix.
+    // The explain transition that is currently running is not stored yet, so "last" means the previous transition.
     private static Transition? ResolveTransition(
         IReadOnlyList<Transition> transitions,
         string input)

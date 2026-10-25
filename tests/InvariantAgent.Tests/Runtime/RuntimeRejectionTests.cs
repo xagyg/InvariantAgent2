@@ -10,6 +10,10 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Runtime;
 
+/// <summary>
+/// Tests that governance rejections (unknown capability, delete, excessive drift) are persisted but
+/// never advance or commit runtime state.
+/// </summary>
 public sealed class RuntimeRejectionTests
 {
     [Fact]
@@ -100,6 +104,7 @@ public sealed class RuntimeRejectionTests
             provider.GetRequiredService<IDriftBaselineStore>());
     }
 
+    /// <summary>Reducer stub that proposes a large adaptive change to trigger the drift-bound invariant.</summary>
     private sealed class HighDriftReducer : IStateReducer
     {
         public void Apply(TransitionContext context)

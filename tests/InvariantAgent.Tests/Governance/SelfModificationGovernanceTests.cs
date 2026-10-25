@@ -4,6 +4,10 @@ using Xunit;
 
 namespace InvariantAgent.Tests.Governance;
 
+/// <summary>
+/// End-to-end tests for governed self-modification: allowed memory keys are assimilated, disallowed
+/// keys are rejected without changing state.
+/// </summary>
 public sealed class SelfModificationGovernanceTests
 {
     [Fact]

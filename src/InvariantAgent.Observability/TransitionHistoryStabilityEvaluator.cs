@@ -6,8 +6,23 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Observability
 {
+    /// <summary>
+    /// Default <see cref="IStabilityEvaluator"/>. Computes Agent Identity Evaluation (AIE) metrics over
+    /// windows of completed transitions (IBAAM 2: Measuring Behavioural Stability).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The latest <c>DefaultHorizon</c> completed transitions form the current window and the window before
+    /// that forms the previous one. Drift magnitude is the Euclidean distance between the two stability vectors.
+    /// </para>
+    /// <para>
+    /// These measurements indicate behavioural change; they do not reject transitions. Invariants remain
+    /// responsible for deciding whether change is acceptable.
+    /// </para>
+    /// </remarks>
     public sealed class TransitionHistoryStabilityEvaluator : IStabilityEvaluator
     {
+        // Memory keys that change every transition and are excluded from persistence scoring.
         private static readonly HashSet<string> VolatileMemoryKeys =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -17,11 +32,14 @@ namespace InvariantAgent.Observability
 
         private readonly BehaviouralDriftDetector _driftDetector;
 
+        /// <summary>Creates the evaluator.</summary>
+        /// <param name="driftDetector">Detector used to score continuity.</param>
         public TransitionHistoryStabilityEvaluator(BehaviouralDriftDetector driftDetector)
         {
             _driftDetector = driftDetector;
         }
 
+        /// <inheritdoc />
         public StabilityAssessment Evaluate(IReadOnlyList<Transition> transitions)
         {
             var completed = transitions
@@ -42,6 +60,7 @@ namespace InvariantAgent.Observability
                 };
             }
 
+            // Current window = last DefaultHorizon completed transitions; prior window = the DefaultHorizon before it.
             var currentWindow = completed.TakeLast(Math.Min(BehaviouralDriftDetector.DefaultHorizon, completed.Count)).ToList();
             var priorWindow = completed
                 .Take(Math.Max(0, completed.Count - currentWindow.Count))
@@ -64,6 +83,7 @@ namespace InvariantAgent.Observability
             };
         }
 
+        // Computes the five AIE dimensions for a window. Consistency and Recovery use the whole history.
         private StabilityVector Measure(
             IReadOnlyList<Transition> allTransitions,
             IReadOnlyList<Transition> window)
@@ -83,6 +103,7 @@ namespace InvariantAgent.Observability
             };
         }
 
+        // Identifiability: -15 per rejection and -5 per distinct capability beyond 3.
         private static int ScoreIdentifiability(IReadOnlyList<Transition> transitions)
         {
             var actions = transitions.Where(t => t.ProposedAction != null).ToList();
@@ -103,6 +124,7 @@ namespace InvariantAgent.Observability
             return Clamp(100 - rejectionPenalty - capabilitySpreadPenalty);
         }
 
+        // Consistency: share of repeated (capability, input) pairs that always produced the same outcome.
         private static int ScoreConsistency(IReadOnlyList<Transition> transitions)
         {
             var comparableGroups = transitions
@@ -126,6 +148,8 @@ namespace InvariantAgent.Observability
             return Clamp(100 - (inconsistentGroups * 100 / comparableGroups.Count));
         }
 
+        // Persistence: penalises lost goal (-30), mode change (-20), lost policies (-10 each, max 30)
+        // and lost stable memory keys (-10 each, max 20).
         private static int ScorePersistence(AgentState baseline, AgentState current)
         {
             var score = 100;
@@ -157,6 +181,7 @@ namespace InvariantAgent.Observability
             return Clamp(score);
         }
 
+        // Recovery: share of rejected transitions followed later by at least one completed transition.
         private static int ScoreRecovery(IReadOnlyList<Transition> transitions)
         {
             var rejectedTransitions = transitions
@@ -176,6 +201,8 @@ namespace InvariantAgent.Observability
             return Clamp(recovered * 100 / rejectedTransitions.Count);
         }
 
+        // Critical: invariant failures with low average or high drift; Intervention: average below 60 or
+        // drift 40+; Watch: average below 85, drift 20+, or any invariant failure; otherwise Stable.
         private static StabilityRegion ClassifyRegion(
             IReadOnlyList<Transition> transitions,
             StabilityVector vector,
@@ -203,6 +230,7 @@ namespace InvariantAgent.Observability
             return StabilityRegion.Stable;
         }
 
+        // Maps the region (and notable drift or poor recovery) to governance recommendations.
         private static IReadOnlyList<string> Recommend(
             StabilityRegion region,
             StabilityVector vector,
@@ -240,6 +268,7 @@ namespace InvariantAgent.Observability
             return recommendations;
         }
 
+        // Confidence grows with the number of completed transitions relative to DefaultHorizon.
         private static MeasurementConfidence ToConfidence(int completedTransitions)
         {
             if (completedTransitions >= BehaviouralDriftDetector.DefaultHorizon * 2)
@@ -255,6 +284,7 @@ namespace InvariantAgent.Observability
             return MeasurementConfidence.Low;
         }
 
+        // Euclidean distance between two stability vectors, clamped to 0-100.
         private static int Distance(StabilityVector left, StabilityVector right)
         {
             var sum =
@@ -267,11 +297,13 @@ namespace InvariantAgent.Observability
             return Clamp((int)Math.Round(Math.Sqrt(sum)));
         }
 
+        // Key used to group repeated actions for the consistency score.
         private static string NormalizeComparableAction(AgentAction action)
         {
             return $"{action.Capability ?? ""}:{(action.Input ?? "").Trim()}";
         }
 
+        // Comparable representation of an outcome (success plus result, or failure plus error).
         private static string OutcomeSignature(Transition transition)
         {
             if (transition.Outcome == null)
@@ -284,6 +316,7 @@ namespace InvariantAgent.Observability
                 : $"fail:{transition.Outcome.Error}";
         }
 
+        // Explicit Goal if set, otherwise the "goal" memory entry.
         private static string EffectiveGoal(AgentState state)
         {
             if (!string.IsNullOrWhiteSpace(state.Goal))
@@ -296,6 +329,7 @@ namespace InvariantAgent.Observability
             return memory.TryGetValue("goal", out var goal) ? goal : "";
         }
 
+        // Memory without volatile keys, as strings.
         private static IReadOnlyDictionary<string, string> StableMemory(AgentState state)
         {
             return state.Memory
@@ -306,6 +340,7 @@ namespace InvariantAgent.Observability
                     StringComparer.OrdinalIgnoreCase);
         }
 
+        // Prefers structured "Passed" metadata; falls back to message text.
         private static bool IsFailedInvariantEvent(TransitionEvent e)
         {
             if (e.Stage != TransitionEventStage.Invariant)
@@ -321,6 +356,7 @@ namespace InvariantAgent.Observability
             return e.Message.Contains("Failed");
         }
 
+        // Clamps a score to the range 0-100.
         private static int Clamp(int score)
         {
             return Math.Max(0, Math.Min(100, score));

@@ -5,17 +5,22 @@ using InvariantAgent.Core.Model.Data;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
+    /// <summary><c>baseline-show</c>: displays the currently approved drift baseline.</summary>
     public sealed class BaselineShowTool : ICapability
     {
         private readonly IDriftBaselineStore _baselines;
 
+        /// <inheritdoc />
         public string Name => "baseline-show";
 
+        /// <summary>Creates the tool.</summary>
+        /// <param name="baselines">Baseline store to read.</param>
         public BaselineShowTool(IDriftBaselineStore baselines)
         {
             _baselines = baselines;
         }
 
+        /// <inheritdoc />
         public CapabilityResult Execute(CapabilityRequest request)
         {
             var baseline = _baselines.Current;
