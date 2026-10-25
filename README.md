@@ -54,6 +54,7 @@ agent> calc 10+20
 [Lifecycle] Phase: Reduction
 [Reduction] ProposedVersion=1
 [Invariant] BehaviouralDriftBoundInvariant: Passed
+[Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
 [Lifecycle] CommittedVersion=1
 [Lifecycle] Phase: Completed
@@ -233,6 +234,7 @@ agent> calc 10+20
 [Lifecycle] Phase: Reduction
 [Reduction] ProposedVersion=1
 [Invariant] BehaviouralDriftBoundInvariant: Passed
+[Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
 [Lifecycle] CommittedVersion=1
 [Lifecycle] Phase: Completed
@@ -262,6 +264,7 @@ agent> memory-set goal=learn IBAAM
 [SelfModification] Set goal
 [Reduction] ProposedVersion=2
 [Invariant] BehaviouralDriftBoundInvariant: Passed
+[Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
 [Lifecycle] CommittedVersion=2
 [Lifecycle] Phase: Completed
@@ -489,6 +492,7 @@ Recent drift:
 [Lifecycle] Phase: Reduction
 [Reduction] ProposedVersion=2
 [Invariant] BehaviouralDriftBoundInvariant: Passed
+[Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
 [Lifecycle] CommittedVersion=2
 [Lifecycle] Phase: Completed

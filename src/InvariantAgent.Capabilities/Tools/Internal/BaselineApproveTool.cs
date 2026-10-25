@@ -1,6 +1,7 @@
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Capability;
 using InvariantAgent.Core.Model.Data;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
@@ -9,8 +10,8 @@ namespace InvariantAgent.Capabilities.Tools.Internal
     /// </summary>
     /// <remarks>
     /// After approval, behavioural drift (and the drift-bound invariant) is measured against this state.
-    /// The "latest state" is the last transition with a non-null <c>After</c>, which can include a transition
-    /// rejected at the Reduction checkpoint.
+    /// Only completed transitions are considered, so a state that governance rejected (for example at the
+    /// Reduction checkpoint) can never be approved as a baseline.
     /// Approval is the human-in-the-loop mechanism for accepting intentional behavioural evolution.
     /// </remarks>
     public sealed class BaselineApproveTool : ICapability
@@ -36,7 +37,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
         public CapabilityResult Execute(CapabilityRequest request)
         {
             var latestState = _transitions.GetAll()
-                .LastOrDefault(t => t.After != null)
+                .LastOrDefault(t => t.Status == TransitionStatus.Completed && t.After != null)
                 ?.After;
 
             if (latestState == null)

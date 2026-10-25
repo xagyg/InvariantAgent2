@@ -5,10 +5,11 @@ using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Rendering;
 using System.Text;
 
+namespace InvariantAgent.Capabilities.Tools.Internal;
+
 /// <summary>
 /// <c>explain [last | id-prefix]</c>: explains a transition's plan, invariant decisions and state impact.
 /// </summary>
-/// <remarks>Declared in the global namespace (no namespace declaration in this file).</remarks>
 public sealed class ExplainTool : ICapability
 {
     private readonly ITransitionStore _store;

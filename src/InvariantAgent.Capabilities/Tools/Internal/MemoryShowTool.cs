@@ -2,14 +2,14 @@
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Capability;
 using InvariantAgent.Core.Model.Data;
+using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Capabilities.Tools.Internal
 {
-    /// <summary><c>memory-show</c>: lists memory from the most recent transition that produced a resulting state.</summary>
+    /// <summary><c>memory-show</c>: lists memory from the latest committed state.</summary>
     /// <remarks>
-    /// "Most recent resulting state" is taken as the last transition with a non-null <c>After</c>. A transition
-    /// rejected at the Reduction checkpoint also has <c>After</c> set, so it can be picked up here even though
-    /// its state was never committed.
+    /// Only completed transitions are considered. A transition rejected at the Reduction checkpoint still has
+    /// a proposed <c>After</c> state, but that state was never committed and is ignored here.
     /// </remarks>
     public sealed class MemoryShowTool : ICapability
     {
@@ -28,7 +28,9 @@ namespace InvariantAgent.Capabilities.Tools.Internal
         /// <inheritdoc />
         public CapabilityResult Execute(CapabilityRequest request)
         {
-            var latestState = _store.GetAll().LastOrDefault(t => t.After != null)?.After;
+            var latestState = _store.GetAll()
+                .LastOrDefault(t => t.Status == TransitionStatus.Completed && t.After != null)
+                ?.After;
 
             if (latestState == null || latestState.Memory.Count == 0)
             {

@@ -11,7 +11,9 @@ namespace InvariantAgent.Execution.Engine;
 /// </summary>
 /// <remarks>
 /// The executor mediates capability access but never applies self-modifications; those are evaluated
-/// by invariants and assimilated by the reducer. Exceptions thrown by capabilities propagate.
+/// by invariants and assimilated by the reducer. Exceptions thrown by capabilities are converted
+/// into failed results, so the transition is rejected by execution invariants and still persisted
+/// instead of crashing the runtime.
 /// </remarks>
 public class CapabilityExecutor : IExecutor
 {
@@ -67,7 +69,8 @@ public class CapabilityExecutor : IExecutor
         }
     }
 
-    // Resolves and invokes the capability; an unknown capability yields a failed result.
+    // Resolves and invokes the capability. An unknown capability or a capability that throws
+    // yields a failed result rather than an exception.
     private CapabilityResult ExecuteCapability(
     AgentAction action)
     {
@@ -83,6 +86,15 @@ public class CapabilityExecutor : IExecutor
             };
         }
 
-        return capability.Execute(new CapabilityRequest { Input = action.Input });
+        try
+        {
+            return capability.Execute(new CapabilityRequest { Input = action.Input });
+        }
+        catch (Exception ex)
+        {
+            return CapabilityResult.Fail(
+                action.Capability,
+                $"Capability '{action.Capability}' failed: {ex.Message}");
+        }
     }
 }

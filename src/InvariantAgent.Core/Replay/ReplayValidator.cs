@@ -102,7 +102,8 @@ public sealed class ReplayValidator
                 DriftType = DriftType.GovernanceDrift,
                 Reason = "Replay validation mismatch.",
                 Comparison = comparison,
-                Severity = severity
+                Severity = severity,
+                Score = score
             };
 
             _driftTracker.Record(
@@ -125,7 +126,8 @@ public sealed class ReplayValidator
             Passed = true,
             DriftType = DriftType.None,
             Comparison = comparison,
-            Severity = severity
+            Severity = severity,
+            Score = score
         };
     }
 

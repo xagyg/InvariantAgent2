@@ -39,10 +39,14 @@ namespace InvariantAgent.Core.Pipeline
             var before = transition.Before;
 
             // Build a fresh state rather than mutating Before, so the prior state stays intact for audit.
-            // Note: Mode, Goal and Policies are not carried forward yet.
+            // Mode, Goal and Policies are carried forward unchanged; Policies is copied so the two
+            // states never share a mutable list.
             var after = new AgentState
             {
-                Version = before.Version + 1
+                Version = before.Version + 1,
+                Mode = before.Mode,
+                Goal = before.Goal,
+                Policies = before.Policies?.ToList() ?? new List<string>()
             };
 
             // shallow-copy memory for now

@@ -8,8 +8,7 @@ namespace InvariantAgent.Capabilities.Services;
 /// Example external-service capability that performs an HTTP GET against a fixed URL.
 /// </summary>
 /// <remarks>
-/// Demonstrates wrapping an external service as a capability. Note that it does not set
-/// <c>CapabilityResult.Capability</c>, so outcomes will show an empty capability name.
+/// Demonstrates wrapping an external service as a capability.
 /// </remarks>
 public class ExampleHttpService : ICapability
 {
@@ -38,6 +37,7 @@ public class ExampleHttpService : ICapability
 
             return new CapabilityResult
             {
+                Capability = Name,
                 Success = response.IsSuccessStatusCode,
                 Data = new TextData { Value = content }
             };
@@ -46,6 +46,7 @@ public class ExampleHttpService : ICapability
         {
             return new CapabilityResult
             {
+                Capability = Name,
                 Success = false,
                 Error = ex.Message
             };
