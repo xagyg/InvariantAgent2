@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.SelfModification;
 
 namespace InvariantAgent.Core.Model.Transition
@@ -54,6 +55,16 @@ namespace InvariantAgent.Core.Model.Transition
 
         /// <summary>Self-modification proposed by the executed capability, if any.</summary>
         public SelfModificationRequest? SelfModification { get; set; }
+
+        /// <summary>
+        /// The drift baseline in force when reduction invariants were evaluated.
+        /// </summary>
+        /// <remarks>
+        /// Recorded so replay scores behavioural drift against the same baseline the live run used, rather than
+        /// whatever baseline is approved at replay time. <c>null</c> means it was not recorded (reduction was never
+        /// reached, or the transition predates this field).
+        /// </remarks>
+        public DriftBaselineSnapshot DriftBaseline { get; set; }
 
         /// <summary>Ordered, auditable event trail for this transition.</summary>
         public List<TransitionEvent> Events { get; init; } = new();

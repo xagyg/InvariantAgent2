@@ -11,10 +11,13 @@ namespace InvariantAgent.Core.Replay;
 
 /// <summary>
 /// Re-evaluates invariants against a recorded transition to verify that governance decisions are
-/// reproducible. A different accept/reject outcome is recorded as <see cref="DriftType.GovernanceDrift"/>.
+/// reproducible. A different accept/reject outcome is reported as <see cref="DriftType.GovernanceDrift"/>.
 /// </summary>
 /// <remarks>
 /// Callers should pass a cloned transition, because invariant evaluation appends events to it.
+/// Behavioural drift is scored against the baseline recorded on the transition, so the result depends only on
+/// the recorded transition and the current rules, not on baselines approved since. Transitions recorded before
+/// baselines were captured fall back to the current baseline (see <see cref="ReplayComparison.DriftBaselineRecorded"/>).
 /// </remarks>
 public sealed class ReplayValidator
 {
@@ -24,7 +27,7 @@ public sealed class ReplayValidator
 
     /// <summary>Creates a replay validator.</summary>
     /// <param name="evaluator">Invariant evaluator used for re-evaluation.</param>
-    /// <param name="driftTracker">Tracker that receives governance drift records.</param>
+    /// <param name="driftTracker">Tracker that receives governance drift records when <c>recordDrift</c> is requested.</param>
     public ReplayValidator(IInvariantEvaluator evaluator, DriftTracker driftTracker)
     {
         _evaluator = evaluator;
@@ -33,8 +36,13 @@ public sealed class ReplayValidator
 
     /// <summary>Replays governance for one transition and compares the result with the original.</summary>
     /// <param name="context">Context wrapping (a copy of) the recorded transition.</param>
+    /// <param name="recordDrift">
+    /// When true, a mismatch is also written to the <see cref="DriftTracker"/> as governance drift.
+    /// Defaults to false so that replay is report-only: repeatedly replaying the same history must not
+    /// change drift statistics.
+    /// </param>
     /// <returns>The validation result and comparison.</returns>
-    public ReplayValidationResult Validate(TransitionContext context)
+    public ReplayValidationResult Validate(TransitionContext context, bool recordDrift = false)
     {
         var originalViolations = ExtractViolations(context.Transition);
 
@@ -65,7 +73,9 @@ public sealed class ReplayValidator
 
             OriginalViolations = originalViolations,
 
-            ReplayViolations = replayViolations
+            ReplayViolations = replayViolations,
+
+            DriftBaselineRecorded = context.Transition.DriftBaseline != null
         };
 
         // Mismatch score: status change +100, phase change +50, +10 per difference in violation count.
@@ -106,17 +116,20 @@ public sealed class ReplayValidator
                 Score = score
             };
 
-            _driftTracker.Record(
-                new DriftRecord
-                {
-                    Type = result.DriftType,
-                    Reason = result.Reason,
-                    TransitionId = context.Transition.Id.ToString(),
-                    TimestampUtc = DateTime.UtcNow,
-                    Phase = context.Transition.Phase,
-                    Severity = severity,
-                    Score = score
-                });
+            if (recordDrift)
+            {
+                _driftTracker.Record(
+                    new DriftRecord
+                    {
+                        Type = result.DriftType,
+                        Reason = result.Reason,
+                        TransitionId = context.Transition.Id.ToString(),
+                        TimestampUtc = DateTime.UtcNow,
+                        Phase = context.Transition.Phase,
+                        Severity = severity,
+                        Score = score
+                    });
+            }
 
             return result;
         }

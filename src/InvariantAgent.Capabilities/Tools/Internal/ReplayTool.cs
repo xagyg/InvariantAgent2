@@ -109,7 +109,8 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 
                 var validator = _services.GetRequiredService<ReplayValidator>();
 
-                var result = validator.Validate(context);
+                // Report-only: replaying must not add records to the drift tracker.
+                var result = validator.Validate(context, recordDrift: false);
 
                 var showDetails = verbose || !result.Passed;
 
@@ -124,6 +125,11 @@ namespace InvariantAgent.Capabilities.Tools.Internal
                     sb.AppendLine($"  OriginalPhase={comparison.OriginalPhase}");
 
                     sb.AppendLine($"  ReplayPhase={comparison.ReplayPhase}");
+
+                    if (!comparison.DriftBaselineRecorded && transition.After != null)
+                    {
+                        sb.AppendLine("  DriftBaseline=not recorded (scored against current baseline)");
+                    }
 
                     if (comparison.OriginalViolations.Count > 0)
                     {

@@ -106,7 +106,7 @@ public sealed class BehaviouralDriftDetector
 
     /// <summary>
     /// Scores the proposed state of <paramref name="transition"/> against the approved baseline if one
-    /// exists, otherwise against the transition's prior state. Used by the drift-bound invariant.
+    /// exists now, otherwise against the transition's prior state. Governance uses <see cref="ScoreAsRecorded"/>.
     /// </summary>
     /// <param name="transition">A transition whose <c>After</c> state has been proposed by the reducer.</param>
     /// <returns>The drift score, severity and explanation.</returns>
@@ -123,6 +123,29 @@ public sealed class BehaviouralDriftDetector
         }
 
         return Score(GetBaseline(transition), transition.After);
+    }
+
+    /// <summary>
+    /// Scores <paramref name="transition"/> against the baseline recorded on it
+    /// (<see cref="Transition.DriftBaseline"/>), falling back to <see cref="Score(Transition)"/> when none was recorded.
+    /// </summary>
+    /// <remarks>
+    /// This is what governance uses. During a live run the recorded baseline is the current one, so the result is
+    /// identical to <see cref="Score(Transition)"/>; during replay it keeps the score independent of baselines
+    /// approved after the transition ran.
+    /// </remarks>
+    /// <param name="transition">The transition to score.</param>
+    /// <returns>The drift score of <c>After</c> relative to the recorded baseline (or <c>Before</c> if none was approved).</returns>
+    public DriftScore ScoreAsRecorded(Transition transition)
+    {
+        var recorded = transition.DriftBaseline;
+
+        if (recorded == null || transition.After == null)
+        {
+            return Score(transition);
+        }
+
+        return Score(recorded.State ?? transition.Before, transition.After);
     }
 
     /// <summary>Scores the adaptive difference between two states.</summary>
