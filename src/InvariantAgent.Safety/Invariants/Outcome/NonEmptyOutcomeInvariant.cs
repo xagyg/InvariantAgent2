@@ -4,7 +4,11 @@ using InvariantAgent.Core.Model.Transition;
 
 namespace InvariantAgent.Safety.Invariants.Outcome
 {
-    /// <summary>Execution-scope integrity invariant: the execution outcome must have a non-empty result.</summary>
+    /// <summary>Execution-scope integrity invariant: a successful execution outcome must have a non-empty result.</summary>
+    /// <remarks>
+    /// Failed outcomes are out of scope: they carry no result by design and are already rejected by
+    /// <c>SuccessOutcomeInvariant</c>, so rejecting them here would report the same failure twice.
+    /// </remarks>
     public sealed class NonEmptyOutcomeInvariant : IInvariant
     {
         public string Name => nameof(NonEmptyOutcomeInvariant);
@@ -23,6 +27,16 @@ namespace InvariantAgent.Safety.Invariants.Outcome
             if (outcome == null)
             {
                 return InvariantResult.Reject("No execution outcome.");
+            }
+
+            // Not applicable to failed executions; SuccessOutcomeInvariant reports those.
+            if (!outcome.Success)
+            {
+                return new InvariantResult
+                {
+                    Passed = true,
+                    Reason = "Not applicable: execution failed."
+                };
             }
 
             if (string.IsNullOrWhiteSpace(outcome.Result))

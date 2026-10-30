@@ -27,7 +27,7 @@ InvariantAgent2 serves as a reference implementation of the **Invariant-Bounded 
 ## Quick Start
 
 ```bash
-dotnet run --project InvariantAgent.ConsoleApp
+dotnet run --project src/InvariantAgent.ConsoleApp
 ```
 
 Example:
@@ -376,6 +376,7 @@ These measurements indicate behavioural change. Invariants remain responsible fo
 - `explain`
 - `replay`
 - `replay verbose`
+- `replay validate` (re-evaluates history against the current invariants; report-only)
 - `drift`
 - `memory-set`
 - `memory-show`
@@ -395,6 +396,25 @@ Entry point:
 ```text
 InvariantAgent.ConsoleApp/Program.cs
 ```
+
+### Persistence
+
+The console app persists to a data directory (default: `data/` next to the executable):
+
+- `transitions.jsonl` - every transition, completed or rejected, one JSON object per line
+- `baselines.jsonl` - every approved drift baseline; the last one is current
+
+On restart the runtime resumes from the last committed state. Choose another location with
+`--InvariantAgent:DataDirectory=<path>` or the `InvariantAgent__DataDirectory` environment variable.
+`AddInvariantAgent()` with no data directory keeps everything in memory (used by the tests).
+
+### Deterministic replay
+
+Each transition records the drift baseline in force when its reduction invariants ran
+(`Transition.DriftBaseline`). `replay validate` scores behavioural drift against that recorded baseline, so its
+result depends only on the recorded history and the current rules, not on baselines approved later. Replay does
+not write to the drift tracker. History recorded before this field existed falls back to the current baseline and
+is flagged in verbose output.
 
 ## Research
 

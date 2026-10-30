@@ -22,10 +22,20 @@ namespace InvariantAgent.ConsoleApp
                     logging.AddConsole();
                     logging.SetMinimumLevel(LogLevel.Warning);
                 })
-                .ConfigureServices(services =>
+                .ConfigureServices((context, services) =>
                 {
+                    // Persistent storage, so history and baselines survive restarts and can be replayed later.
+                    // Override with --InvariantAgent:DataDirectory=<path> or the
+                    // InvariantAgent__DataDirectory environment variable.
+                    var dataDirectory = context.Configuration["InvariantAgent:DataDirectory"];
+
+                    if (string.IsNullOrWhiteSpace(dataDirectory))
+                    {
+                        dataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
+                    }
+
                     // Registers the runtime, invariants, planner, capabilities, storage and observability.
-                    services.AddInvariantAgent();
+                    services.AddInvariantAgent(dataDirectory);
 
                     // Runs the interactive REPL loop in the background.
                     services.AddHostedService<

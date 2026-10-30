@@ -34,6 +34,7 @@ namespace InvariantAgent.Runtime
             Console.WriteLine("Commands:");
             Console.WriteLine("  exit  - quit");
             Console.WriteLine("  clear - clear screen");
+            Console.WriteLine($"Resumed at state version {_runtime.State.Version}.");
             Console.WriteLine();
 
             while (!stoppingToken.IsCancellationRequested)

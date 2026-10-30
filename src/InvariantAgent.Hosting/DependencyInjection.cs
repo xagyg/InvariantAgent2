@@ -27,20 +27,40 @@ namespace InvariantAgent.Hosting
     /// </summary>
     public static class DependencyInjection
     {
+        /// <summary>File name of the transition history inside the data directory.</summary>
+        public const string TransitionsFileName = "transitions.jsonl";
+
+        /// <summary>File name of the drift baseline approval history inside the data directory.</summary>
+        public const string BaselinesFileName = "baselines.jsonl";
+
         /// <summary>
         /// Registers storage, observability, planner, executor, reducer, meta-invariants, invariants,
         /// capabilities and the governed runtime (all as singletons).
         /// </summary>
         /// <param name="services">The service collection to populate.</param>
+        /// <param name="dataDirectory">
+        /// Directory for persistent storage. When set, transitions and drift baselines are kept in
+        /// <see cref="TransitionsFileName"/> and <see cref="BaselinesFileName"/> there and survive restarts
+        /// (the runtime resumes from the last committed state). When <c>null</c>, everything is in memory.
+        /// </param>
         /// <returns>The same service collection, for chaining.</returns>
-        public static IServiceCollection AddInvariantAgent(this IServiceCollection services)
+        public static IServiceCollection AddInvariantAgent(
+            this IServiceCollection services,
+            string? dataDirectory = null)
         {
-            // MEMORY STORAGE
-            services.AddSingleton<ITransitionStore, InMemoryTransitionStore>();
-
-            // PERSISTENT STORAGE (Comment out the memory storage above, and uncomment the lines below) ...
-            //services.AddSingleton<ITransitionStore>(_ => 
-            //        new FileTransitionStore(Path.Combine(AppContext.BaseDirectory, "data", "transitions.json")));
+            // STORAGE: transition history and approved drift baselines.
+            if (string.IsNullOrWhiteSpace(dataDirectory))
+            {
+                services.AddSingleton<ITransitionStore, InMemoryTransitionStore>();
+                services.AddSingleton<IDriftBaselineStore, InMemoryDriftBaselineStore>();
+            }
+            else
+            {
+                services.AddSingleton<ITransitionStore>(_ =>
+                    new FileTransitionStore(Path.Combine(dataDirectory, TransitionsFileName)));
+                services.AddSingleton<IDriftBaselineStore>(_ =>
+                    new FileDriftBaselineStore(Path.Combine(dataDirectory, BaselinesFileName)));
+            }
 
             // OBSERVABILITY: drift analysis and behavioural stability evaluation.
             services.AddSingleton<IDriftAnalyzer, SimpleDriftAnalyzer>();
@@ -52,7 +72,6 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ReplayValidator>();
 
             services.AddSingleton<DriftTracker>();
-            services.AddSingleton<IDriftBaselineStore, InMemoryDriftBaselineStore>();
             services.AddSingleton<BehaviouralDriftDetector>();
 
             // EXECUTION and STATE ASSIMILATION.

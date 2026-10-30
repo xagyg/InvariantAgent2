@@ -29,5 +29,12 @@ namespace InvariantAgent.Core.Replay
         /// <summary>Unresolved violations found on replay.</summary>
         public IReadOnlyList<string> ReplayViolations { get; init; }
             = Array.Empty<string>();
+
+        /// <summary>
+        /// True if the transition carries the drift baseline it was originally scored against. When false
+        /// (history recorded before baselines were captured), replay used the currently approved baseline,
+        /// so a drift-related mismatch may reflect a baseline change rather than a rule change.
+        /// </summary>
+        public bool DriftBaselineRecorded { get; init; }
     }
 }

@@ -2,6 +2,7 @@
 using InvariantAgent.Core.Control;
 using InvariantAgent.Core.Model.Agent;
 using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.Transition;
 using InvariantAgent.Core.Pipeline;
 using InvariantAgent.Core.Transitioning;
@@ -35,9 +36,10 @@ namespace InvariantAgent.Runtime
         private readonly IExecutor _executor;
         private readonly IStateReducer _reducer;
         private readonly ITransitionStore _store;
+        private readonly IDriftBaselineStore? _baselines;
 
         // The last committed state. Replaced only after all governance checkpoints pass.
-        private AgentState _state = new();
+        private AgentState _state;
 
         /// <summary>The last committed agent state.</summary>
         public AgentState State => _state;
@@ -48,18 +50,38 @@ namespace InvariantAgent.Runtime
         /// <param name="executor">Executes approved actions.</param>
         /// <param name="reducer">Assimilates approved outcomes into a proposed next state.</param>
         /// <param name="store">Persists every transition, completed or rejected.</param>
+        /// <param name="baselines">
+        /// Approved drift baselines. When supplied, the baseline in force is recorded on each transition before
+        /// reduction invariants run, so replay can score drift against the same baseline.
+        /// </param>
+        /// <remarks>
+        /// With a persistent store the runtime resumes from the last committed state, so a restart does not
+        /// silently reset the agent while its history survives.
+        /// </remarks>
         public GovernedAgentRuntime(
             IPlanner planner,
             IInvariantEvaluator invariantEvaluator,
             IExecutor executor,
             IStateReducer reducer,
-            ITransitionStore store)
+            ITransitionStore store,
+            IDriftBaselineStore? baselines = null)
         {
             _planner = planner;
             _evaluator = invariantEvaluator;
             _executor = executor;
             _reducer = reducer;
             _store = store;
+            _baselines = baselines;
+
+            _state = RestoreCommittedState(store);
+        }
+
+        // The After state of the most recent completed transition is the last state that was committed.
+        private static AgentState RestoreCommittedState(ITransitionStore store)
+        {
+            return store.GetAll()
+                .LastOrDefault(t => t.Status == TransitionStatus.Completed && t.After != null)
+                ?.After ?? new AgentState();
         }
 
         /// <summary>Processes one input through the full governed transition lifecycle.</summary>
@@ -176,6 +198,13 @@ namespace InvariantAgent.Runtime
                     ["ProposedAfterVersion"] = transition.After?.Version,
                     ["Committed"] = false
                 });
+
+            // Record the drift baseline these invariants are about to use, for deterministic replay.
+            // Without a baseline store we cannot know which baseline the detector uses, so record nothing.
+            if (_baselines != null)
+            {
+                transition.DriftBaseline = DriftBaselineSnapshot.From(_baselines.Current);
+            }
 
             // REDUCTION INVARIANTS
             decision = _evaluator.Evaluate(context, InvariantScope.Reduction);

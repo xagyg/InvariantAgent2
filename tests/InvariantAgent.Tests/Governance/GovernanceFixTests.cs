@@ -169,7 +169,7 @@ public sealed class GovernanceFixTests
                 Status = TransitionStatus.Completed,
                 ProposedAction = new AgentAction { Capability = "delete", Input = "everything" }
             }
-        });
+        }, recordDrift: true);
 
         Assert.False(result.Passed);
         Assert.Equal(160, result.Score);

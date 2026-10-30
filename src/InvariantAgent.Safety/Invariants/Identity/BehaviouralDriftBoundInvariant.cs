@@ -48,7 +48,8 @@ public sealed class BehaviouralDriftBoundInvariant : IInvariant
             return InvariantResult.Allow();
         }
 
-        var score = _detector.Score(transition);
+        // Use the baseline recorded on the transition so replay reproduces the live decision.
+        var score = _detector.ScoreAsRecorded(transition);
 
         if (score.Score < _maxScore)
         {
