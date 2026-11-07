@@ -42,6 +42,7 @@ agent> calc 10+20
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
 [Control] Plan invariants passed
+[Conscience] Plan appraisal: Proceed (tension 0.25) -> Proceeded
 [Lifecycle] Phase: Execution
 [Execution] 30
 [Lifecycle] Phase: ExecutionValidation
@@ -56,6 +57,7 @@ agent> calc 10+20
 [Invariant] BehaviouralDriftBoundInvariant: Passed
 [Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
+[Conscience] Answer appraisal: Proceed (tension 0.00) -> Proceeded
 [Lifecycle] CommittedVersion=1
 [Lifecycle] Phase: Completed
 Transition Id: 5594c376-2201-4616-b35f-dd126458bf57
@@ -212,6 +214,7 @@ The following session demonstrates:
 - rejected actions
 - replay and auditing
 - governed self-modification
+- conscience appraisal
 - drift analysis
 
 All state changes occur only after invariant approval.
@@ -228,6 +231,7 @@ agent> calc 10+20
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
 [Control] Plan invariants passed
+[Conscience] Plan appraisal: Proceed (tension 0.25) -> Proceeded
 [Lifecycle] Phase: Execution
 [Execution] 30
 [Lifecycle] Phase: ExecutionValidation
@@ -242,6 +246,7 @@ agent> calc 10+20
 [Invariant] BehaviouralDriftBoundInvariant: Passed
 [Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
+[Conscience] Answer appraisal: Proceed (tension 0.00) -> Proceeded
 [Lifecycle] CommittedVersion=1
 [Lifecycle] Phase: Completed
 Transition Id: 5594c376-2201-4616-b35f-dd126458bf57
@@ -256,6 +261,7 @@ agent> memory-set goal=learn IBAAM
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
 [Control] Plan invariants passed
+[Conscience] Plan appraisal: Proceed (tension 0.20) -> Proceeded
 [Lifecycle] Phase: Execution
 [SelfModification] memory.set goal
 [Execution] Proposed memory update: goal
@@ -272,6 +278,7 @@ agent> memory-set goal=learn IBAAM
 [Invariant] BehaviouralDriftBoundInvariant: Passed
 [Invariant] RejectedTransitionCannotCommitInvariant: Passed
 [Control] Reduction invariants passed
+[Conscience] Answer appraisal: Proceed (tension 0.27) -> Proceeded
 [Lifecycle] CommittedVersion=2
 [Lifecycle] Phase: Completed
 Transition Id: 90a02255-8610-4b90-99fe-380151a9e5cd
@@ -289,7 +296,11 @@ agent> boo
 [Lifecycle] Phase: Rejected
 Transition Id: ced39314-d599-4813-9f9b-b0d8cadf82d4
 Status: Rejected
+Reason: AllowedCapabilityInvariant: Capability 'boo' is not allowed or unknown.
 ```
+
+`boo` has no `[Conscience]` line: the plan invariants rejected it, and the conscience only appraises plans the
+invariants allow.
 
 ## State Projection
 
@@ -353,59 +364,43 @@ These measurements indicate behavioural change. Invariants remain responsible fo
 
 ## Functional Conscience (IBAAM 6)
 
-IBAAM 6 (*Conscience Within Controls*) adds a functional conscience that weighs what the agent **should** do inside the
-boundary the invariants set on what it **may** do. It has its own contract (`IConscience`), separate from
-`IInvariant`, so it cannot be registered as an invariant, and it is only consulted after the relevant invariants
-pass. No stance can authorise anything an invariant blocks.
+IBAAM 6 (*Conscience Within Controls*) adds a conscience that weighs what the agent **should** do inside the boundary
+the invariants set on what it **may** do. It has its own contract (`IConscience`, not `IInvariant`), runs only after
+the relevant invariants pass, and can never authorise anything they block.
 
-The default implementation, `HistoryCalibratedConscience`, is deterministic: the same plan and the same history give
-the same appraisal, while a different history can give a different one. Each appraisal is graded and decomposed:
+`HistoryCalibratedConscience` is deterministic and calibrated from governance history. Each appraisal combines
+violation risk (how often similar plans were blocked), forecast drift and conflict with prior commitments, amplified
+by trend pressure (stability region), and selects a stance:
 
-| Component | What it estimates | Source |
-|-----------|-------------------|--------|
-| Violation risk | Probability that similar plans were blocked by the controls (the only calibrated probability) | Precedent transitions, pulled towards the deployment base rate |
-| Forecast drift | Drift the plan's resulting state would produce, as (score / bound)² | Precedents at the plan point; a dry run of the commit at the answer point |
-| Trend pressure | Remaining tolerance given recent behaviour | Current stability region |
-| Commitment conflict | Inconsistency with the agent's own commitments and reviewer decisions | Commitment store |
+- **Proceed** - no change
+- **Revise** - the appraisal goes back to the planner for up to two re-plans, each re-checked by the plan invariants
+  (with the literal command planner this becomes Escalate)
+- **Escalate** - held for human review: `conscience-review <id> uphold|overturn <note>`
+- **Veto** - rejected, with the justification logged
 
-Plan-specific tension (`p = 1 - Π(1 - vᵢ)^wᵢ` over violation risk, forecast drift and commitment conflict) is
-amplified by trend pressure (`tension = 1 - (1 - p)^(1 + w·trend)`), so unstable history makes real concerns weigh more
-but never stops a plan on its own. Commitment conflict uses closeness rescaled from the match threshold, so only plans
-close to the declined conduct weigh heavily. Tension selects a stance: **Proceed**, **Revise** (the appraisal is returned to the
-planner for up to two re-plans; every revised plan passes the plan invariants again and is re-appraised; at the limit,
-or when the planner cannot produce a different plan, it becomes Escalate), **Escalate** (held for human review) or
-**Veto**. The justification is generated from the components, citing precedent transitions
-("resembles #8f273d76, blocked by AllowedMemoryKeyInvariant [memory-integrity]").
-
-Revise, Escalate and Veto create **commitments** (conversation-scoped for Revise, user-scoped for Escalate and Veto).
-A reviewer resolves an escalation with `conscience-review <id> uphold|overturn [note]`, which records a reviewer
-commitment that takes precedence over the agent's own. Appraisals are recorded on the transition, so
-`replay validate` reproduces conscience decisions without re-running the conscience.
-
-Mitigations for the feedback loop in IBAAM 6, Section 9: transitions the conscience stopped are not used as boundary
-labels or as instability in trend pressure, and `conscience calibration` reports the Brier score of violation risk
-against realised control outcomes, including how many appraised plans have no realised outcome.
-
-Example (literal command planner, so Revise cannot re-plan and escalates):
+Revise, Escalate and Veto create commitments that later appraisals are checked against; reviewer decisions take
+precedence. Appraisals are recorded on each transition, so `replay validate` reproduces them.
 
 ```text
 agent> memory-set password=hunter2
 [Conscience] Plan appraisal: Proceed (tension 0.20) -> Proceeded
 [Control] SelfModification invariants failed: AllowedMemoryKeyInvariant: Memory key 'password' is not allowed.
+
 agent> memory-set password=letmein
-[Conscience] Plan appraisal: Revise (tension 0.62) -> Escalated [planner 'command' could not produce a different plan]
-Reason: Conscience escalated for human review (conscience-review 67e722e2 uphold|overturn): Revise (tension 0.62):
-violation risk 0.58 - 1 of 1 similar plans were blocked by the controls (#8f273d76 blocked by
-AllowedMemoryKeyInvariant [memory-integrity], sim 0.60); base rate 0.33; ...
+[Conscience] Plan appraisal: Revise (tension 0.64) -> Escalated [planner 'command' could not produce a different plan]
+Status: Rejected
+Reason: Conscience escalated for human review (conscience-review 54a878b5 uphold|overturn): Revise (tension 0.64):
+violation risk 0.55 - 1 of 1 similar plans were blocked by the controls (#9fee20d6 blocked by
+AllowedMemoryKeyInvariant [memory-integrity], sim 0.60); ...
+Held for human review. To resolve, run one of:
+  conscience-review 54a878b5 uphold <note>     (decline this and similar requests)
+  conscience-review 54a878b5 overturn <note>   (clear it; then retry the request)
+  conscience pending                           (see everything awaiting review)
 ```
 
-The second write never executes: the conscience anticipated the control outcome. With an LLM planner the appraisal is
-added to the prompt and the model re-plans.
-
-Configure with `AddInvariantAgent(dataDirectory, conscience => { ... })` (`ConscienceOptions`: thresholds, weights,
-revision limit, commitment scopes and lifetime, exempt capabilities). Disable it with
-`conscience => conscience.Enabled = false`, or `--InvariantAgent:Conscience:Enabled=false` in the console app.
-Thresholds are conservative placeholders; tuning them against a human-labelled set is the next empirical step.
+The second write never executes: the conscience anticipated the control's verdict. Configure it through
+`AddInvariantAgent(dataDirectory, conscience => { ... })`, or disable it with
+`--InvariantAgent:Conscience:Enabled=false`. Thresholds are placeholders pending evaluation against a labelled set.
 
 ## Features
 
