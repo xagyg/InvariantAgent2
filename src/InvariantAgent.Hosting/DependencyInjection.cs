@@ -3,8 +3,10 @@ using InvariantAgent.Capabilities;
 using InvariantAgent.Capabilities.Services;
 using InvariantAgent.Capabilities.Tools;
 using InvariantAgent.Capabilities.Tools.Internal;
+using InvariantAgent.Conscience;
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control;
+using InvariantAgent.Core.Conscience;
 using InvariantAgent.Core.Control.MetaInvariants;
 using InvariantAgent.Core.Drift;
 using InvariantAgent.Core.Pipeline;
@@ -33,26 +35,39 @@ namespace InvariantAgent.Hosting
         /// <summary>File name of the drift baseline approval history inside the data directory.</summary>
         public const string BaselinesFileName = "baselines.jsonl";
 
+        /// <summary>File name of the conscience commitment history inside the data directory.</summary>
+        public const string CommitmentsFileName = "commitments.jsonl";
+
         /// <summary>
         /// Registers storage, observability, planner, executor, reducer, meta-invariants, invariants,
         /// capabilities and the governed runtime (all as singletons).
         /// </summary>
         /// <param name="services">The service collection to populate.</param>
         /// <param name="dataDirectory">
-        /// Directory for persistent storage. When set, transitions and drift baselines are kept in
-        /// <see cref="TransitionsFileName"/> and <see cref="BaselinesFileName"/> there and survive restarts
-        /// (the runtime resumes from the last committed state). When <c>null</c>, everything is in memory.
+        /// Directory for persistent storage. When set, transitions, drift baselines and conscience commitments are kept
+        /// in <see cref="TransitionsFileName"/>, <see cref="BaselinesFileName"/> and <see cref="CommitmentsFileName"/>
+        /// there and survive restarts (the runtime resumes from the last committed state). When <c>null</c>, everything
+        /// is in memory.
+        /// </param>
+        /// <param name="configureConscience">
+        /// Configures the functional conscience (IBAAM 6). It is enabled by default; set
+        /// <see cref="ConscienceOptions.Enabled"/> to false to run with invariants only.
         /// </param>
         /// <returns>The same service collection, for chaining.</returns>
         public static IServiceCollection AddInvariantAgent(
             this IServiceCollection services,
-            string? dataDirectory = null)
+            string? dataDirectory = null,
+            Action<ConscienceOptions>? configureConscience = null)
         {
+            var conscienceOptions = new ConscienceOptions();
+            configureConscience?.Invoke(conscienceOptions);
+
             // STORAGE: transition history and approved drift baselines.
             if (string.IsNullOrWhiteSpace(dataDirectory))
             {
                 services.AddSingleton<ITransitionStore, InMemoryTransitionStore>();
                 services.AddSingleton<IDriftBaselineStore, InMemoryDriftBaselineStore>();
+                services.AddSingleton<ICommitmentStore, InMemoryCommitmentStore>();
             }
             else
             {
@@ -60,6 +75,8 @@ namespace InvariantAgent.Hosting
                     new FileTransitionStore(Path.Combine(dataDirectory, TransitionsFileName)));
                 services.AddSingleton<IDriftBaselineStore>(_ =>
                     new FileDriftBaselineStore(Path.Combine(dataDirectory, BaselinesFileName)));
+                services.AddSingleton<ICommitmentStore>(_ =>
+                    new FileCommitmentStore(Path.Combine(dataDirectory, CommitmentsFileName)));
             }
 
             // OBSERVABILITY: drift analysis and behavioural stability evaluation.
@@ -86,26 +103,32 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IMetaInvariant, ReviewMetaInvariant>();
 
             // CONTROL: the active invariant set. Each invariant declares its own scope (lifecycle checkpoint).
-            services.AddSingleton<IInvariantEvaluator>(sp =>
-            {
-                var registry = sp.GetRequiredService<ICapabilityRegistry>();
-                var metaInvariants = sp.GetServices<IMetaInvariant>();
+            // Registered individually (in evaluation order) so the conscience can read the value each one protects.
+            services.AddSingleton<IInvariant, NoDeleteInvariant>();
+            services.AddSingleton<IInvariant>(sp =>
+                new AllowedCapabilityInvariant(sp.GetRequiredService<ICapabilityRegistry>().GetCapabilityNames()));
+            services.AddSingleton<IInvariant, SuccessOutcomeInvariant>();
+            services.AddSingleton<IInvariant, AllowedMemoryKeyInvariant>();
+            services.AddSingleton<IInvariant, NonEmptyOutcomeInvariant>();
+            services.AddSingleton<IInvariant>(sp =>
+                new BehaviouralDriftBoundInvariant(sp.GetRequiredService<BehaviouralDriftDetector>()));
+            // Backstop: a rejected transition must never carry state into a commit.
+            services.AddSingleton<IInvariant, RejectedTransitionCannotCommitInvariant>();
 
-                return new InvariantEvaluator(
-                    new IInvariant[]
-                    {
-                        new NoDeleteInvariant(),
-                        new AllowedCapabilityInvariant(registry.GetCapabilityNames()),
-                        new SuccessOutcomeInvariant(),
-                        new AllowedMemoryKeyInvariant(),
-                        new NonEmptyOutcomeInvariant(),
-                        new BehaviouralDriftBoundInvariant(
-                            sp.GetRequiredService<BehaviouralDriftDetector>()),
-                        // Backstop: a rejected transition must never carry state into a commit.
-                        new RejectedTransitionCannotCommitInvariant()
-                    },
-                    metaInvariants);
-            });
+            services.AddSingleton<IInvariantEvaluator>(sp =>
+                new InvariantEvaluator(sp.GetServices<IInvariant>(), sp.GetServices<IMetaInvariant>()));
+
+            // CONSCIENCE (IBAAM 6): weighs what the agent should do inside what the invariants say it may do.
+            // Deliberately not an IInvariant: it has its own contract and runs only after the invariants pass.
+            services.AddSingleton(conscienceOptions);
+            services.AddSingleton<ConscienceSession>();
+
+            if (conscienceOptions.Enabled)
+            {
+                services.AddSingleton<IConscience>(sp =>
+                    new HistoryCalibratedConscience(conscienceOptions, sp.GetService<IValueJudge>()));
+                services.AddSingleton<ConscienceCoordinator>();
+            }
 
             // CAPABILITIES: user-facing tools followed by internal introspection tools.
             services.AddSingleton<ICapability, EchoTool>();
@@ -119,6 +142,8 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, ExplainTool>();
             services.AddSingleton<ICapability, BaselineApproveTool>();
             services.AddSingleton<ICapability, BaselineShowTool>();
+            services.AddSingleton<ICapability, ConscienceShowTool>();
+            services.AddSingleton<ICapability, ConscienceReviewTool>();
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 

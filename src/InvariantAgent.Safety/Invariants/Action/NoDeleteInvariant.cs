@@ -17,6 +17,9 @@ namespace InvariantAgent.Safety.Invariants.Action
 
         public InvariantSeverity Severity => InvariantSeverity.Error;
 
+        /// <summary>Protects stored data from destruction.</summary>
+        public string ProtectedValue => "data-preservation";
+
         /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {

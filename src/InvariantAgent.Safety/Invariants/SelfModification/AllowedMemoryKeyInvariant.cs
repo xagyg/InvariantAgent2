@@ -28,6 +28,9 @@ namespace InvariantAgent.Safety.Invariants.SelfModification
 
         public InvariantCategory Category => InvariantCategory.SelfModification;
 
+        /// <summary>Protects the integrity of the agent's own memory.</summary>
+        public string ProtectedValue => "memory-integrity";
+
         /// <inheritdoc />
         public InvariantResult Evaluate(TransitionContext context)
         {

@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\InvariantAgent.Conscience\InvariantAgent.Conscience.csproj" />
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
     <ProjectReference Include="..\InvariantAgent.Runtime\InvariantAgent.Runtime.csproj" />
   </ItemGroup>

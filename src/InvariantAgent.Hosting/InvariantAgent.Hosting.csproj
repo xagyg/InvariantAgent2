@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\InvariantAgent.Adaptive\InvariantAgent.Adaptive.csproj" />
     <ProjectReference Include="..\InvariantAgent.Capabilities\InvariantAgent.Capabilities.csproj" />
+    <ProjectReference Include="..\InvariantAgent.Conscience\InvariantAgent.Conscience.csproj" />
     <ProjectReference Include="..\InvariantAgent.Core\InvariantAgent.Core.csproj" />
     <ProjectReference Include="..\InvariantAgent.Execution\InvariantAgent.Execution.csproj" />
     <ProjectReference Include="..\InvariantAgent.Observability\InvariantAgent.Observability.csproj" />

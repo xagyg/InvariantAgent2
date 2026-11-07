@@ -34,8 +34,14 @@ namespace InvariantAgent.ConsoleApp
                         dataDirectory = Path.Combine(AppContext.BaseDirectory, "data");
                     }
 
-                    // Registers the runtime, invariants, planner, capabilities, storage and observability.
-                    services.AddInvariantAgent(dataDirectory);
+                    // Functional conscience (IBAAM 6) is on by default; disable with
+                    // --InvariantAgent:Conscience:Enabled=false.
+                    var conscienceEnabled = !string.Equals(
+                        context.Configuration["InvariantAgent:Conscience:Enabled"], "false",
+                        StringComparison.OrdinalIgnoreCase);
+
+                    // Registers the runtime, invariants, conscience, planner, capabilities, storage and observability.
+                    services.AddInvariantAgent(dataDirectory, conscience => conscience.Enabled = conscienceEnabled);
 
                     // Runs the interactive REPL loop in the background.
                     services.AddHostedService<

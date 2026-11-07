@@ -36,5 +36,11 @@ namespace InvariantAgent.Core.Replay
         /// so a drift-related mismatch may reflect a baseline change rather than a rule change.
         /// </summary>
         public bool DriftBaselineRecorded { get; init; }
+
+        /// <summary>
+        /// True if the conscience stopped the original transition (Escalate or Veto) and replay applied that recorded
+        /// appraisal rather than re-appraising.
+        /// </summary>
+        public bool ConscienceStopRecorded { get; init; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Drift;
+using InvariantAgent.Core.Model.Conscience;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.Transition;
@@ -18,6 +19,9 @@ namespace InvariantAgent.Core.Replay;
 /// Behavioural drift is scored against the baseline recorded on the transition, so the result depends only on
 /// the recorded transition and the current rules, not on baselines approved since. Transitions recorded before
 /// baselines were captured fall back to the current baseline (see <see cref="ReplayComparison.DriftBaselineRecorded"/>).
+/// A transition stopped by the conscience (Escalate or Veto) is replayed by re-evaluating invariants up to the point
+/// where it was stopped and then applying the <em>recorded</em> appraisal, so replay reproduces the live decision
+/// without re-running the conscience (IBAAM 6, Section 6.4.4).
 /// </remarks>
 public sealed class ReplayValidator
 {
@@ -58,7 +62,10 @@ public sealed class ReplayValidator
             .Select(v => $"{v.Invariant}: {v.Reason}")
             .ToList();
 
-        var replayRejected = reports.Any(r => !r.Passed);
+        var conscienceStop = RecordedConscienceStop(context.Transition);
+
+        // Invariants decide first; a recorded conscience stop applies only where the controls let the plan through.
+        var replayRejected = reports.Any(r => !r.Passed) || conscienceStop != null;
         var originalRejected = context.Transition.Status == TransitionStatus.Rejected;
 
         var comparison = new ReplayComparison
@@ -75,7 +82,9 @@ public sealed class ReplayValidator
 
             ReplayViolations = replayViolations,
 
-            DriftBaselineRecorded = context.Transition.DriftBaseline != null
+            DriftBaselineRecorded = context.Transition.DriftBaseline != null,
+
+            ConscienceStopRecorded = conscienceStop != null
         };
 
         // Mismatch score: status change +100, phase change +50, +10 per difference in violation count.
@@ -161,6 +170,14 @@ public sealed class ReplayValidator
     /// </summary>
     private static IReadOnlyList<InvariantScope> GetScopesForReplay(Transition transition)
     {
+        // Stopped by the conscience at the plan point: nothing after plan validation ever ran.
+        var stop = RecordedConscienceStop(transition);
+
+        if (stop != null && stop.Point == AppraisalPoint.Plan && !HasAnyInvariantFailure(transition))
+        {
+            return new[] { InvariantScope.Plan };
+        }
+
         if (transition.Status == TransitionStatus.Rejected)
         {
             if (HasInvariantFailure(transition, InvariantScope.Plan))
@@ -202,6 +219,17 @@ public sealed class ReplayValidator
             InvariantScope.SelfModification,
             InvariantScope.Reduction
         };
+    }
+
+    // The recorded appraisal that stopped the transition, if the conscience stopped it.
+    private static ConscienceAppraisalRecord RecordedConscienceStop(Transition transition)
+    {
+        return transition.Appraisals?.LastOrDefault(a => a.Stopped);
+    }
+
+    private static bool HasAnyInvariantFailure(Transition transition)
+    {
+        return transition.Events.Any(e => e.Stage == TransitionEventStage.Invariant && e.Message.Contains("Failed"));
     }
 
     // True if the original trail contains a failed invariant event for the given scope.
