@@ -1,4 +1,6 @@
 ﻿using InvariantAgent.Adaptive;
+using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Safety.Invariants.Control;
 using InvariantAgent.Capabilities;
 using InvariantAgent.Capabilities.Services;
 using InvariantAgent.Capabilities.Tools;
@@ -57,7 +59,8 @@ namespace InvariantAgent.Hosting
         public static IServiceCollection AddInvariantAgent(
             this IServiceCollection services,
             string? dataDirectory = null,
-            Action<ConscienceOptions>? configureConscience = null)
+            Action<ConscienceOptions>? configureConscience = null,
+            OperationalContext operationalContext = OperationalContext.Normal)
         {
             var conscienceOptions = new ConscienceOptions();
             configureConscience?.Invoke(conscienceOptions);
@@ -95,6 +98,11 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IExecutor, CapabilityExecutor>();
             services.AddSingleton<IStateReducer, StateReducer>();
 
+            // HIG-C OPERATIONAL CONTEXT: stamped on every transition; changed only by an operator (the context capability).
+            services.AddSingleton(new OperationalContextState(
+                operationalContext,
+                operationalContext == OperationalContext.Normal ? "default" : "configured at start-up"));
+
             // HIG META-INVARIANTS: govern whether lower-priority violations may be overridden.
             services.AddSingleton<IMetaInvariant, PriorityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, OverrideSeverityMetaInvariant>();
@@ -112,6 +120,13 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<IInvariant, NonEmptyOutcomeInvariant>();
             services.AddSingleton<IInvariant>(sp =>
                 new BehaviouralDriftBoundInvariant(sp.GetRequiredService<BehaviouralDriftDetector>()));
+            // Control integrity: governance capabilities (review, baseline, context) run only when the operator typed them.
+            services.AddSingleton<IInvariant>(sp =>
+            {
+                var registry = sp.GetRequiredService<ICapabilityRegistry>();
+                return new OperatorOnlyCapabilityInvariant(
+                    registry.GetCapabilityNames().Where(n => registry.Get(n)?.OperatorOnly == true));
+            });
             // Backstop: a rejected transition must never carry state into a commit.
             services.AddSingleton<IInvariant, RejectedTransitionCannotCommitInvariant>();
 
@@ -144,6 +159,7 @@ namespace InvariantAgent.Hosting
             services.AddSingleton<ICapability, BaselineShowTool>();
             services.AddSingleton<ICapability, ConscienceShowTool>();
             services.AddSingleton<ICapability, ConscienceReviewTool>();
+            services.AddSingleton<ICapability, ContextTool>();
 
             services.AddSingleton<ICapabilityRegistry, CapabilityRegistry>();
 

@@ -14,6 +14,9 @@ namespace InvariantAgent.Core.Model.Control
         /// <summary>Consistency with the agent's own prior commitments.</summary>
         public const string Consistency = "consistency";
 
+        /// <summary>The control layer stays outside the agent's reach (IBAAM 1, Section 4.3).</summary>
+        public const string ControlIntegrity = "control-integrity";
+
         /// <summary>Default tag for an invariant category.</summary>
         /// <param name="category">The invariant category.</param>
         public static string ForCategory(InvariantCategory category)

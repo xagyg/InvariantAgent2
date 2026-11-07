@@ -105,6 +105,7 @@ public sealed class ConscienceOptions
         "baseline-show",
         "conscience",
         "conscience-show",
-        "conscience-review"
+        "conscience-review",
+        "context"
     };
 }

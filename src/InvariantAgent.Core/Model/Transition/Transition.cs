@@ -58,6 +58,17 @@ namespace InvariantAgent.Core.Model.Transition
         public SelfModificationRequest? SelfModification { get; set; }
 
         /// <summary>
+        /// HIG-C operational context in force when this transition ran (IBAAM 4, Section 5).
+        /// </summary>
+        /// <remarks>
+        /// Recorded so replay resolves same-layer conflicts under the same context the live run used. Transitions recorded
+        /// before this field existed deserialise as <see cref="InvariantAgent.Core.Model.Control.OperationalContext.Normal"/>,
+        /// which is what the runtime used for them.
+        /// </remarks>
+        public InvariantAgent.Core.Model.Control.OperationalContext OperationalContext { get; set; }
+            = InvariantAgent.Core.Model.Control.OperationalContext.Normal;
+
+        /// <summary>
         /// The drift baseline in force when reduction invariants were evaluated.
         /// </summary>
         /// <remarks>

@@ -45,6 +45,11 @@ public sealed class ConscienceReviewTool : ICapability
     public string Name => "conscience-review";
 
     /// <inheritdoc />
+    /// <remarks>A reviewer decision is the value-learning signal the controls cannot provide, so it must come from a human,
+    /// never from a planner reviewing its own escalation.</remarks>
+    public bool OperatorOnly => true;
+
+    /// <inheritdoc />
     public CapabilityResult Execute(CapabilityRequest request)
     {
         var parts = (request.Input ?? "").Split(' ', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

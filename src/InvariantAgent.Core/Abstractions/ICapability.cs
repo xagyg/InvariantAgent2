@@ -19,6 +19,18 @@ public interface ICapability
     /// <summary>Optional alternative names that also resolve to this capability. Empty by default.</summary>
     IReadOnlyCollection<string> Aliases => Array.Empty<string>();
 
+    /// <summary>
+    /// <c>true</c> for governance capabilities only a human operator may invoke (resolving conscience escalations,
+    /// re-certifying the drift baseline, changing the operational context). Defaults to <c>false</c>.
+    /// </summary>
+    /// <remarks>
+    /// Enforced by <c>OperatorOnlyCapabilityInvariant</c>, not by planner prompts: an operator-only capability runs only
+    /// when the operator typed that exact command, so a planner (an LLM in particular) can never propose one itself.
+    /// Otherwise the agent could clear its own escalations or move the baseline its drift is measured against, and the
+    /// control layer would no longer be outside the agent's reach (IBAAM 1, Section 4.3).
+    /// </remarks>
+    bool OperatorOnly => false;
+
     /// <summary>Executes the capability with the supplied request.</summary>
     /// <param name="request">The input selected by the planner.</param>
     /// <returns>The execution result, including any proposed (not yet applied) self-modification.</returns>
