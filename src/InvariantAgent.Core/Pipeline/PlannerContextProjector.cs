@@ -16,6 +16,15 @@ public static class PlannerContextProjector
     /// <returns>A planner context exposing only whitelisted memory (<c>goal</c>, <c>lastOutcome</c>).</returns>
     public static PlannerContext Project(AgentState state, string input)
     {
+        return Project(state, input, null);
+    }
+
+    /// <summary>Projects state and input, attaching conscience feedback for a revised plan.</summary>
+    /// <param name="state">The current committed agent state.</param>
+    /// <param name="input">Raw user input.</param>
+    /// <param name="revision">Conscience feedback on the previous proposal, or <c>null</c> for a first proposal.</param>
+    public static PlannerContext Project(AgentState state, string input, PlannerRevision revision)
+    {
         return new PlannerContext
         {
             Input = input,
@@ -28,7 +37,9 @@ public static class PlannerContextProjector
 
             RelevantMemory = state.Memory
                 .Where(kvp => kvp.Key == "goal" || kvp.Key == "lastOutcome")
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
+
+            Revision = revision
         };
     }
 }

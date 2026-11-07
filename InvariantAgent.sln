@@ -24,6 +24,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Storage", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Tests", "tests\InvariantAgent.Tests\InvariantAgent.Tests.csproj", "{3C3068A3-BF64-4C3A-B9CB-A8FD39A2582D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InvariantAgent.Conscience", "src\InvariantAgent.Conscience\InvariantAgent.Conscience.csproj", "{14983978-E1F3-4307-94D3-26D57350C3C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +76,10 @@ Global
 		{3C3068A3-BF64-4C3A-B9CB-A8FD39A2582D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C3068A3-BF64-4C3A-B9CB-A8FD39A2582D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C3068A3-BF64-4C3A-B9CB-A8FD39A2582D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14983978-E1F3-4307-94D3-26D57350C3C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14983978-E1F3-4307-94D3-26D57350C3C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14983978-E1F3-4307-94D3-26D57350C3C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14983978-E1F3-4307-94D3-26D57350C3C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

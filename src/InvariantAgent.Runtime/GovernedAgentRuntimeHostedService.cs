@@ -78,8 +78,37 @@ namespace InvariantAgent.Runtime
 
                 Console.WriteLine($"Transition Id: {context.Transition.Id}");
                 Console.WriteLine($"Status: {context.Transition.Status}");
+
+                if (context.Transition.Status == Core.Model.Transition.TransitionStatus.Rejected &&
+                    !string.IsNullOrWhiteSpace(context.Transition.Reason))
+                {
+                    Console.WriteLine($"Reason: {context.Transition.Reason}");
+                }
+
+                PrintReviewCommands(context.Transition);
                 Console.WriteLine();
             }
+        }
+
+        // When the conscience escalated, prints the review commands ready to copy. Deliberately print-only: escalation means
+        // someone decides separately, so the REPL never prompts the requester to approve their own request.
+        private static void PrintReviewCommands(Core.Model.Transition.Transition transition)
+        {
+            var escalation = transition.Appraisals?.LastOrDefault();
+
+            if (escalation == null || escalation.Effect != Core.Model.Conscience.ConscienceEffect.Escalated)
+            {
+                return;
+            }
+
+            var id = transition.Id.ToString("N")[..8];
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Held for human review. To resolve, run one of:");
+            Console.ResetColor();
+            Console.WriteLine($"  conscience-review {id} uphold <note>     (decline this and similar requests)");
+            Console.WriteLine($"  conscience-review {id} overturn <note>   (clear it; then retry the request)");
+            Console.WriteLine("  conscience pending                           (see everything awaiting review)");
         }
 
         // Console colour for each transition event stage.
@@ -95,6 +124,7 @@ namespace InvariantAgent.Runtime
                 "Reduction" => ConsoleColor.Cyan,
                 "SelfModification" => ConsoleColor.Blue,
                 "Lifecycle" => ConsoleColor.White,
+                "Conscience" => ConsoleColor.Red,
                 _ => ConsoleColor.Gray
             };
         }

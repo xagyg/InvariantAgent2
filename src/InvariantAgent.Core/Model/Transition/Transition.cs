@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Conscience;
 using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.SelfModification;
 
@@ -65,6 +66,19 @@ namespace InvariantAgent.Core.Model.Transition
         /// reached, or the transition predates this field).
         /// </remarks>
         public DriftBaselineSnapshot DriftBaseline { get; set; }
+
+        /// <summary>
+        /// Invariants whose unresolved violations rejected this transition. Empty when it completed, or when it was
+        /// stopped by the conscience rather than by a control.
+        /// </summary>
+        /// <remarks>Boundary labels for the conscience: each blocked transition is an exact example of where the controls lie.</remarks>
+        public List<string> BlockingInvariants { get; set; } = new();
+
+        /// <summary>
+        /// Conscience appraisals made during this transition, in order (plan appraisals per revision attempt, then the
+        /// answer appraisal). Recorded so replay reproduces the live decision (IBAAM 6, Section 6.4.4).
+        /// </summary>
+        public List<ConscienceAppraisalRecord> Appraisals { get; set; } = new();
 
         /// <summary>Ordered, auditable event trail for this transition.</summary>
         public List<TransitionEvent> Events { get; init; } = new();

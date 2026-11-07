@@ -11,6 +11,8 @@ namespace InvariantAgent.Core.Model.Transition
         Execution, 
         Reduction,
         SelfModification,
-        Lifecycle
+        Lifecycle,
+        /// <summary>Conscience appraisal (IBAAM 6). Appended last because stages are persisted as numbers.</summary>
+        Conscience
     }
 }

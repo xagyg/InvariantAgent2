@@ -19,6 +19,11 @@ namespace InvariantAgent.Adaptive
         {
             var prompt = BuildPrompt(context.State, context.Input);
 
+            if (context.Revision != null)
+            {
+                prompt += BuildRevisionPrompt(context.Revision);
+            }
+
             var response = Complete(prompt);
 
             return ParseAction(response);
@@ -123,6 +128,36 @@ Do not return JSON.
             sb.AppendLine("User input:");
 
             sb.AppendLine(input);
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Appends the conscience's appraisal of the previous proposal (IBAAM 6, Section 6.3), so the model can re-plan
+        /// around the concern rather than only being blocked by it.
+        /// </summary>
+        /// <param name="revision">Conscience feedback on the previous proposal.</param>
+        protected virtual string BuildRevisionPrompt(PlannerRevision revision)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine();
+            sb.AppendLine("Conscience feedback on your previous proposal:");
+            sb.AppendLine($"Previous capability: {revision.Previous?.Capability}");
+            sb.AppendLine($"Previous input: {revision.Previous?.Input}");
+
+            if (revision.ValuesAtStake.Count > 0)
+            {
+                sb.AppendLine($"Values at stake: {string.Join(", ", revision.ValuesAtStake)}");
+            }
+
+            sb.AppendLine($"Appraisal: {revision.Justification}");
+            sb.AppendLine();
+            sb.AppendLine("""
+Propose a different action that still serves the user's request but addresses this concern.
+If no such action exists, propose the most conservative option (for example echo an explanation).
+Use the same output format.
+""");
 
             return sb.ToString();
         }

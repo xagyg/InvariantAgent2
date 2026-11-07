@@ -52,6 +52,13 @@ namespace InvariantAgent.Core.Abstractions
         System.Collections.Generic.IReadOnlyList<OperationalContext> Contexts =>
             System.Array.Empty<OperationalContext>();
 
+        /// <summary>
+        /// Tag for the value this invariant protects (IBAAM 6, Section 6.4.1). The conscience reasons from precedent using
+        /// these tags ("this resembles a plan blocked for exposing restricted data"). Defaults to a tag derived from
+        /// <see cref="Category"/>; override to be more specific.
+        /// </summary>
+        string ProtectedValue => ProtectedValues.ForCategory(Category);
+
         /// <summary>Evaluates the invariant against the current transition.</summary>
         /// <param name="context">The transition being governed.</param>
         /// <returns>A pass/fail result with an explanatory reason.</returns>

@@ -1,6 +1,8 @@
-﻿using InvariantAgent.Core.Abstractions;
+﻿using InvariantAgent.Conscience;
+using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Control;
 using InvariantAgent.Core.Model.Agent;
+using InvariantAgent.Core.Model.Conscience;
 using InvariantAgent.Core.Model.Control;
 using InvariantAgent.Core.Model.Drift;
 using InvariantAgent.Core.Model.Transition;
@@ -18,12 +20,19 @@ namespace InvariantAgent.Runtime
     /// <list type="number">
     /// <item>Input received and the planner proposes an action from the bounded projection <c>π(Sₜ)</c>.</item>
     /// <item>Pre-control: Plan invariants.</item>
+    /// <item>Conscience plan appraisal (IBAAM 6), when a conscience is configured: Proceed, Revise (re-plan, re-check
+    /// plan invariants, re-appraise; bounded), Escalate or Veto.</item>
     /// <item>Capability execution.</item>
     /// <item>Post-control: Execution invariants.</item>
     /// <item>Self-modification invariants.</item>
     /// <item>Reduction: the reducer proposes <c>Sₜ₊₁</c>, then Reduction invariants (e.g. drift bound) are checked.</item>
+    /// <item>Conscience answer appraisal: Proceed, caveat (Revise), Escalate or Veto before commit.</item>
     /// <item>Commit the new state and persist the transition.</item>
     /// </list>
+    /// <para>
+    /// The conscience sits strictly inside the invariants: it is only consulted after they pass, and none of its stances
+    /// can authorise anything they block. Every revised plan passes every plan invariant again.
+    /// </para>
     /// <para>
     /// A failure at any checkpoint rejects the transition. Rejected transitions are persisted too, but
     /// never change runtime state.
@@ -37,6 +46,7 @@ namespace InvariantAgent.Runtime
         private readonly IStateReducer _reducer;
         private readonly ITransitionStore _store;
         private readonly IDriftBaselineStore? _baselines;
+        private readonly ConscienceCoordinator? _conscience;
 
         // The last committed state. Replaced only after all governance checkpoints pass.
         private AgentState _state;
@@ -54,6 +64,9 @@ namespace InvariantAgent.Runtime
         /// Approved drift baselines. When supplied, the baseline in force is recorded on each transition before
         /// reduction invariants run, so replay can score drift against the same baseline.
         /// </param>
+        /// <param name="conscience">
+        /// Functional conscience (IBAAM 6). When <c>null</c> the runtime behaves exactly as without one.
+        /// </param>
         /// <remarks>
         /// With a persistent store the runtime resumes from the last committed state, so a restart does not
         /// silently reset the agent while its history survives.
@@ -64,7 +77,8 @@ namespace InvariantAgent.Runtime
             IExecutor executor,
             IStateReducer reducer,
             ITransitionStore store,
-            IDriftBaselineStore? baselines = null)
+            IDriftBaselineStore? baselines = null,
+            ConscienceCoordinator? conscience = null)
         {
             _planner = planner;
             _evaluator = invariantEvaluator;
@@ -72,6 +86,7 @@ namespace InvariantAgent.Runtime
             _reducer = reducer;
             _store = store;
             _baselines = baselines;
+            _conscience = conscience;
 
             _state = RestoreCommittedState(store);
         }
@@ -134,7 +149,14 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision)) 
             {
-                TransitionPhases.Reject(transition, decision.Summary);
+                RejectByControls(transition, decision);
+                _store.Append(transition);
+                return context;
+            }
+
+            // CONSCIENCE: plan appraisal, inside the boundary the plan invariants just confirmed.
+            if (_conscience != null && !await AppraisePlanAsync(context, input))
+            {
                 _store.Append(transition);
                 return context;
             }
@@ -162,7 +184,7 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
-                TransitionPhases.Reject(transition, decision.Summary);
+                RejectByControls(transition, decision);
                 _store.Append(transition);
                 return context;
             }
@@ -174,7 +196,7 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
-                TransitionPhases.Reject(transition, decision.Summary);
+                RejectByControls(transition, decision);
                 _store.Append(transition);
                 return context;
             }
@@ -211,10 +233,17 @@ namespace InvariantAgent.Runtime
 
             if (!TryApplyGovernanceOutcome(context, decision))
             {
-                TransitionPhases.Reject(transition, decision.Summary);
+                RejectByControls(transition, decision);
 
                 _store.Append(transition);
 
+                return context;
+            }
+
+            // CONSCIENCE: answer appraisal, after every control has passed and before anything is committed.
+            if (_conscience != null && !AppraiseAnswer(context))
+            {
+                _store.Append(transition);
                 return context;
             }
 
@@ -236,6 +265,160 @@ namespace InvariantAgent.Runtime
             _store.Append(transition);
 
             return context;
+        }
+
+        /// <summary>
+        /// Plan appraisal loop (IBAAM 6, Section 6.3). Returns <c>false</c> if the transition was stopped.
+        /// </summary>
+        /// <remarks>
+        /// Revise hands the appraisal back to the planner for a bounded number of re-plans. Each revised plan goes through
+        /// every plan invariant again and is re-appraised, so the action appraised is always the action executed. When the
+        /// revision limit is reached, or the planner cannot produce a different plan, the stance becomes Escalate.
+        /// </remarks>
+        private async Task<bool> AppraisePlanAsync(TransitionContext context, string input)
+        {
+            var transition = context.Transition;
+            var conscience = _conscience!;
+
+            for (var attempt = 0; ; attempt++)
+            {
+                var action = transition.ProposedAction;
+
+                if (!conscience.ShouldAppraise(action))
+                {
+                    return true;
+                }
+
+                var appraisal = conscience.Appraise(context, AppraisalPoint.Plan, attempt);
+
+                switch (appraisal.Stance)
+                {
+                    case ConscienceStance.Proceed:
+                        conscience.Record(context, AppraisalPoint.Plan, attempt, action, appraisal, ConscienceEffect.Proceeded);
+                        return true;
+
+                    case ConscienceStance.Veto:
+                        conscience.Record(context, AppraisalPoint.Plan, attempt, action, appraisal, ConscienceEffect.Vetoed);
+                        TransitionPhases.Reject(transition, $"Conscience veto: {appraisal.Justification}");
+                        return false;
+
+                    case ConscienceStance.Escalate:
+                        Escalate(context, AppraisalPoint.Plan, attempt, action, appraisal, "");
+                        return false;
+                }
+
+                // REVISE
+                if (attempt >= conscience.Options.MaxRevisions)
+                {
+                    Escalate(context, AppraisalPoint.Plan, attempt, action, appraisal,
+                        $"revision limit {conscience.Options.MaxRevisions} reached");
+                    return false;
+                }
+
+                var revision = ConscienceCoordinator.ToRevision(attempt + 1, action, appraisal);
+                var plannerContext = PlannerContextProjector.Project(_state, input, revision);
+                var revised = await _planner.PlanAsync(plannerContext, CancellationToken.None);
+
+                if (ConscienceCoordinator.SamePlan(action, revised))
+                {
+                    Escalate(context, AppraisalPoint.Plan, attempt, action, appraisal,
+                        $"planner '{_planner.Name}' could not produce a different plan");
+                    return false;
+                }
+
+                conscience.Record(context, AppraisalPoint.Plan, attempt, action, appraisal, ConscienceEffect.Revised);
+
+                transition.ProposedAction = revised;
+
+                transition.AddEvent(TransitionEventStage.Planning, $"Revised: Capability={revised?.Capability}",
+                    new()
+                    {
+                        ["Capability"] = revised?.Capability,
+                        ["Input"] = revised?.Input,
+                        ["Planner"] = _planner.Name,
+                        ["RevisionAttempt"] = attempt + 1,
+                        ["PreviousCapability"] = action?.Capability,
+                        ["PreviousInput"] = action?.Input
+                    });
+
+                // Every revised plan passes every plan invariant again.
+                var decision = _evaluator.Evaluate(context, InvariantScope.Plan);
+
+                if (!TryApplyGovernanceOutcome(context, decision))
+                {
+                    RejectByControls(transition, decision);
+                    return false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Answer appraisal. Returns <c>false</c> if the transition was stopped before commit. Revise at this point cannot
+        /// re-plan an action that has already run, so it is recorded as a caveat on the answer.
+        /// </summary>
+        private bool AppraiseAnswer(TransitionContext context)
+        {
+            var transition = context.Transition;
+            var conscience = _conscience!;
+            var action = transition.ProposedAction;
+
+            if (!conscience.Options.AppraiseAnswers || !conscience.ShouldAppraise(action))
+            {
+                return true;
+            }
+
+            var attempt = transition.Appraisals.Count(a => a.Point == AppraisalPoint.Plan) - 1;
+            var appraisal = conscience.Appraise(context, AppraisalPoint.Answer, Math.Max(0, attempt));
+
+            switch (appraisal.Stance)
+            {
+                case ConscienceStance.Revise:
+                    conscience.Record(context, AppraisalPoint.Answer, Math.Max(0, attempt), action, appraisal,
+                        ConscienceEffect.Caveated, "answer already produced; caveat recorded instead of re-planning");
+                    return true;
+
+                case ConscienceStance.Escalate:
+                    Escalate(context, AppraisalPoint.Answer, Math.Max(0, attempt), action, appraisal, "");
+                    return false;
+
+                case ConscienceStance.Veto:
+                    conscience.Record(context, AppraisalPoint.Answer, Math.Max(0, attempt), action, appraisal,
+                        ConscienceEffect.Vetoed);
+                    TransitionPhases.Reject(transition, $"Conscience veto: {appraisal.Justification}");
+                    return false;
+
+                default:
+                    conscience.Record(context, AppraisalPoint.Answer, Math.Max(0, attempt), action, appraisal,
+                        ConscienceEffect.Proceeded);
+                    return true;
+            }
+        }
+
+        // Holds the transition for human review: nothing further runs and nothing is committed.
+        private void Escalate(
+            TransitionContext context,
+            AppraisalPoint point,
+            int attempt,
+            AgentAction action,
+            ConscienceAppraisal appraisal,
+            string note)
+        {
+            _conscience!.Record(context, point, attempt, action, appraisal, ConscienceEffect.Escalated, note);
+
+            TransitionPhases.Reject(context.Transition,
+                $"Conscience escalated for human review (conscience-review {context.Transition.Id.ToString("N")[..8]} uphold|overturn): " +
+                appraisal.Justification);
+        }
+
+        // Rejects through the controls and records which invariants blocked it (boundary labels for the conscience).
+        private static void RejectByControls(Transition transition, InvariantEvaluationReport report)
+        {
+            transition.BlockingInvariants = report.Violations
+                .Select(v => v.Invariant)
+                .Distinct()
+                .ToList();
+
+            TransitionPhases.Reject(transition, report.Summary);
         }
 
         /// <summary>

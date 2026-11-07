@@ -101,6 +101,7 @@ public static class TransitionFormatter
         AppendSummary(sb, transition);
         AppendPlan(sb, transition);
         AppendGovernance(sb, transition);
+        AppendConscience(sb, transition);
         AppendStateImpact(sb, transition);
 
         sb.AppendLine();
@@ -118,8 +119,14 @@ public static class TransitionFormatter
 
         if (transition.Status == TransitionStatus.Rejected)
         {
-            sb.AppendLine(
-                $"  The runtime planned to use '{capability}', but the transition was rejected before execution.");
+            var stoppedByConscience = transition.Appraisals != null && transition.Appraisals.Any(a => a.Stopped) &&
+                                      (transition.BlockingInvariants == null || transition.BlockingInvariants.Count == 0);
+
+            sb.AppendLine(stoppedByConscience
+                ? $"  The runtime planned to use '{capability}'; every control passed, but the conscience stopped the transition."
+                : transition.Outcome == null
+                    ? $"  The runtime planned to use '{capability}', but the transition was rejected before execution."
+                    : $"  The runtime used '{capability}', but the transition was rejected before its state was committed.");
 
             if (!string.IsNullOrWhiteSpace(transition.Reason))
                 sb.AppendLine($"  {transition.Reason}");
@@ -168,6 +175,34 @@ public static class TransitionFormatter
         AppendInvariantEvents(sb, transition, InvariantScope.SelfModification, "Self-modification invariants");
 
         AppendInvariantEvents(sb, transition, InvariantScope.Reduction, "Reduction invariants");
+    }
+
+    // Conscience appraisals (IBAAM 6): stance, effect and the justification generated from the tension components.
+    private static void AppendConscience(StringBuilder sb, Transition transition)
+    {
+        if (transition.Appraisals == null || transition.Appraisals.Count == 0)
+        {
+            return;
+        }
+
+        sb.AppendLine("Conscience:");
+
+        foreach (var record in transition.Appraisals)
+        {
+            var appraisal = record.Appraisal;
+
+            sb.AppendLine(
+                $"  - {record.Point} (attempt {record.Attempt}) {record.Capability}: " +
+                $"{appraisal?.Stance} -> {record.Effect}" +
+                (string.IsNullOrWhiteSpace(record.Note) ? "" : $" [{record.Note}]"));
+
+            if (appraisal != null)
+            {
+                sb.AppendLine($"    {appraisal.Justification}");
+            }
+        }
+
+        sb.AppendLine();
     }
 
     // Lists Invariant-stage events whose "Scope" metadata matches the requested scope.

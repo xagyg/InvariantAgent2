@@ -82,3 +82,7 @@ docker-compose.override.yml
 # Publish output
 # =========================
 publish/
+
+# Other 
+*outputs/
+data-demo/

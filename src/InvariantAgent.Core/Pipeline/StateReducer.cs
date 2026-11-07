@@ -95,7 +95,7 @@ namespace InvariantAgent.Core.Pipeline
 
         /// <summary>
         /// Returns <c>true</c> for successful outcomes of capabilities that act on the world.
-        /// Introspective tools (explain, drift, replay, memory-show, baseline-*) are excluded so that
+        /// Introspective and governance tools (explain, drift, replay, memory-show, baseline-*, conscience*) are excluded so that
         /// observing the agent does not itself change its adaptive state.
         /// </summary>
         private static bool ShouldStoreLastOutcome(Transition transition)
@@ -111,7 +111,10 @@ namespace InvariantAgent.Core.Pipeline
                        "replay",
                        "memory-show",
                        "baseline-approve",
-                       "baseline-show"
+                       "baseline-show",
+                       "conscience",
+                       "conscience-show",
+                       "conscience-review"
                    }.Contains(capability);
         }
     }
