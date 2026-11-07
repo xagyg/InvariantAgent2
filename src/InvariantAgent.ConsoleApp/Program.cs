@@ -1,4 +1,5 @@
-﻿using InvariantAgent.Hosting;
+﻿using InvariantAgent.Core.Model.Control;
+using InvariantAgent.Hosting;
 using InvariantAgent.Runtime;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -41,7 +42,17 @@ namespace InvariantAgent.ConsoleApp
                         StringComparison.OrdinalIgnoreCase);
 
                     // Registers the runtime, invariants, conscience, planner, capabilities, storage and observability.
-                    services.AddInvariantAgent(dataDirectory, conscience => conscience.Enabled = conscienceEnabled);
+                    // HIG-C operational context in force at start-up (default Normal); an operator changes it at run time
+                    // with the context command. Override with --InvariantAgent:OperationalContext=Degraded.
+                    var operationalContext = Enum.TryParse<OperationalContext>(
+                        context.Configuration["InvariantAgent:OperationalContext"], ignoreCase: true, out var configured)
+                        ? configured
+                        : OperationalContext.Normal;
+
+                    services.AddInvariantAgent(
+                        dataDirectory,
+                        conscience => conscience.Enabled = conscienceEnabled,
+                        operationalContext);
 
                     // Runs the interactive REPL loop in the background.
                     services.AddHostedService<

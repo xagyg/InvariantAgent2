@@ -41,6 +41,7 @@ agent> calc 10+20
 [Lifecycle] Phase: PlanValidation
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
+[Invariant] OperatorOnlyCapabilityInvariant: Passed
 [Control] Plan invariants passed
 [Conscience] Plan appraisal: Proceed (tension 0.25) -> Proceeded
 [Lifecycle] Phase: Execution
@@ -109,7 +110,16 @@ Invariants can be assigned a governance layer:
 Fundamental > Mission > Behavioural > AdaptiveHeuristic
 ```
 
-Context-aware hierarchical governance (HIG-C) extends same-layer conflict handling with invariant criticality and the current operational context. Priority is still evaluated first; criticality and context help distinguish equal-priority soft conflicts.
+Context-aware hierarchical governance (HIG-C) extends same-layer conflict handling with invariant criticality and the current operational context. Priority is still evaluated first; criticality and context help distinguish equal-priority soft conflicts. When they cannot (equal criticality and no context advantage) there is no basis for precedence, so none of the tied violations is overridden: they stay blocking and the conflict is flagged for review.
+
+### Operational context
+
+The HIG-C operational context (`Normal`, `Degraded`, `Emergency`, `Recovery`, `Maintenance`) is stamped on every transition when it starts and recorded with it, so replay resolves conflicts under the same context. Set the start-up context with `--InvariantAgent:OperationalContext=Degraded`; an operator changes it at run time:
+
+```text
+agent> context                         # show the context in force
+agent> context degraded storm load     # applies from the next transition
+```
 
 Fundamental invariants are non-negotiable by default. Lower-layer `Info` and `Warning` violations may be overridden only when all applicable higher-priority invariants are preserved. `Error` and `Critical` violations remain blocking unless a future domain-specific policy explicitly authorises otherwise.
 
@@ -230,6 +240,7 @@ agent> calc 10+20
 [Lifecycle] Phase: PlanValidation
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
+[Invariant] OperatorOnlyCapabilityInvariant: Passed
 [Control] Plan invariants passed
 [Conscience] Plan appraisal: Proceed (tension 0.25) -> Proceeded
 [Lifecycle] Phase: Execution
@@ -260,6 +271,7 @@ agent> memory-set goal=learn IBAAM
 [Lifecycle] Phase: PlanValidation
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
+[Invariant] OperatorOnlyCapabilityInvariant: Passed
 [Control] Plan invariants passed
 [Conscience] Plan appraisal: Proceed (tension 0.20) -> Proceeded
 [Lifecycle] Phase: Execution
@@ -292,6 +304,7 @@ agent> boo
 [Lifecycle] Phase: PlanValidation
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Failed Capability 'boo' is not allowed or unknown.
+[Invariant] OperatorOnlyCapabilityInvariant: Passed
 [Control] Plan invariants failed: AllowedCapabilityInvariant: Capability 'boo' is not allowed or unknown.
 [Lifecycle] Phase: Rejected
 Transition Id: ced39314-d599-4813-9f9b-b0d8cadf82d4
@@ -301,6 +314,14 @@ Reason: AllowedCapabilityInvariant: Capability 'boo' is not allowed or unknown.
 
 `boo` has no `[Conscience]` line: the plan invariants rejected it, and the conscience only appraises plans the
 invariants allow.
+
+## Operator-Only Governance Commands
+
+`conscience-review`, `baseline-approve` and `context` change the controls rather than act within them, so they are
+operator-only (`ICapability.OperatorOnly`). `OperatorOnlyCapabilityInvariant` lets one run only when the proposed action
+is exactly what the operator typed. With the command planner that is always the case; with an LLM planner the operator
+can still type the command verbatim, but a model that proposes one itself (to clear its own escalation, re-certify its own
+drift baseline or declare an emergency) is rejected at plan validation. The guard is a control, not a prompt instruction.
 
 ## State Projection
 
@@ -439,9 +460,10 @@ The second write never executes: the conscience anticipated the control's verdic
 - `memory-set`
 - `memory-show`
 - `baseline-show`
-- `baseline-approve`
+- `baseline-approve` (operator-only)
 - `conscience [commitments | pending | calibration | last | <id>]`
-- `conscience-review <id> uphold|overturn [note]`
+- `conscience-review <id> uphold|overturn [note]` (operator-only)
+- `context [normal|degraded|emergency|recovery|maintenance] [reason]` (operator-only)
 
 Additional capabilities can be added through the capability registry.
 
@@ -525,6 +547,7 @@ agent> drift
 [Lifecycle] Phase: PlanValidation
 [Invariant] NoDeleteInvariant: Passed
 [Invariant] AllowedCapabilityInvariant: Passed
+[Invariant] OperatorOnlyCapabilityInvariant: Passed
 [Control] Plan invariants passed
 [Lifecycle] Phase: Execution
 [Execution]

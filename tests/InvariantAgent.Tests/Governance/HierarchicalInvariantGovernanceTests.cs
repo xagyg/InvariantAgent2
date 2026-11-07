@@ -101,8 +101,11 @@ public sealed class HierarchicalInvariantGovernanceTests
     }
 
     [Fact]
-    public void Evaluate_WhenSameLayerSoftViolationsAreOverridden_FlagsReview()
+    public void Evaluate_WhenSameLayerSoftViolationsAreIndistinguishable_HoldsBothAndFlagsReview()
     {
+        // Equal layer, equal criticality, no context advantage: HIG-C has no basis for precedence, so neither violation
+        // may be waived. Previously a tie let both be overridden, so an unresolvable conflict passed while a resolvable
+        // one was blocked.
         var evaluator = new InvariantEvaluator(new IInvariant[]
         {
             TestInvariant.Pass("SystemIntegrity", InvariantLayer.Fundamental),
@@ -119,13 +122,10 @@ public sealed class HierarchicalInvariantGovernanceTests
 
         var report = evaluator.Evaluate(context, InvariantScope.Plan);
 
-        Assert.True(report.Passed);
-        Assert.Equal(2, report.Overrides.Count);
-        Assert.All(report.Overrides, o =>
-        {
-            Assert.True(o.RequiresReview);
-            Assert.NotEmpty(o.ReviewReasons);
-        });
+        Assert.False(report.Passed);
+        Assert.Equal(2, report.Violations.Count);
+        Assert.Empty(report.Overrides);
+        Assert.Equal(2, context.Transition.Events.Count(e => e.Message.StartsWith("HIG-C unresolved")));
         Assert.Contains(
             context.Transition.Events,
             e => e.Metadata.TryGetValue("RequiresReview", out var requiresReview) &&

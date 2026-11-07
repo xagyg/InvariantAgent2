@@ -47,6 +47,7 @@ namespace InvariantAgent.Runtime
         private readonly ITransitionStore _store;
         private readonly IDriftBaselineStore? _baselines;
         private readonly ConscienceCoordinator? _conscience;
+        private readonly OperationalContextState? _operationalContext;
 
         // The last committed state. Replaced only after all governance checkpoints pass.
         private AgentState _state;
@@ -67,6 +68,10 @@ namespace InvariantAgent.Runtime
         /// <param name="conscience">
         /// Functional conscience (IBAAM 6). When <c>null</c> the runtime behaves exactly as without one.
         /// </param>
+        /// <param name="operationalContext">
+        /// HIG-C operational context in force (IBAAM 4). Stamped on each transition when it starts, so same-layer conflicts
+        /// are resolved under it and replay reproduces the decision. When <c>null</c> every transition runs as Normal.
+        /// </param>
         /// <remarks>
         /// With a persistent store the runtime resumes from the last committed state, so a restart does not
         /// silently reset the agent while its history survives.
@@ -78,7 +83,8 @@ namespace InvariantAgent.Runtime
             IStateReducer reducer,
             ITransitionStore store,
             IDriftBaselineStore? baselines = null,
-            ConscienceCoordinator? conscience = null)
+            ConscienceCoordinator? conscience = null,
+            OperationalContextState? operationalContext = null)
         {
             _planner = planner;
             _evaluator = invariantEvaluator;
@@ -87,6 +93,7 @@ namespace InvariantAgent.Runtime
             _store = store;
             _baselines = baselines;
             _conscience = conscience;
+            _operationalContext = operationalContext;
 
             _state = RestoreCommittedState(store);
         }
@@ -120,8 +127,20 @@ namespace InvariantAgent.Runtime
 
             var context = new TransitionContext
             {
-                Transition = transition
+                Transition = transition,
+                // HIG-C: the context in force when the transition starts governs all of its checkpoints.
+                OperationalContext = _operationalContext?.Current ?? OperationalContext.Normal
             };
+
+            if (context.OperationalContext != OperationalContext.Normal)
+            {
+                transition.AddEvent(TransitionEventStage.Lifecycle, $"OperationalContext={context.OperationalContext}",
+                    new()
+                    {
+                        ["OperationalContext"] = context.OperationalContext.ToString(),
+                        ["Reason"] = _operationalContext?.Reason ?? ""
+                    });
+            }
 
             TransitionPhases.MoveTo(transition, TransitionPhase.Planning);
 

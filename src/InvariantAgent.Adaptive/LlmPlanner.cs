@@ -78,7 +78,7 @@ and input for the current request.
 Available capabilities:
 - echo
 - search
-- calculator
+- calc
 - replay
 - drift
 - memory-set

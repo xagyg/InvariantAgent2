@@ -22,6 +22,9 @@ namespace InvariantAgent.Capabilities.Tools.Internal
         /// <inheritdoc />
         public string Name => "baseline-approve";
 
+        /// <summary>Re-certifying the baseline moves what drift is measured against, so only an operator may do it.</summary>
+        public bool OperatorOnly => true;
+
         /// <summary>Creates the tool.</summary>
         /// <param name="transitions">Transition store used to find the latest committed state.</param>
         /// <param name="baselines">Baseline store to update.</param>

@@ -9,7 +9,10 @@ namespace InvariantAgent.Core.Model.Control
         Preserve,
         /// <summary>A conflicting invariant scored higher, so this one may be subordinated (overridden) if meta-invariants allow.</summary>
         Subordinate,
-        /// <summary>Scores were tied; HIG-C could not distinguish the conflicting invariants.</summary>
+        /// <summary>
+        /// Scores were tied; HIG-C could not distinguish the conflicting invariants. With no clear precedence none of them
+        /// may be overridden: they stay blocking and the conflict is flagged for review.
+        /// </summary>
         Unresolved
     }
 }

@@ -16,7 +16,8 @@ namespace InvariantAgent.Core.Control
     /// <list type="number">
     /// <item>Evaluates every invariant whose scope matches (plus <c>Transition</c>-scoped invariants) and records an Invariant event for each.</item>
     /// <item>Collects failures as <see cref="InvariantViolation"/>s.</item>
-    /// <item>For each violation, applies HIG-C to same-layer conflicts; a violation that HIG-C preserves stays blocking.</item>
+    /// <item>For each violation, applies HIG-C to same-layer conflicts; a violation that HIG-C preserves, or cannot
+    /// distinguish from its peers, stays blocking.</item>
     /// <item>Otherwise asks every meta-invariant; only if all allow is an auditable <see cref="InvariantOverride"/> created.</item>
     /// <item>Returns the remaining (unresolved) violations together with the overrides.</item>
     /// </list>
@@ -153,6 +154,29 @@ namespace InvariantAgent.Core.Control
                             ["Criticality"] = violation.Criticality.ToString(),
                             ["OperationalContext"] = context.OperationalContext.ToString(),
                             ["ComparedInvariants"] = contextualDecision.ComparedInvariants,
+                            ["Reason"] = contextualDecision.Reason
+                        });
+
+                    continue;
+                }
+
+                // HIG-C could not distinguish this violation from its same-layer peers (equal criticality, no context
+                // advantage). With no clear precedence there is no authority to waive any of them, so they stay blocking
+                // and the conflict is flagged for review (IBAAM 3, Section 4: review meta-invariants; IBAAM 4, Section 6).
+                if (contextualDecision.Outcome == ContextualGovernanceOutcome.Unresolved)
+                {
+                    context.Transition.AddEvent(
+                        TransitionEventStage.Control,
+                        $"HIG-C unresolved same-layer conflict, held: {violation.Invariant}",
+                        new Dictionary<string, object>
+                        {
+                            ["Invariant"] = violation.Invariant,
+                            ["Layer"] = violation.Layer.ToString(),
+                            ["Criticality"] = violation.Criticality.ToString(),
+                            ["OperationalContext"] = context.OperationalContext.ToString(),
+                            ["ComparedInvariants"] = contextualDecision.ComparedInvariants,
+                            ["RequiresReview"] = true,
+                            ["ReviewReasons"] = new[] { contextualDecision.Reason },
                             ["Reason"] = contextualDecision.Reason
                         });
 

@@ -67,8 +67,8 @@ namespace InvariantAgent.Observability
                 .TakeLast(Math.Min(BehaviouralDriftDetector.DefaultHorizon, Math.Max(0, completed.Count - currentWindow.Count)))
                 .ToList();
 
-            var current = Measure(transitions, currentWindow);
-            var previous = priorWindow.Count == 0 ? null : Measure(transitions, priorWindow);
+            var current = Measure(transitions, currentWindow, isLatest: true);
+            var previous = priorWindow.Count == 0 ? null : Measure(transitions, priorWindow, isLatest: false);
             var driftMagnitude = previous == null ? 0 : Distance(previous, current);
             var region = ClassifyRegion(transitions, current, driftMagnitude);
 
@@ -83,24 +83,84 @@ namespace InvariantAgent.Observability
             };
         }
 
-        // Computes the five AIE dimensions for a window. Consistency and Recovery use the whole history.
+        // Computes the five AIE dimensions for a window of completed transitions.
+        //   Identifiability looks at the window's span of history, rejected transitions included (the window itself holds
+        //   only completed ones, so scoring it directly could never see a rejection).
+        //   Consistency and Recovery are cumulative up to the end of the span, so the previous window's vector reflects the
+        //   history as it stood then. Scoring both windows over the whole history made the two values identical, so they
+        //   never contributed to drift magnitude.
         private StabilityVector Measure(
             IReadOnlyList<Transition> allTransitions,
-            IReadOnlyList<Transition> window)
+            IReadOnlyList<Transition> window,
+            bool isLatest)
         {
             var latest = window.Last();
             var baseline = window.First().Before;
             var current = latest.After;
+
             var driftScore = _driftDetector.Score(baseline, current).Score;
+
+            var (span, historyToDate) = Span(allTransitions, window, isLatest);
 
             return new StabilityVector
             {
-                Identifiability = ScoreIdentifiability(window),
+                Identifiability = ScoreIdentifiability(span),
                 Continuity = Clamp(100 - driftScore),
-                Consistency = ScoreConsistency(allTransitions),
+                Consistency = ScoreConsistency(historyToDate),
                 Persistence = ScorePersistence(baseline, current),
-                Recovery = ScoreRecovery(allTransitions)
+                Recovery = ScoreRecovery(historyToDate)
             };
+        }
+
+        // The span of a window: every transition (any status) after the completed transition that precedes the window, up
+        // to the window's last completed transition, or to the end of history for the latest window so that trailing
+        // rejections count. Also returns the history from the start up to the end of that span.
+        private static (IReadOnlyList<Transition> Span, IReadOnlyList<Transition> HistoryToDate) Span(
+            IReadOnlyList<Transition> allTransitions,
+            IReadOnlyList<Transition> window,
+            bool isLatest)
+        {
+            var firstIndex = IndexOf(allTransitions, window.First());
+            var lastIndex = isLatest ? allTransitions.Count - 1 : IndexOf(allTransitions, window.Last());
+
+            if (firstIndex < 0 || lastIndex < 0)
+            {
+                return (window, allTransitions);
+            }
+
+            var spanStart = firstIndex;
+
+            while (spanStart > 0 && !IsCompleted(allTransitions[spanStart - 1]))
+            {
+                spanStart--;
+            }
+
+            var span = new List<Transition>();
+
+            for (var i = spanStart; i <= lastIndex; i++)
+            {
+                span.Add(allTransitions[i]);
+            }
+
+            return (span, allTransitions.Take(lastIndex + 1).ToList());
+        }
+
+        private static bool IsCompleted(Transition transition)
+        {
+            return transition.Status == TransitionStatus.Completed && transition.After != null;
+        }
+
+        private static int IndexOf(IReadOnlyList<Transition> transitions, Transition transition)
+        {
+            for (var i = 0; i < transitions.Count; i++)
+            {
+                if (ReferenceEquals(transitions[i], transition))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         // Identifiability: -15 per rejection and -5 per distinct capability beyond 3.
