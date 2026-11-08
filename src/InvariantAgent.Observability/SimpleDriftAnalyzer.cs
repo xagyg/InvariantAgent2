@@ -64,6 +64,17 @@ namespace InvariantAgent.Observability
 
             var highestSeverity = records.Count == 0 ? InvariantSeverity.Info : records.Max(r => r.Severity);
 
+            // HIG-C (IBAAM 3 revised, Section 9): split behavioural drift by whether governance explains it.
+            var byId = transitions
+                .GroupBy(t => t.Id.ToString())
+                .ToDictionary(g => g.Key, g => g.Last());
+            var behavioural = records.Where(r => r.Type == DriftType.BehaviouralDrift).ToList();
+            var attributed = behavioural
+                .Where(r => byId.TryGetValue(r.TransitionId, out var t) && PrescribesChange(t))
+                .ToList();
+            var unattributed = behavioural.Except(attributed).ToList();
+            var behaviouralScore = behavioural.Sum(r => r.Score);
+
             return new DriftReport
             {
                 TransitionCount = transitions.Count,
@@ -84,8 +95,82 @@ namespace InvariantAgent.Observability
 
                 HighestDriftSeverity = highestSeverity,
 
+                ConflictTransitions = transitions.Count(t => t.Conflicts != null && t.Conflicts.Count > 0),
+
+                EscalatedTransitions = transitions.Count(t => t.GovernanceEscalated),
+
+                AttributedDrift = Attribution(attributed, behaviouralScore),
+
+                UnattributedDrift = Attribution(unattributed, behaviouralScore),
+
+                MissingExpectedChange = transitions.SelectMany(MissingExpectedChange).ToList(),
+
                 Stability = _stabilityEvaluator.Evaluate(transitions)
             };        
+        }
+
+        // A transition whose conflict record prescribes different behaviour from simply carrying out the proposal.
+        private static bool PrescribesChange(Transition transition)
+        {
+            return transition.Conflicts != null && transition.Conflicts.Any(c => c.ChangesBehaviour);
+        }
+
+        private static DriftAttribution Attribution(IReadOnlyList<DriftRecord> subset, int total)
+        {
+            var score = subset.Sum(r => r.Score);
+
+            return new DriftAttribution
+            {
+                Events = subset.Count,
+                Score = score,
+                Share = total == 0 ? 0 : (double)score / total
+            };
+        }
+
+        /// <summary>
+        /// Conflict records whose prescribed outcome did not take effect on the transition (Section 9, "missing expected
+        /// change"): a decline on a transition that still completed, a selected alternative that was not the capability
+        /// executed, or an overridden invariant that still appears among the blocking invariants.
+        /// </summary>
+        private static IEnumerable<string> MissingExpectedChange(Transition transition)
+        {
+            if (transition.Conflicts == null)
+            {
+                yield break;
+            }
+
+            foreach (var conflict in transition.Conflicts)
+            {
+                var id = transition.Id.ToString("N")[..8];
+
+                if (conflict.Selected == GovernanceCandidate.DeclineId)
+                {
+                    if (transition.Status == TransitionStatus.Completed)
+                    {
+                        yield return $"{id} {conflict.Scope}: declined, but the transition completed.";
+                    }
+
+                    continue;
+                }
+
+                if (conflict.Selected != GovernanceCandidate.ProposedId &&
+                    transition.Outcome != null &&
+                    !string.Equals(transition.Outcome.Capability, conflict.SelectedCapability, StringComparison.OrdinalIgnoreCase))
+                {
+                    yield return $"{id} {conflict.Scope}: selected {conflict.Selected} ({conflict.SelectedCapability}), " +
+                                 $"but '{transition.Outcome.Capability}' executed.";
+                }
+
+                var stillBlocking = conflict.Overridden
+                    .Intersect(transition.BlockingInvariants ?? new List<string>())
+                    .ToList();
+
+                if (stillBlocking.Count > 0)
+                {
+                    yield return $"{id} {conflict.Scope}: overrode {string.Join(", ", stillBlocking)}, " +
+                                 "but it still blocked the transition.";
+                }
+            }
         }
 
         // Invariant events are formatted "Name: Passed|Failed reason"; take the text before the colon.

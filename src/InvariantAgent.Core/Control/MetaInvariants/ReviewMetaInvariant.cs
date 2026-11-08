@@ -6,11 +6,18 @@ using System.Linq;
 namespace InvariantAgent.Core.Control.MetaInvariants
 {
     /// <summary>
-    /// Flags ambiguous or noisy override situations for human review without blocking them.
+    /// Flags overrides that warrant human review without blocking them (IBAAM 3 revised, Section 7.5).
     /// </summary>
     /// <remarks>
-    /// Review is requested when the candidate violation conflicts with another violation in the same
-    /// layer, or when the number of simultaneous violations reaches the configured threshold.
+    /// Review is requested when:
+    /// <list type="bullet">
+    /// <item>the override was decided within a level, by criticality in context (a same-level conflict);</item>
+    /// <item>several candidates tie in the governed set, so the adaptive layer's preference decided;</item>
+    /// <item>a fundamental violation was authorised by a pre-authorised protocol;</item>
+    /// <item>the number of simultaneous violations reaches the configured threshold.</item>
+    /// </list>
+    /// Repeated overrides of the same invariant across transitions are an observability concern and are reported by the
+    /// drift tooling rather than here.
     /// </remarks>
     public sealed class ReviewMetaInvariant : IMetaInvariant
     {
@@ -34,18 +41,27 @@ namespace InvariantAgent.Core.Control.MetaInvariants
             var reasons = new List<string>();
             var violation = context.CandidateViolation;
 
-            var sameLayerConflicts = context.AllViolations
-                .Where(v =>
-                    v.Invariant != violation.Invariant &&
-                    v.Layer == violation.Layer)
-                .Select(v => v.Invariant)
-                .ToArray();
+            var sameLevel = context.Witnesses
+                .Where(w => w.Worse && w.DecidingLayer == violation.Layer)
+                .ToList();
 
-            if (sameLayerConflicts.Length > 0)
+            if (sameLevel.Count > 0)
             {
                 reasons.Add(
-                    $"{violation.Invariant} conflicts with same-layer invariant(s): " +
-                    string.Join(", ", sameLayerConflicts));
+                    $"{violation.Invariant} was decided within level {violation.Layer} by criticality in " +
+                    $"{context.OperationalContext}: " + string.Join("; ", sameLevel));
+            }
+
+            if (context.GovernedSetSize > 1)
+            {
+                reasons.Add(
+                    $"{context.GovernedSetSize} candidates tie in the governed set; the adaptive layer's preference decided.");
+            }
+
+            if (violation.Layer == InvariantLayer.Fundamental && !string.IsNullOrEmpty(context.EscalationProtocol))
+            {
+                reasons.Add(
+                    $"Fundamental invariant {violation.Invariant} overridden under protocol '{context.EscalationProtocol}'.");
             }
 
             if (context.AllViolations.Count >= _violationReviewThreshold)

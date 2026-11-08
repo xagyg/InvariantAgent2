@@ -1,18 +1,18 @@
 namespace InvariantAgent.Core.Model.Control
 {
-    /// <summary>Outcome of HIG-C same-layer conflict resolution.</summary>
+    /// <summary>How criticality and context entered an override decision under HIG-C.</summary>
     public enum ContextualGovernanceOutcome
     {
-        /// <summary>No same-layer conflict existed; HIG-C did not apply.</summary>
+        /// <summary>Priority between levels decided the override; criticality and context did not.</summary>
         NotApplicable,
-        /// <summary>The invariant scored highest and must be preserved (it stays blocking and is not overridden).</summary>
+        /// <summary>Retained for compatibility with records written before the revised HIG-C rule; no longer produced.</summary>
         Preserve,
-        /// <summary>A conflicting invariant scored higher, so this one may be subordinated (overridden) if meta-invariants allow.</summary>
-        Subordinate,
         /// <summary>
-        /// Scores were tied; HIG-C could not distinguish the conflicting invariants. With no clear precedence none of them
-        /// may be overridden: they stay blocking and the conflict is flagged for review.
+        /// A same-level comparison decided the override: every competing candidate is worse at the invariant's own level,
+        /// by criticality in the current context.
         /// </summary>
+        Subordinate,
+        /// <summary>Retained for compatibility with records written before the revised HIG-C rule; no longer produced.</summary>
         Unresolved
     }
 }

@@ -29,7 +29,7 @@ namespace InvariantAgent.Core.Model.Transition
         /// <summary>HIG-C operational context in effect for this transition (default Normal).</summary>
         /// <remarks>
         /// Stored on <see cref="Transition"/> (<see cref="Transition.OperationalContext"/>) so it is persisted with the
-        /// transition and replay re-evaluates same-layer conflicts under the context the live run used.
+        /// transition and replay re-resolves conflicts under the context the live run used.
         /// </remarks>
         public OperationalContext OperationalContext
         {

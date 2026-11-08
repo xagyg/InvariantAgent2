@@ -160,6 +160,16 @@ public static class TransitionFormatter
 
             if (!string.IsNullOrWhiteSpace(transition.ProposedAction.Input))
                 sb.AppendLine($"  Input: {transition.ProposedAction.Input}");
+
+            // HIG-C may have replaced the planner's proposal with a governed alternative.
+            var replaced = transition.Events.FirstOrDefault(e =>
+                e.Stage == TransitionEventStage.Planning &&
+                e.Message.StartsWith("Governed alternative selected", StringComparison.Ordinal));
+
+            if (replaced?.Metadata != null && replaced.Metadata.TryGetValue("PreviousCapability", out var previous))
+            {
+                sb.AppendLine($"  Governed alternative to the planner's proposal '{Convert.ToString(previous)}'.");
+            }
         }
 
         sb.AppendLine();
@@ -175,6 +185,45 @@ public static class TransitionFormatter
         AppendInvariantEvents(sb, transition, InvariantScope.SelfModification, "Self-modification invariants");
 
         AppendInvariantEvents(sb, transition, InvariantScope.Reduction, "Reduction invariants");
+        AppendConflicts(sb, transition);
+    }
+
+    // HIG-C conflict resolutions (IBAAM 3 revised, Section 7.4): selected candidate, its profile, overrides, escalation.
+    private static void AppendConflicts(StringBuilder sb, Transition transition)
+    {
+        if (transition.Conflicts == null || transition.Conflicts.Count == 0)
+        {
+            return;
+        }
+
+        sb.AppendLine("Conflict resolution (HIG-C):");
+
+        foreach (var conflict in transition.Conflicts)
+        {
+            sb.AppendLine(
+                $"  - {conflict.Scope} [{conflict.OperationalContext}]: selected {conflict.Selected}" +
+                (string.IsNullOrEmpty(conflict.SelectedCapability) ? " " : $" '{conflict.SelectedCapability}' ") +
+                $"(profile {conflict.Profile})" +
+                (conflict.Overridden.Count > 0 ? $"; overrides {string.Join(", ", conflict.Overridden)}" : "") +
+                (conflict.Escalated ? "; ESCALATED for human review" : ""));
+
+            if (!string.IsNullOrWhiteSpace(conflict.Reason))
+            {
+                sb.AppendLine($"    {conflict.Reason}");
+            }
+        }
+
+        foreach (var e in transition.Events.Where(e =>
+                     e.Stage == TransitionEventStage.Control &&
+                     e.Message.StartsWith("Override authorised:", StringComparison.Ordinal)))
+        {
+            if (e.Metadata != null && e.Metadata.TryGetValue("Justification", out var justification))
+            {
+                sb.AppendLine($"    {Convert.ToString(justification)}");
+            }
+        }
+
+        sb.AppendLine();
     }
 
     // Conscience appraisals (IBAAM 6): stance, effect and the justification generated from the tension components.

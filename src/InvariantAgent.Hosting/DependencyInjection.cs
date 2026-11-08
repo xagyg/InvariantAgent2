@@ -18,6 +18,7 @@ using InvariantAgent.Observability;
 using InvariantAgent.Runtime;
 using InvariantAgent.Safety.Invariants.Action;
 using InvariantAgent.Safety.Invariants.Identity;
+using InvariantAgent.Safety.Invariants.Mission;
 using InvariantAgent.Safety.Invariants.Outcome;
 using InvariantAgent.Safety.Invariants.Runtime;
 using InvariantAgent.Safety.Invariants.SelfModification;
@@ -103,7 +104,9 @@ namespace InvariantAgent.Hosting
                 operationalContext,
                 operationalContext == OperationalContext.Normal ? "default" : "configured at start-up"));
 
-            // HIG META-INVARIANTS: govern whether lower-priority violations may be overridden.
+            // HIG-C META-INVARIANTS (IBAAM 3 revised, Section 7): fundamental violations need escalation (Priority);
+            // hard severities stay blocking (deployment policy); overrides must be witnessed (Justification); every
+            // override is audited; ambiguous ones are flagged for review.
             services.AddSingleton<IMetaInvariant, PriorityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, OverrideSeverityMetaInvariant>();
             services.AddSingleton<IMetaInvariant, JustificationMetaInvariant>();
@@ -129,9 +132,18 @@ namespace InvariantAgent.Hosting
             });
             // Backstop: a rejected transition must never carry state into a commit.
             services.AddSingleton<IInvariant, RejectedTransitionCannotCommitInvariant>();
+            // HIG-C: the duty to act on the request gives declining its cost (IBAAM 3 revised, Section 8.1). Without it,
+            // declining satisfies everything and any violation at all rejects the transition.
+            services.AddSingleton<IInvariant, ServiceObligationInvariant>();
 
+            // PRE-AUTHORISED PROTOCOLS for fundamental-level conflicts (Section 7.2): none by default, so a conflict
+            // between fundamental invariants is always held for human review. Register IEscalationProtocol
+            // implementations here only with the approval of the responsible governance body.
             services.AddSingleton<IInvariantEvaluator>(sp =>
-                new InvariantEvaluator(sp.GetServices<IInvariant>(), sp.GetServices<IMetaInvariant>()));
+                new InvariantEvaluator(
+                    sp.GetServices<IInvariant>(),
+                    sp.GetServices<IMetaInvariant>(),
+                    sp.GetServices<IEscalationProtocol>()));
 
             // CONSCIENCE (IBAAM 6): weighs what the agent should do inside what the invariants say it may do.
             // Deliberately not an IInvariant: it has its own contract and runs only after the invariants pass.

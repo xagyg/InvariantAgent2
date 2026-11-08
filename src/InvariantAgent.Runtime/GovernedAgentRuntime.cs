@@ -19,7 +19,8 @@ namespace InvariantAgent.Runtime
     /// <para>Pipeline for each input:</para>
     /// <list type="number">
     /// <item>Input received and the planner proposes an action from the bounded projection <c>π(Sₜ)</c>.</item>
-    /// <item>Pre-control: Plan invariants.</item>
+    /// <item>Pre-control: HIG-C resolves the plan checkpoint over the proposal, any planner alternatives
+    /// (<see cref="IAlternativePlanner"/>) and declining; the governed action is carried forward.</item>
     /// <item>Conscience plan appraisal (IBAAM 6), when a conscience is configured: Proceed, Revise (re-plan, re-check
     /// plan invariants, re-appraise; bounded), Escalate or Veto.</item>
     /// <item>Capability execution.</item>
@@ -34,8 +35,9 @@ namespace InvariantAgent.Runtime
     /// can authorise anything they block. Every revised plan passes every plan invariant again.
     /// </para>
     /// <para>
-    /// A failure at any checkpoint rejects the transition. Rejected transitions are persisted too, but
-    /// never change runtime state.
+    /// At every checkpoint the governed outcome is either to continue (possibly with witnessed overrides) or to decline.
+    /// Declining rejects the transition; when every candidate violates a fundamental invariant the transition is also
+    /// marked as escalated for human review. Rejected transitions are persisted too, but never change runtime state.
     /// </para>
     /// </remarks>
     public sealed class GovernedAgentRuntime
@@ -69,7 +71,7 @@ namespace InvariantAgent.Runtime
         /// Functional conscience (IBAAM 6). When <c>null</c> the runtime behaves exactly as without one.
         /// </param>
         /// <param name="operationalContext">
-        /// HIG-C operational context in force (IBAAM 4). Stamped on each transition when it starts, so same-layer conflicts
+        /// HIG-C operational context in force (IBAAM 3 revised). Stamped on each transition when it starts, so conflicts
         /// are resolved under it and replay reproduces the decision. When <c>null</c> every transition runs as Normal.
         /// </param>
         /// <remarks>
@@ -163,8 +165,9 @@ namespace InvariantAgent.Runtime
 
             TransitionPhases.MoveTo(transition, TransitionPhase.PlanValidation);
 
-            // PRE-CONTROL
-            var decision = _evaluator.Evaluate(context, Core.Model.Control.InvariantScope.Plan);
+            // PRE-CONTROL: HIG-C resolves over the proposal, any planner alternatives and declining.
+            var alternatives = await ProposeAlternativesAsync(plannerContext, proposedAction);
+            var decision = _evaluator.Evaluate(context, InvariantScope.Plan, alternatives);
 
             if (!TryApplyGovernanceOutcome(context, decision)) 
             {
@@ -430,6 +433,7 @@ namespace InvariantAgent.Runtime
         }
 
         // Rejects through the controls and records which invariants blocked it (boundary labels for the conscience).
+        // A fundamental conflict that no pre-authorised protocol covers is held for human review (HIG-C, Section 7.2).
         private static void RejectByControls(Transition transition, InvariantEvaluationReport report)
         {
             transition.BlockingInvariants = report.Violations
@@ -437,7 +441,30 @@ namespace InvariantAgent.Runtime
                 .Distinct()
                 .ToList();
 
+            if (report.RequiresEscalation)
+            {
+                transition.GovernanceEscalated = true;
+            }
+
             TransitionPhases.Reject(transition, report.Summary);
+        }
+
+        // Asks an alternative-capable planner for further candidates; other planners contribute only their proposal.
+        private async Task<IReadOnlyList<AgentAction>> ProposeAlternativesAsync(
+            Core.Model.Planning.PlannerContext plannerContext,
+            AgentAction proposed)
+        {
+            if (_planner is not IAlternativePlanner alternativePlanner || proposed == null)
+            {
+                return Array.Empty<AgentAction>();
+            }
+
+            var alternatives = await alternativePlanner.ProposeAlternativesAsync(
+                plannerContext, proposed, CancellationToken.None);
+
+            return alternatives?
+                .Where(a => a != null && !ConscienceCoordinator.SamePlan(proposed, a))
+                .ToList() ?? (IReadOnlyList<AgentAction>)Array.Empty<AgentAction>();
         }
 
         /// <summary>
@@ -447,6 +474,32 @@ namespace InvariantAgent.Runtime
         private bool TryApplyGovernanceOutcome(TransitionContext context, InvariantEvaluationReport report)
         {
             var transition = context.Transition;
+
+            // HIG-C may select a planner alternative over the proposal: from here on the transition carries that action.
+            if (report.Passed && report.SelectedAlternative != null)
+            {
+                var previous = transition.ProposedAction;
+                transition.ProposedAction = report.SelectedAlternative;
+
+                transition.AddEvent(TransitionEventStage.Planning,
+                    $"Governed alternative selected: Capability={report.SelectedAlternative.Capability}",
+                    new()
+                    {
+                        ["Capability"] = report.SelectedAlternative.Capability,
+                        ["Input"] = report.SelectedAlternative.Input,
+                        ["Selected"] = report.Resolution?.SelectedId ?? "",
+                        ["PreviousCapability"] = previous?.Capability,
+                        ["PreviousInput"] = previous?.Input,
+                        ["Reason"] = report.Resolution?.Reason ?? ""
+                    });
+            }
+
+            var conflict = ConflictRecord.From(report);
+
+            if (conflict != null)
+            {
+                transition.Conflicts.Add(conflict);
+            }
 
             transition.AddEvent(
                 TransitionEventStage.Control,
@@ -460,6 +513,10 @@ namespace InvariantAgent.Runtime
                     ["Reason"] = report.Summary,
                     ["ViolationCount"] = report.Violations.Count,
                     ["OverrideCount"] = report.Overrides.Count,
+                    ["Declined"] = report.Declined,
+                    ["RequiresEscalation"] = report.RequiresEscalation,
+                    ["Selected"] = report.Resolution?.SelectedId ?? GovernanceCandidate.ProposedId,
+                    ["GovernedSet"] = report.Resolution?.GovernedSet.ToArray() ?? Array.Empty<string>(),
                     ["Violations"] = report.Violations
                         .Select(v => new
                         {
@@ -468,6 +525,8 @@ namespace InvariantAgent.Runtime
                             Scope = v.Scope.ToString(),
                             Severity = v.Severity.ToString(),
                             Layer = v.Layer.ToString(),
+                            Criticality = v.CriticalityInContext.ToString(),
+                            v.Degree,
                             v.Reason
                         })
                         .ToArray(),
@@ -477,6 +536,7 @@ namespace InvariantAgent.Runtime
                             OverriddenInvariant = o.OverriddenViolation.Invariant,
                             OverriddenLayer = o.OverriddenLayer.ToString(),
                             o.PreservedHigherPriorityInvariants,
+                            Witnesses = o.Witnesses.Select(w => w.ToString()).ToArray(),
                             o.Justification,
                             o.MetaInvariantCategory,
                             o.RequiresReview,

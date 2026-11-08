@@ -10,7 +10,7 @@ using Xunit;
 namespace InvariantAgent.Tests.Governance;
 
 /// <summary>
-/// HIG-C operational context (IBAAM 4, Section 5) is wired into the runtime: stamped on every transition, changed only by
+/// HIG-C operational context (IBAAM 3 revised, Section 5) is wired into the runtime: stamped on every transition, changed only by
 /// the operator, and recorded so replay resolves conflicts under the same context.
 /// </summary>
 public sealed class OperationalContextTests

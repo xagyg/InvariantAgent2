@@ -8,7 +8,7 @@ namespace InvariantAgent.Capabilities.Tools.Internal
 {
     /// <summary>
     /// <c>context [normal|degraded|emergency|recovery|maintenance] [reason]</c>: shows or sets the HIG-C operational context
-    /// (IBAAM 4, Section 5). Operator-only: a planner can never change the context its own conflicts are judged under.
+    /// (IBAAM 3 revised, Section 5). Operator-only: a planner can never change the context its own conflicts are judged under.
     /// </summary>
     /// <remarks>A new context applies from the next transition; the transition that sets it keeps the old one.</remarks>
     public sealed class ContextTool : ICapability

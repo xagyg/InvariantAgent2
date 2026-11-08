@@ -1,6 +1,6 @@
 namespace InvariantAgent.Core.Model.Control
 {
-    /// <summary>HIG-C operational circumstances that influence same-layer conflict resolution.</summary>
+    /// <summary>HIG-C operational circumstances κ: they set each invariant's criticality C(I, κ) and so shape conflict resolution.</summary>
     public enum OperationalContext
     {
         /// <summary>Normal operation (default).</summary>

@@ -4,23 +4,29 @@ using System.Collections.Generic;
 namespace InvariantAgent.Core.Model.Control
 {
     /// <summary>
-    /// An auditable record of a violation that was overridden under Hierarchical Invariant Governance.
+    /// An auditable record of a violation the governed action carries (IBAAM 3 revised, Section 7).
     /// </summary>
     /// <remarks>
-    /// An override is only created when every meta-invariant allows it. The record captures the
-    /// preserved higher-priority invariants, the generated justification, review flags and, where
-    /// applicable, the HIG-C contextual decision so the override can be inspected later.
+    /// An override exists only when the selected action is in the governed set and every meta-invariant allows the
+    /// override. The record carries the witnesses showing that every candidate which would have violated the invariant less
+    /// has a worse violation profile, the generated justification and review flags, so the override can be recomputed
+    /// and inspected later.
     /// </remarks>
     public sealed class InvariantOverride
     {
         /// <summary>The violation that was overridden.</summary>
         public InvariantViolation OverriddenViolation { get; init; } = new();
 
-        /// <summary>Names of higher-layer invariants that passed and therefore justify the override.</summary>
+        /// <summary>
+        /// Candidates that would have violated the invariant less, each with the profile position at which it is worse.
+        /// </summary>
+        public IReadOnlyList<OverrideWitness> Witnesses { get; init; } = Array.Empty<OverrideWitness>();
+
+        /// <summary>Names of higher-level invariants the governed action satisfies (context for reviewers).</summary>
         public IReadOnlyList<string> PreservedHigherPriorityInvariants { get; init; }
             = Array.Empty<string>();
 
-        /// <summary>Generated rationale explaining why the override was permitted.</summary>
+        /// <summary>Generated rationale explaining why the override was necessary.</summary>
         public string Justification { get; init; } = "";
 
         /// <summary>Comma-separated list of meta-invariant categories that participated (kept for display/back-compat).</summary>
@@ -33,15 +39,22 @@ namespace InvariantAgent.Core.Model.Control
         /// <summary><c>true</c> when the override situation is ambiguous or noisy and should be reviewed by a human.</summary>
         public bool RequiresReview { get; init; }
 
-        /// <summary>Reasons the override was flagged for review (e.g. same-layer conflicts).</summary>
+        /// <summary>Reasons the override was flagged for review (e.g. same-level conflicts, ties).</summary>
         public IReadOnlyList<string> ReviewReasons { get; init; }
             = Array.Empty<string>();
 
-        /// <summary>The HIG-C (criticality and context) decision made for this violation.</summary>
+        /// <summary>
+        /// How criticality and context decided the override: <see cref="ContextualGovernanceOutcome.Subordinate"/> when a
+        /// same-level comparison decided it, <see cref="ContextualGovernanceOutcome.NotApplicable"/> when priority between
+        /// levels decided it.
+        /// </summary>
         public ContextualGovernanceDecision ContextualDecision { get; init; }
             = new();
 
-        /// <summary>Convenience accessor for the governance layer of the overridden invariant.</summary>
+        /// <summary>Pre-authorised protocol that authorised a fundamental-level override, if any.</summary>
+        public string EscalationProtocol { get; init; } = "";
+
+        /// <summary>Convenience accessor for the governance level of the overridden invariant.</summary>
         public InvariantLayer OverriddenLayer => OverriddenViolation.Layer;
     }
 }
