@@ -108,50 +108,11 @@ Reducers assimilate approved state evolution.
 
 ## Hierarchical and Context-Aware Invariant Governance (HIG-C)
 
-IA2 implements the resolution rule of *Hierarchical and Context-Aware Invariant Governance for Adaptive Agents* (IBAAM 3, revised edition, which supersedes IBAAM 3 and 4).
+Implements IBAAM 3 (revised edition). Invariants have a level (`Fundamental > Mission > Behavioural > AdaptiveHeuristic`), a violation degree in [0, 1], and a criticality that can depend on the operational context.
 
-Invariants are assigned a governance level:
+At each checkpoint the evaluator compares the proposed action, any planner alternatives and declining, and selects the least-bad by level first, then criticality. `ServiceObligationInvariant` gives declining a cost, so minor lower-level violations can proceed as witnessed, audited overrides; fundamental violations never proceed autonomously and are escalated for human review when every option breaks one.
 
-```text
-Fundamental > Mission > Behavioural > AdaptiveHeuristic
-```
-
-At every checkpoint the evaluator compares **candidate actions**: the action in flight, any alternatives offered by an `IAlternativePlanner` (plan checkpoint only), and the **null action** (declining to continue). For each candidate:
-
-- every applicable invariant reports a **violation degree** in [0, 1] (`InvariantResult.Allow`, `Reject` or `Violated(degree, …)` for threshold invariants); declining is scored with `IInvariant.EvaluateDecline`;
-- each violation has a **criticality in the current operational context**, `IInvariant.CriticalityIn(context)` (by default the base criticality, raised one level in the invariant's `Contexts`);
-- the degrees form a **violation profile**, ordered by level first and criticality second.
-
-The **governed set** is the candidates with the lexicographically smallest profile: any higher-level violation outweighs any lower-level one, and within a level a more critical violation outweighs any amount of less critical violation. Ties are left to the adaptive layer (the planner's order of preference). With no conflict this reduces exactly to ordinary enforcement.
-
-`ServiceObligationInvariant` (mission level) gives declining its cost: declining leaves the request unanswered. An action that violates only behavioural or heuristic obligations is therefore better than declining and proceeds with witnessed overrides; an action that violates anything fundamental, or a mission obligation more critically, loses to declining. Remove it and declining is free, so any violation rejects.
-
-### Fundamental conflicts and escalation
-
-No action that violates a fundamental invariant is carried out autonomously. When every candidate, including declining, violates a fundamental invariant, the runtime holds (rejects) and marks the transition `GovernanceEscalated` for human review, with the recommended candidate in the decision record. A governance body can register pre-authorised protocols (`IEscalationProtocol`) that cover specific cases; none are registered by default.
-
-### Operational context
-
-The HIG-C operational context (`Normal`, `Degraded`, `Emergency`, `Recovery`, `Maintenance`) is stamped on every transition when it starts and recorded with it, so replay resolves conflicts under the same context. Set the start-up context with `--InvariantAgent:OperationalContext=Degraded`; an operator changes it at run time:
-
-```text
-agent> context                         # show the context in force
-agent> context degraded storm load     # applies from the next transition
-```
-
-### Meta-invariants
-
-- `PriorityMetaInvariant`: fundamental violations need a pre-authorised protocol; otherwise escalate.
-- `JustificationMetaInvariant`: **witnessed override** — every candidate that would violate the invariant less must have a worse profile; generates the justification.
-- `OverrideSeverityMetaInvariant`: deployment policy keeping `Error` and `Critical` violations blocking regardless of level.
-- `AuditMetaInvariant`: marks override decisions for governance audit.
-- `ReviewMetaInvariant`: flags same-level decisions, ties in the governed set, protocol-authorised fundamental overrides and many simultaneous violations.
-
-The evaluator also checks **level–criticality consistency** when it is built: an invariant below the fundamental level that can be Catastrophic in any context is a configuration error.
-
-### Decision records and drift
-
-Each resolved conflict is recorded on the transition (`Transition.Conflicts`) and in Control events: every candidate's profile, the governed set, the selected candidate, each override's witnesses and justification, and any escalation. `explain` shows them. The `drift` report splits behavioural drift into **attributed** drift (on transitions whose conflict record prescribed a change) and **unattributed** drift, and lists **missing expected change**: resolutions that did not take effect.
+The operational context is set by an operator (`context degraded <reason>`) and recorded on each transition for replay. Conflict decisions appear in `explain`, and `drift` separates drift that governance explains from drift it does not.
 
 ## Architecture
 
