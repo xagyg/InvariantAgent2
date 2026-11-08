@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace InvariantAgent.Core.Model.Control
 {
     /// <summary>
-    /// The HIG-C decision for a violation that conflicts with other violations in the same layer.
+    /// How priority, criticality and context decided one override under HIG-C.
     /// </summary>
     /// <remarks>
     /// HIG-C keeps hierarchy as the primary mechanism; criticality and operational context are only
-    /// used to distinguish equal-priority (same-layer) conflicts.
+    /// decide within a level (IBAAM 3 revised, Section 6.2).
     /// </remarks>
     public sealed class ContextualGovernanceDecision
     {
@@ -28,7 +28,7 @@ namespace InvariantAgent.Core.Model.Control
         public IReadOnlyList<OperationalContext> Contexts { get; init; }
             = Array.Empty<OperationalContext>();
 
-        /// <summary>Names of the same-layer invariants it was compared against.</summary>
+        /// <summary>Invariants violated by the competing candidates at the deciding profile position.</summary>
         public IReadOnlyList<string> ComparedInvariants { get; init; }
             = Array.Empty<string>();
 

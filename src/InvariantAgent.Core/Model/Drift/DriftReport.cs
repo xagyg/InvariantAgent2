@@ -48,9 +48,47 @@ public sealed class DriftReport
     /// <summary>Behavioural stability assessment for the same history.</summary>
     public StabilityAssessment Stability { get; init; } = new();
 
+    /// <summary>Transitions that carry at least one HIG-C conflict record.</summary>
+    public int ConflictTransitions { get; init; }
+
+    /// <summary>Transitions held for human review because of a fundamental conflict.</summary>
+    public int EscalatedTransitions { get; init; }
+
+    /// <summary>
+    /// Behavioural drift attributed to governance (IBAAM 3 revised, Section 9): drift on transitions whose conflict record
+    /// prescribed a change of behaviour. Expected; replaying the log reproduces it.
+    /// </summary>
+    public DriftAttribution AttributedDrift { get; init; } = new();
+
+    /// <summary>
+    /// Behavioural drift the governance process does not explain: drift on transitions with no conflict record that
+    /// prescribed a change. A governance signal even when every invariant is satisfied.
+    /// </summary>
+    public DriftAttribution UnattributedDrift { get; init; } = new();
+
+    /// <summary>
+    /// Missing expected change: conflict records whose prescribed outcome did not take effect (a declined transition that
+    /// still completed, an alternative that was not the one executed, or an overridden invariant that still blocked).
+    /// Suggests a resolution is not taking effect; feeds review.
+    /// </summary>
+    public IReadOnlyList<string> MissingExpectedChange { get; init; } = new List<string>();
+
     /// <summary><c>true</c> if any drift was recorded.</summary>
     public bool HasDrift => DriftCounts.Count > 0;
 
     /// <summary>Total number of drift records.</summary>
     public int TotalDriftEvents => DriftCounts.Values.Sum();
+}
+
+/// <summary>Count and total score of a subset of behavioural drift records.</summary>
+public sealed class DriftAttribution
+{
+    /// <summary>Number of drift records.</summary>
+    public int Events { get; init; }
+
+    /// <summary>Sum of their scores.</summary>
+    public int Score { get; init; }
+
+    /// <summary>Share of all behavioural drift score (0 when there is none).</summary>
+    public double Share { get; init; }
 }

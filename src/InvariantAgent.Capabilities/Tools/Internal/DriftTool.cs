@@ -44,6 +44,24 @@ namespace InvariantAgent.Capabilities.Tools.Internal
             sb.AppendLine($"Stability confidence: {report.Stability.Confidence}");
             sb.AppendLine($"Stability drift magnitude: {report.Stability.DriftMagnitude}");
 
+
+            sb.AppendLine();
+            sb.AppendLine("Conflict resolution (HIG-C):");
+            sb.AppendLine($"  Transitions with conflicts: {report.ConflictTransitions}");
+            sb.AppendLine($"  Escalated for human review: {report.EscalatedTransitions}");
+            sb.AppendLine($"  Attributed drift: {report.AttributedDrift.Events} events, score {report.AttributedDrift.Score} ({report.AttributedDrift.Share:P0})");
+            sb.AppendLine($"  Unattributed drift: {report.UnattributedDrift.Events} events, score {report.UnattributedDrift.Score} ({report.UnattributedDrift.Share:P0})");
+
+            if (report.MissingExpectedChange.Count > 0)
+            {
+                sb.AppendLine("  Missing expected change (review):");
+
+                foreach (var item in report.MissingExpectedChange)
+                {
+                    sb.AppendLine($"    {item}");
+                }
+            }
+
             sb.AppendLine();
             sb.AppendLine("Stability vector:");
             sb.AppendLine($"  Identifiability: {report.Stability.Current.Identifiability}");

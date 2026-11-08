@@ -2,7 +2,7 @@ namespace InvariantAgent.Core.Model.Control
 {
     /// <summary>
     /// HIG-C criticality: the potential severity of consequences if an invariant is violated.
-    /// Higher values carry more weight when resolving same-layer conflicts.
+    /// Within a level, a more critical violation outweighs any amount of less critical violation (HIG-C).
     /// </summary>
     public enum InvariantCriticality
     {

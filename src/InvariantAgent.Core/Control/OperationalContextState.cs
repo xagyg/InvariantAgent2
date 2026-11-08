@@ -4,12 +4,12 @@ using System;
 namespace InvariantAgent.Core.Control
 {
     /// <summary>
-    /// The HIG-C operational context currently in force (IBAAM 4, Section 5): Normal, Degraded, Emergency, Recovery or
+    /// The HIG-C operational context currently in force (IBAAM 3 revised, Section 5): Normal, Degraded, Emergency, Recovery or
     /// Maintenance.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The runtime stamps <see cref="Current"/> onto every transition when it starts, so same-layer conflicts are resolved
+    /// The runtime stamps <see cref="Current"/> onto every transition when it starts, so conflicts are resolved
     /// under the context that was in force and replay reproduces that decision. Context is governance state, like the
     /// approved drift baseline: it is set by an operator (the <c>context</c> capability, which planners cannot invoke) or by
     /// configuration (<c>--InvariantAgent:OperationalContext=Degraded</c>), never by the agent itself.

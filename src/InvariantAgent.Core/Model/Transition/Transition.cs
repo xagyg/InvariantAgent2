@@ -58,10 +58,10 @@ namespace InvariantAgent.Core.Model.Transition
         public SelfModificationRequest? SelfModification { get; set; }
 
         /// <summary>
-        /// HIG-C operational context in force when this transition ran (IBAAM 4, Section 5).
+        /// HIG-C operational context in force when this transition ran (IBAAM 3 revised, Section 5).
         /// </summary>
         /// <remarks>
-        /// Recorded so replay resolves same-layer conflicts under the same context the live run used. Transitions recorded
+        /// Recorded so replay resolves conflicts under the same context the live run used. Transitions recorded
         /// before this field existed deserialise as <see cref="InvariantAgent.Core.Model.Control.OperationalContext.Normal"/>,
         /// which is what the runtime used for them.
         /// </remarks>
@@ -84,6 +84,22 @@ namespace InvariantAgent.Core.Model.Transition
         /// </summary>
         /// <remarks>Boundary labels for the conscience: each blocked transition is an exact example of where the controls lie.</remarks>
         public List<string> BlockingInvariants { get; set; } = new();
+
+        /// <summary>
+        /// Invariant conflicts resolved during this transition (IBAAM 3 revised, Section 7.4): one record per checkpoint
+        /// at which no candidate satisfied every invariant, or at which the governed action carried overrides.
+        /// </summary>
+        /// <remarks>
+        /// Behavioural change on a transition that carries a conflict record is <em>attributed</em> drift: the governance
+        /// process explains it. Change on transitions without one is unattributed (Section 9).
+        /// </remarks>
+        public List<ConflictRecord> Conflicts { get; set; } = new();
+
+        /// <summary>
+        /// <c>true</c> when HIG-C held this transition for human review because every candidate, including declining,
+        /// violated a fundamental invariant and no pre-authorised protocol covered the case (Section 7.2).
+        /// </summary>
+        public bool GovernanceEscalated { get; set; }
 
         /// <summary>
         /// Conscience appraisals made during this transition, in order (plan appraisals per revision attempt, then the

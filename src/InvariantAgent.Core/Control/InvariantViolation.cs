@@ -14,16 +14,22 @@
         /// <summary>Scope at which the invariant was evaluated.</summary>
         public InvariantScope Scope { get; init; }
 
-        /// <summary>Severity of the violation; Error and Critical are blocking by default.</summary>
+        /// <summary>Severity of the violation; under the default policy Error and Critical can never be overridden.</summary>
         public InvariantSeverity Severity { get; init; }
 
-        /// <summary>HIG layer of the violated invariant.</summary>
+        /// <summary>HIG level of the violated invariant.</summary>
         public InvariantLayer Layer { get; init; } = InvariantLayer.Fundamental;
 
-        /// <summary>HIG-C criticality of the violated invariant.</summary>
+        /// <summary>Base criticality of the violated invariant.</summary>
         public InvariantCriticality Criticality { get; init; } = InvariantCriticality.Medium;
 
-        /// <summary>HIG-C operational contexts in which the violated invariant is especially relevant.</summary>
+        /// <summary>Criticality of this violation in the operational context it occurred in, C(I, κ).</summary>
+        public InvariantCriticality CriticalityInContext { get; init; } = InvariantCriticality.Medium;
+
+        /// <summary>Violation degree v ∈ (0, 1].</summary>
+        public double Degree { get; init; } = 1;
+
+        /// <summary>Operational contexts in which violating the invariant is more critical than usual.</summary>
         public System.Collections.Generic.IReadOnlyList<OperationalContext> Contexts { get; init; }
             = System.Array.Empty<OperationalContext>();
 

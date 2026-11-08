@@ -1,17 +1,24 @@
 using InvariantAgent.Core.Abstractions;
 using InvariantAgent.Core.Model.Control;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace InvariantAgent.Core.Control.MetaInvariants
 {
     /// <summary>
-    /// Enforces HIG layer precedence (Fundamental, then Mission, then Behavioural, then AdaptiveHeuristic).
+    /// Fundamental invariants and escalation (IBAAM 3 revised, Section 7.2): no action that violates a fundamental
+    /// invariant may be carried out autonomously.
     /// </summary>
     /// <remarks>
-    /// A violation may only be overridden when: it is not in the Fundamental layer; no higher-layer
-    /// invariant is also violated; and at least one higher-layer invariant was preserved (passed).
-    /// The preserved invariants are returned as <c>PreservedHigherPriorityInvariants</c> metadata.
+    /// <para>
+    /// Priority between levels is enforced by the resolution rule itself: a higher-level violation always outweighs a
+    /// lower-level one in the violation profile, so this meta-invariant no longer needs the earlier rules ("no override
+    /// while a higher-level violation is unresolved", "override authority from a preserved higher-level invariant").
+    /// </para>
+    /// <para>
+    /// What remains is the fundamental rule. A fundamental violation is authorised only when a pre-authorised protocol
+    /// covers it; otherwise the agent holds at the null action and the evaluator escalates. Changing priorities is a change
+    /// to the hierarchy (versioned and approved), never a runtime override.
+    /// </para>
     /// </remarks>
     public sealed class PriorityMetaInvariant : IMetaInvariant
     {
@@ -24,41 +31,23 @@ namespace InvariantAgent.Core.Control.MetaInvariants
         {
             var violation = context.CandidateViolation;
 
-            // Rule 1: fundamental invariants are never overrideable.
             if (violation.Layer == InvariantLayer.Fundamental)
             {
-                return MetaInvariantResult.Reject(
-                    "Fundamental invariants are non-overrideable.");
-            }
-
-            // Rule 2: a lower-layer violation cannot be waived while a higher-layer one is unresolved.
-            var higherPriorityFailure = context.AllViolations
-                .FirstOrDefault(v => v.Layer > violation.Layer);
-
-            if (higherPriorityFailure != null)
-            {
-                return MetaInvariantResult.Reject(
-                    $"{violation.Invariant} cannot be overridden while higher-priority invariant " +
-                    $"{higherPriorityFailure.Invariant} is unresolved.");
-            }
-
-            // Rule 3: override authority comes from a higher-layer invariant that actually passed.
-            var preservedHigherPriorityInvariants = context.EvaluationRecords
-                .Where(r => r.Result.Passed && r.Invariant.Layer > violation.Layer)
-                .Select(r => r.Invariant.Name)
-                .ToArray();
-
-            if (preservedHigherPriorityInvariants.Length == 0)
-            {
-                return MetaInvariantResult.Reject(
-                    $"{violation.Invariant} has no preserved higher-priority invariant to justify override authority.");
-            }
-
-            return MetaInvariantResult.Allow(
-                metadata: new Dictionary<string, object>
+                if (string.IsNullOrEmpty(context.EscalationProtocol))
                 {
-                    ["PreservedHigherPriorityInvariants"] = preservedHigherPriorityInvariants
-                });
+                    return MetaInvariantResult.Reject(
+                        $"{violation.Invariant} is fundamental: it cannot be violated autonomously and requires escalation.");
+                }
+
+                return MetaInvariantResult.Allow(
+                    $"Fundamental violation authorised by pre-authorised protocol '{context.EscalationProtocol}'.",
+                    new Dictionary<string, object>
+                    {
+                        ["EscalationProtocol"] = context.EscalationProtocol
+                    });
+            }
+
+            return MetaInvariantResult.Allow();
         }
     }
 }
